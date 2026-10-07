@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build & Dist Outputs
+dist/
+dist-ssr/
+build/
+.vite/
+*.tsbuildinfo
+
+# Environment & Secrets (CRITICAL SECURITY)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Logs & Temporary Files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.tmp/
+scratch/
+backend/scratch/
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.user
+*.userossc
+
+# Agent & AI Tooling Directories
+.agents/
+.claude/
+.cursor/
+.devin/
+.plugins/
+.opencode-skills/
+.claude-replay.*
+/.figma/design-context/

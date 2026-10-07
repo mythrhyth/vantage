@@ -1,0 +1,152 @@
+import React, { useState, useEffect, useMemo } from "react"
+import {
+  Page,
+  IconName,
+  ScenarioName,
+  ScenarioControls,
+  StressTestRun,
+  StressTestHistoryEntry,
+  AssetName,
+} from "../../types"
+import {
+  titleCase,
+  mappedScenarioForEvent,
+  signedValue,
+  generateEventStressParameters,
+  calculateScenarioLoss,
+} from "../../utils"
+import { Icon } from "../common/Icon"
+import { Button } from "../common/Button"
+import { PanelTitle } from "../common/PanelTitle"
+import { Slider } from "../common/Slider"
+import { Summary } from "../common/Summary"
+import { PageHeading } from "../common/PageHeading"
+
+export function EventStressComparisonDialog({
+  history,
+  onClose,
+}: {
+  history: StressTestHistoryEntry[]
+  onClose: () => void
+}) {
+  const available = history.slice(0, 4)
+  const [selected, setSelected] = useState<number[]>(
+    available.map((entry) => entry.runId),
+  )
+  useEffect(() => {
+    const closeOnEscape = (input: KeyboardEvent) => {
+      if (input.key === "Escape") onClose()
+    }
+    document.addEventListener("keydown", closeOnEscape)
+    return () => document.removeEventListener("keydown", closeOnEscape)
+  }, [onClose])
+  const toggle = (runId: number) => {
+    setSelected((current) =>
+      current.includes(runId)
+        ? current.length > 1
+          ? current.filter((id) => id !== runId)
+          : current
+        : current.length < 4
+          ? [...current, runId]
+          : current,
+    )
+  }
+  const rows = history
+    .filter((entry) => selected.includes(entry.runId))
+    .sort((a, b) => b.loss - a.loss)
+
+  return (
+    <div
+      className="explainability-overlay"
+      onMouseDown={(input) => input.target === input.currentTarget && onClose()}
+    >
+      <section
+        className="explainability-dialog event-stress-compare-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="event-stress-compare-title"
+      >
+        <div className="explainability-header">
+          <div>
+            <span className="dialog-eyebrow">Event stress-test comparison</span>
+            <div className="dialog-title" id="event-stress-compare-title">
+              Compare Stress Tests
+            </div>
+            <span className="dialog-meta">
+              Compare up to four completed event-driven runs
+            </span>
+          </div>
+          <Button
+            variant="icon"
+            icon="close"
+            ariaLabel="Close event stress-test comparison"
+            onClick={onClose}
+          >
+            Close
+          </Button>
+        </div>
+        <div className="explainability-body">
+          <div className="event-history-choice-grid">
+            {history.slice(0, 8).map((entry) => (
+              <Button
+                key={entry.runId}
+                variant="text"
+                className={selected.includes(entry.runId) ? "selected" : ""}
+                ariaPressed={selected.includes(entry.runId)}
+                onClick={() => toggle(entry.runId)}
+              >
+                {entry.event.title}
+              </Button>
+            ))}
+          </div>
+          <section className="dialog-section comparison-table-section">
+            <div className="dialog-section-title">
+              Portfolio risk comparison
+            </div>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>Scenario</th>
+                    <th>Impact</th>
+                    <th>Portfolio loss</th>
+                    <th>Loss %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((entry, index) => (
+                    <tr
+                      className={index === 0 ? "largest-loss-row" : ""}
+                      key={entry.runId}
+                    >
+                      <td>
+                        <strong>{entry.event.title}</strong>
+                        {index === 0 && <small>Greatest portfolio risk</small>}
+                      </td>
+                      <td>{entry.scenario}</td>
+                      <td>{entry.event.impact.toFixed(1)}</td>
+                      <td className="negative">-₹{entry.loss.toFixed(1)} Cr</td>
+                      <td className="negative">
+                        -{(entry.loss / 24.5).toFixed(1)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <span className="prototype-label">
+              Illustrative model output generated from event-specific prototype
+              assumptions.
+            </span>
+          </section>
+        </div>
+        <div className="explainability-footer">
+          <Button variant="text" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </section>
+    </div>
+  )
+}

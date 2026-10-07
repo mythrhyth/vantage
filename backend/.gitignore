@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment & Secret files
+.env
+.env.local
+.env.*
+!.env.example
+
+# Build & Scratch files
+dist/
+scratch/
+*.log
+
+# Agent directories
+.agents/
+.claude/
+.cursor/
+.devin/

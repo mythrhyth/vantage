@@ -1,0 +1,441 @@
+import React, { useState, useEffect, useMemo } from "react"
+import {
+  Page,
+  IconName,
+  ScenarioName,
+  ScenarioControls,
+  StressTestRun,
+  StressTestHistoryEntry,
+  AssetName,
+} from "../../types"
+
+import {
+  titleCase,
+  mappedScenarioForEvent,
+  signedValue,
+  generateEventStressParameters,
+  calculateScenarioLoss,
+} from "../../utils"
+import { Icon } from "../common/Icon"
+import { Button } from "../common/Button"
+import { PanelTitle } from "../common/PanelTitle"
+import { Slider } from "../common/Slider"
+import { Summary } from "../common/Summary"
+import { PageHeading } from "../common/PageHeading"
+
+export function EventExplainabilityDialog({
+  event,
+  onClose,
+  onRunStressTest,
+}: {
+  event: any
+  onClose: () => void
+  onRunStressTest?: (event: any) => void
+}) {
+  useEffect(() => {
+    const handleKeyDown = (input: KeyboardEvent) => {
+      if (input.key === "Escape") onClose()
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [onClose])
+
+  const sentimentLabel = event.sentiment >= 0 ? "Positive" : "Negative"
+  const impactLabel =
+    event.impact >= 8 ? "High" : event.impact >= 7 ? "Elevated" : "Moderate"
+  const stressTriggered = event.impact >= 7
+  const mappedScenario = mappedScenarioForEvent(event.category)
+  
+
+  return (
+    <div
+      className="explainability-overlay"
+      onMouseDown={(input) => {
+        if (input.target === input.currentTarget) onClose()
+      }}
+    >
+      <section
+        className="explainability-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="explainability-title"
+      >
+        <div className="explainability-header">
+          <div>
+            <span className="dialog-eyebrow">Event explainability</span>
+            <div className="dialog-title" id="explainability-title">
+              {event.title}
+            </div>
+            <span className="dialog-meta">
+              {event.source} · {event.date} at {event.time}
+            </span>
+          </div>
+          <Button
+            variant="icon"
+            icon="close"
+            ariaLabel="Close event explainability"
+            onClick={onClose}
+          >
+            Close
+          </Button>
+        </div>
+
+        <div className="explainability-body">
+          <section className="dialog-section snapshot-section">
+            <div className="dialog-section-title">Event snapshot</div>
+            <div className="snapshot-grid">
+              <span>
+                <small>Classification</small>
+                <b>{titleCase(event.category)}</b>
+              </span>
+              <span>
+                <small>Entity</small>
+                <b>{titleCase(event.entity)}</b>
+              </span>
+              <span>
+                <small>Sentiment</small>
+                <b className={event.sentiment >= 0 ? "positive" : "negative"}>
+                  {event.sentiment > 0 ? "+" : ""}
+                  {event.sentiment.toFixed(2)} / {sentimentLabel}
+                </b>
+              </span>
+              <span>
+                <small>Impact</small>
+                <b>
+                  {event.impact.toFixed(1)} / 10 / {impactLabel}
+                </b>
+              </span>
+            </div>
+          </section>
+
+          <div className="event-integration-grid">
+            <section className="dialog-section event-source-detail">
+              <div className="dialog-section-title">Source visibility & Provenance</div>
+              <span>
+                <small>Primary source</small>
+                <b>{event.source}</b>
+              </span>
+              <span>
+                <small>Reporting sources count</small>
+                <b className="positive">{event.source_count || (event.additional_sources?.length ? event.additional_sources.length + 1 : 1)} source{(event.source_count || 1) > 1 ? 's' : ''} reporting this event</b>
+              </span>
+              {Array.isArray(event.additional_sources) && event.additional_sources.length > 0 && (
+                <span>
+                  <small>Also reported by</small>
+                  <b>{event.additional_sources.map((s: any) => s.source || s.name).join(', ')}</b>
+                </span>
+              )}
+              <span>
+                <small>Timestamp</small>
+                <b>{event.date} at {event.time}</b>
+              </span>
+            </section>
+            <section className="dialog-section trigger-decision-card">
+              <div className="dialog-section-title">Trigger decision</div>
+              <div className="trigger-decision-metrics">
+                <span>
+                  <small>Impact score</small>
+                  <b>{event.impact.toFixed(1)}</b>
+                </span>
+                <span>
+                  <small>Trigger threshold</small>
+                  <b>7.0</b>
+                </span>
+                <span>
+                  <small>Status</small>
+                  <b className={stressTriggered ? "positive" : ""}>
+                    {stressTriggered ? "Stress test triggered" : "— No trigger"}
+                  </b>
+                </span>
+              </div>
+              <div className="trigger-scale">
+                <i style={{ width: `${event.impact * 10}%` }} />
+                <b style={{ left: "70%" }} />
+              </div>
+              <div className="trigger-scale-labels">
+                <span>{event.impact.toFixed(1)} / 10</span>
+                <span>7.0 threshold</span>
+              </div>
+              <p>
+                <strong>
+                  Why was the stress test{" "}
+                  {stressTriggered ? "triggered" : "not triggered"}?
+                </strong>
+                {stressTriggered
+                  ? `Impact score exceeds the configured threshold of 7.0. The event is classified as a high-impact ${event.category.toLowerCase()} event.`
+                  : `Impact score remains below the configured threshold of 7.0, so no automatic stress scenario was generated.`}
+              </p>
+            </section>
+          </div>
+
+          <section className="dialog-section event-stress-mapping">
+            <div className="dialog-section-title">Event-to-Stress Mapping</div>
+            <span className="mapping-origin">
+              Generated from NLP Risk Engine output
+            </span>
+            <div className="event-mapping-flow">
+              {[
+                ["Detected event", event.title],
+                ["Event classification", titleCase(event.category)],
+                ["Impact score", `${event.impact.toFixed(1)} / 10`],
+                [
+                  "Trigger rule",
+                  `${event.impact.toFixed(1)} ${
+                    stressTriggered ? "≥" : "<"
+                  } 7.0`,
+                ],
+                [
+                  "Stress scenario",
+                  stressTriggered
+                    ? mappedScenario
+                    : `${mappedScenario} · analyst initiated`,
+                ],
+              ].map(([label, value], index) => (
+                <div key={label}>
+                  <span>
+                    <small>{label}</small>
+                    <b>{value}</b>
+                  </span>
+                  {index < 4 && <i>→</i>}
+                </div>
+              ))}
+            </div>
+            <div className="generated-scenario-action">
+              <span>
+                <small>Suggested scenario</small>
+                <b>{mappedScenario}</b>
+                {!stressTriggered && (
+                  <i>Available for analyst-initiated testing</i>
+                )}
+              </span>
+            </div>
+          </section>
+
+          <div className="dialog-two-column">
+            <section className="dialog-section">
+              <div className="dialog-section-title">
+                Why this classification?
+              </div>
+              <p>{event.classificationReason || "Classified automatically by NLP Risk Engine based on article key phrase extraction and market taxonomy."}</p>
+              <div className="evidence-chips">
+                {(Array.isArray(event.signals) ? event.signals : []).map((signal: any) => (
+                  <span key={typeof signal === 'string' ? signal : JSON.stringify(signal)}>{typeof signal === 'string' ? signal : JSON.stringify(signal)}</span>
+                ))}
+              </div>
+              {event.classificationConfidence !== undefined && (
+                <div className="confidence-row">
+                  <span>Classification confidence</span>
+                  <b>{event.classificationConfidence}%</b>
+                </div>
+              )}
+            </section>
+
+            <section className="dialog-section">
+              <div className="dialog-section-title">Why this sentiment?</div>
+              <div className="score-line">
+                <span>Sentiment score</span>
+                <b className={event.sentiment >= 0 ? "positive" : "negative"}>
+                  {event.sentiment > 0 ? "+" : ""}
+                  {typeof event.sentiment === 'number' ? event.sentiment.toFixed(2) : event.sentiment}
+                </b>
+              </div>
+              <div className="sentiment-scale">
+                <i
+                  className="sentiment-marker"
+                  style={{ left: `${((Number(event.sentiment) + 1) / 2) * 100}%` }}
+                />
+              </div>
+              <div className="sentiment-scale-labels">
+                <span>-1 Negative</span>
+                <span>0 Neutral</span>
+                <span>+1 Positive</span>
+              </div>
+              <div className="driver-list">
+                {(Array.isArray(event.sentimentDrivers) ? event.sentimentDrivers : []).map((driver: any) => {
+                  const driverText = typeof driver === 'string' ? driver : (driver.text || driver.driver || JSON.stringify(driver));
+                  return (
+                    <span key={driverText}>
+                      <b>{driverText}</b>
+                      <small className={event.sentiment >= 0 ? "positive" : "negative"}>
+                        {sentimentLabel}
+                      </small>
+                    </span>
+                  );
+                })}
+              </div>
+              {event.sentimentConfidence !== undefined && (
+                <div className="confidence-row">
+                  <span>Sentiment confidence</span>
+                  <b>{event.sentimentConfidence}%</b>
+                </div>
+              )}
+            </section>
+          </div>
+
+          <div className="dialog-two-column impact-entities-grid">
+            <section className="dialog-section">
+              <div className="dialog-section-title">Why this impact?</div>
+              <div className="score-line">
+                <span>Impact score</span>
+                <b>{typeof event.impact === 'number' ? event.impact.toFixed(1) : event.impact} / 10</b>
+              </div>
+              <div className="factor-list">
+                {(Array.isArray(event.impactFactors) ? event.impactFactors : []).map((item: any) => {
+                  const factor = Array.isArray(item) ? item[0] : (item.factor || item.name || String(item));
+                  const score = Array.isArray(item) ? item[1] : (item.score || 5);
+                  return (
+                    <div className="factor-row" key={factor}>
+                      <span>{factor}</span>
+                      <i>
+                        <b style={{ width: `${Number(score) * 10}%` }} />
+                      </i>
+                      <strong>{score} / 10</strong>
+                    </div>
+                  );
+                })}
+              </div>
+              <p>{event.impactReason || "Assessed based on entity exposure and potential market volatility."}</p>
+              {event.impactConfidence !== undefined && (
+                <div className="confidence-row">
+                  <span>Impact confidence</span>
+                  <b>{event.impactConfidence}%</b>
+                </div>
+              )}
+            </section>
+
+            <section className="dialog-section affected-section">
+              <div className="dialog-section-title">Affected entities</div>
+              <span className="entity-label">Primary affected entity</span>
+              <strong className="primary-entity">
+                {titleCase(event.entity)}
+              </strong>
+              <span className="entity-label secondary-label">
+                Secondary affected areas
+              </span>
+              <div className="affected-list">
+                {(Array.isArray(event.affectedAreas) ? event.affectedAreas : []).map((item: any) => {
+                  const area = Array.isArray(item) ? item[0] : (item.area || item.name || String(item));
+                  const level = Array.isArray(item) ? item[1] : (item.level || "Moderate");
+                  return (
+                    <span key={area}>
+                      <b>{area}</b>
+                      <small className={level === "High" ? "risk" : ""}>
+                        {level}
+                      </small>
+                    </span>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+
+          <div className="dialog-two-column transmission-evidence-grid">
+            <section className="dialog-section">
+              <div className="dialog-section-title">Risk transmission</div>
+              <div className="risk-flow">
+                {(() => {
+                  const flow = Array.isArray(event.riskFlow) ? event.riskFlow : [];
+                  return flow.map((step: any, index: number) => {
+                    const stepText = typeof step === 'string' ? step : (step.step || JSON.stringify(step));
+                    return (
+                      <div key={stepText}>
+                        <span>{stepText}</span>
+                        {index < flow.length - 1 && <i>↓</i>}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </section>
+
+            <section className="dialog-section">
+              <div className="dialog-section-title">Evidence</div>
+              <div className="evidence-source">
+                <span>Source</span>
+                <b>{event.source}</b>
+              </div>
+              <div className="source-excerpt">
+                <span>
+                  Evidence used for classification and risk assessment
+                </span>
+                <p>“{event.excerpt}”</p>
+              </div>
+              {(event as any).url ? (
+                <Button
+                  onClick={() =>
+                    window.open(
+                      (event as any).url,
+                      "_blank",
+                      "noopener,noreferrer",
+                    )
+                  }
+                >
+                  View Source <Icon name="arrow" size={14} />
+                </Button>
+              ) : (
+                <div className="source-unavailable">
+                  <strong>Source URL unavailable</strong>
+                </div>
+              )}
+            </section>
+          </div>
+
+                    <section className="dialog-section portfolio-section">
+            <div className="dialog-section-title">Portfolio relevance</div>
+            {event.relevanceType ? (
+              <div className="portfolio-content">
+                <div>
+                  <span>Relevance Type</span>
+                  <strong>{event.relevanceType}</strong>
+                </div>
+                {event.relevanceScore !== null && (
+                  <div>
+                    <span>Relevance Score</span>
+                    <strong>{event.relevanceScore.toFixed(2)}</strong>
+                  </div>
+                )}
+                <div>
+                  <span>Relevance Reason</span>
+                  <p>{event.relevanceReason}</p>
+                </div>
+                {event.affectedAssets && event.affectedAssets.length > 0 && (
+                  <div className="portfolio-areas">
+                    <span>Affected Holdings:</span>
+                    {event.affectedAssets.map((asset: string) => (
+                      <span key={asset}>
+                        <b>{asset}</b>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="portfolio-unavailable">
+                <strong>Relevance metadata unavailable</strong>
+                <span>
+                  No mapped holdings data is available for this event.
+                </span>
+              </div>
+            )}
+          </section>
+        </div>
+
+        <div className="explainability-footer">
+          <Button variant="text" onClick={onClose}>
+            Close
+          </Button>
+          {onRunStressTest && (
+            <Button onClick={() => onRunStressTest(event)}>
+              Run Stress Test <Icon name="arrow" size={14} />
+            </Button>
+          )}
+        </div>
+      </section>
+    </div>
+  )
+}

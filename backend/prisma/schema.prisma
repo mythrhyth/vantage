@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Portfolio {
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String
+  baseline_value Decimal
+  index_universe String?         @default("NIFTY50")
+  created_at     DateTime        @default(now())
+  assets         Asset[]
+  stress_runs    StressTestRun[]
+
+  @@map("portfolios")
+}
+
+model Asset {
+  id             String    @id @default(uuid()) @db.Uuid
+  portfolio_id   String    @db.Uuid
+  portfolio      Portfolio @relation(fields: [portfolio_id], references: [id], onDelete: Cascade)
+  ticker         String?
+  company        String?
+  asset_type     String
+  sector         String?
+  current_weight Decimal
+  exposure_value Decimal?
+  sentiment      Decimal
+  base_sentiment Decimal
+
+  @@map("assets")
+}
+
+model RiskEvent {
+  id                    String          @id @default(uuid()) @db.Uuid
+  title                 String
+  category              String
+  sentiment             Decimal
+  impact                Decimal
+  entity                String
+  source                String
+  source_count          Int             @default(1)
+  additional_sources    Json?
+  canonical_url         String?
+  horizon               String
+  classification_reason    String?
+  classification_confidence Decimal?
+  signals                  Json
+  sentiment_drivers        Json
+  sentiment_confidence     Decimal?
+  impact_factors           Json
+  impact_reason            String?
+  impact_confidence        Decimal?
+  affected_areas           Json
+  risk_flow             Json
+  excerpt               String?
+  affected_assets       Json?
+  relevance_type        String?
+  relevance_score       Decimal?
+  relevance_reason      String?
+  created_at            DateTime        @default(now())
+  stress_runs           StressTestRun[]
+  ingested_articles     IngestedArticle[]
+
+  @@map("risk_events")
+}
+
+model Scenario {
+  id          String          @id @default(uuid()) @db.Uuid
+  name        String
+  rate        Decimal
+  spread      Decimal
+  probability Decimal
+  liquidity   Decimal
+  inflation   Decimal
+  stress_runs StressTestRun[]
+
+  @@map("scenarios")
+}
+
+model StressTestRun {
+  id                 String     @id @default(uuid()) @db.Uuid
+  portfolio_id       String     @db.Uuid
+  portfolio          Portfolio  @relation(fields: [portfolio_id], references: [id], onDelete: Cascade)
+  scenario_id        String?    @db.Uuid
+  scenario           Scenario?  @relation(fields: [scenario_id], references: [id], onDelete: SetNull)
+  event_id           String?    @db.Uuid
+  event              RiskEvent? @relation(fields: [event_id], references: [id], onDelete: SetNull)
+  parameters_used    Json
+  baseline_value     Decimal
+  stressed_value     Decimal
+  absolute_loss      Decimal
+  risk_score         Decimal
+  attribution_result Json
+  executed_at        DateTime   @default(now())
+
+  @@map("stress_test_runs")
+}
+
+model IngestedArticle {
+  id               String     @id @default(uuid()) @db.Uuid
+  source           String
+  external_id      String?
+  title            String
+  url              String?
+  canonical_url    String?
+  content          String
+  content_hash     String
+  published_at     DateTime?
+  ingested_at      DateTime   @default(now())
+  processed_at     DateTime?
+  processing_status String
+  risk_event_id    String?    @db.Uuid
+  risk_event       RiskEvent? @relation(fields: [risk_event_id], references: [id], onDelete: SetNull)
+
+  @@unique([source, external_id])
+  @@unique([source, content_hash])
+  @@map("ingested_articles")
+}
+
+model IngestionSourceConfig {
+  id                   String    @id
+  name                 String
+  domain               String
+  source_type          String
+  adapter_type         String
+  feed_url             String
+  enabled              Boolean   @default(true)
+  fetch_interval       Int       @default(15)
+  max_items_per_run    Int       @default(20)
+  last_fetched_at      DateTime?
+  last_successful_at   DateTime?
+  last_error           String?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+
+  @@map("ingestion_source_configs")
+}
+
+model IngestionSystemSettings {
+  id                      String   @id @default("default")
+  freshness_window        String   @default("LAST_24_HOURS")
+  max_items_per_source    Int      @default(20)
+  auto_analyze            Boolean  @default(true)
+  deduplicate_similar     Boolean  @default(true)
+  similarity_threshold    Float    @default(0.85)
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  @@map("ingestion_system_settings")
+}
+
