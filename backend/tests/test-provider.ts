@@ -1,6 +1,6 @@
-import { NlpService } from '../src/services/nlp/nlp.service';
-import { GeminiNlpProvider } from '../src/services/nlp/gemini-nlp.provider';
-import { DevelopmentNlpProvider } from '../src/services/nlp/development-nlp.provider';
+import { NlpService } from '../src/providers/nlp/nlp.service';
+import { GeminiNlpProvider } from '../src/providers/nlp/gemini-nlp.provider';
+import { DevelopmentNlpProvider } from '../src/providers/nlp/development-nlp.provider';
 
 async function runProviderTests() {
   console.log('--- PROVIDER TESTS ---');

@@ -1,8 +1,8 @@
 import { prisma } from '../src/server';
-import { portfolioRelevanceFilter } from '../src/ingestion/portfolio-relevance';
-import { eventClusteringEngine } from '../src/ingestion/event-clustering';
-import { RssSourceAdapter } from '../src/ingestion/adapters/rss.adapter';
-import { NormalizedArticle } from '../src/ingestion/types';
+import { portfolioRelevanceFilter } from '../src/services/ingestion/portfolio-relevance';
+import { eventClusteringEngine } from '../src/services/ingestion/event-clustering';
+import { RssSourceAdapter } from '../src/providers/news/rss.adapter';
+import { NormalizedArticle } from '../src/types/ingestion.types';
 
 async function runTests() {
   console.log('==================================================');

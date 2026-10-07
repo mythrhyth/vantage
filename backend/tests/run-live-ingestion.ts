@@ -1,4 +1,4 @@
-import { ingestionService } from '../src/ingestion/ingestion.service';
+import { ingestionService } from '../src/services/ingestion/ingestion.service';
 
 async function main() {
   console.log('==================================================');

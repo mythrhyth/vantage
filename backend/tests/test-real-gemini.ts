@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { nlpService } from '../src/services/nlp/nlp.service';
-import { EventService } from '../src/services/event.service';
+import { nlpService } from '../src/providers/nlp/nlp.service';
+import { EventService } from '../src/services/events/event.service';
 
 const eventService = new EventService();
 

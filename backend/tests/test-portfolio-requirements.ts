@@ -1,4 +1,4 @@
-import { PortfolioService } from '../src/services/portfolio.service';
+import { PortfolioService } from '../src/services/portfolios/portfolio.service';
 import { prisma } from '../src/server';
 
 async function testPortfolioWorkflow() {

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { prisma } from '../src/server';
-import { NlpService } from '../src/services/nlp/nlp.service';
-import { NlpValidationException } from '../src/services/nlp/nlp.exception';
+import { NlpService } from '../src/providers/nlp/nlp.service';
+import { NlpValidationException } from '../src/providers/nlp/nlp.exception';
 
 const API_URL = 'http://localhost:3000/api';
 

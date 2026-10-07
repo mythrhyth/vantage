@@ -1,4 +1,4 @@
-import { GeminiNlpProvider } from '../src/services/nlp/gemini-nlp.provider';
+import { GeminiNlpProvider } from '../src/providers/nlp/gemini-nlp.provider';
 
 async function run() {
   process.env.GEMINI_API_KEY = 'fake-key';
