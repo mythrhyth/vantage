@@ -31,3 +31,16 @@ export interface RiskAnalysisProvider {
   analyze(input: { text: string; source: string; timestamp?: string }): Promise<RiskAnalysis>;
   analyzeRelevance(input: { text: string; portfolioAssets: any[] }): Promise<RelevanceAnalysis>;
 }
+
+export interface SentimentResult {
+  sentiment: number;
+  confidence: number;
+  label: 'positive' | 'negative' | 'neutral';
+  drivers: string[];
+  model: string;
+}
+
+export interface ISentimentAnalyzer {
+  analyzeSentiment(text: string): Promise<SentimentResult>;
+}
+

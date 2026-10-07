@@ -1899,23 +1899,25 @@ tbody tr:nth-child(even) { background: color-mix(in srgb, var(--panel-subtle) 55
   font-size: 9px;
 }
 .engine-pipeline i { align-self: center; color: var(--accent); font-style: normal; }
-.intelligence-table .stress-action-table { min-width: 1140px; }
+.intelligence-table .stress-action-table { min-width: 1050px; width: 100%; table-layout: fixed; border-collapse: collapse; }
 .intelligence-table .stress-action-table th:first-child,
-.intelligence-table .stress-action-table td:first-child { width: 26%; }
+.intelligence-table .stress-action-table td:first-child { width: 23%; word-break: break-word; white-space: normal; line-height: 1.4; }
 .intelligence-table .stress-action-table th:nth-child(2),
-.intelligence-table .stress-action-table td:nth-child(2) { width: 12%; }
+.intelligence-table .stress-action-table td:nth-child(2) { width: 12%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .intelligence-table .stress-action-table th:nth-child(3),
-.intelligence-table .stress-action-table td:nth-child(3) { width: 11%; }
+.intelligence-table .stress-action-table td:nth-child(3) { width: 16%; word-break: break-word; white-space: normal; line-height: 1.35; padding-right: 12px; }
 .intelligence-table .stress-action-table th:nth-child(4),
-.intelligence-table .stress-action-table td:nth-child(4) { width: 8%; }
+.intelligence-table .stress-action-table td:nth-child(4) { width: 10%; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 6px; padding-right: 14px; }
 .intelligence-table .stress-action-table th:nth-child(5),
-.intelligence-table .stress-action-table td:nth-child(5) { width: 7%; }
+.intelligence-table .stress-action-table td:nth-child(5) { width: 10%; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-right: 14px; }
 .intelligence-table .stress-action-table th:nth-child(6),
-.intelligence-table .stress-action-table td:nth-child(6) { width: 10%; }
+.intelligence-table .stress-action-table td:nth-child(6) { width: 10%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .intelligence-table .stress-action-table th:nth-child(7),
-.intelligence-table .stress-action-table td:nth-child(7) { width: 7%; }
+.intelligence-table .stress-action-table td:nth-child(7) { width: 7%; white-space: nowrap; }
 .intelligence-table .stress-action-table th:nth-child(8),
-.intelligence-table .stress-action-table td:nth-child(8) { width: 19%; text-align: left; }
+.intelligence-table .stress-action-table td:nth-child(8) { width: 12%; text-align: left; white-space: nowrap; }
+.neutral { color: var(--secondary); font-weight: 500; }
+.entity-cell-text { color: var(--text); font-weight: 500; display: inline-block; max-width: 100%; word-break: break-word; }
 .stress-triggered {
   display: inline-flex;
   align-items: center;

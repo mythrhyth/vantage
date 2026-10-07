@@ -49,75 +49,82 @@ export function EventTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((event, index) => (
-            <tr
-              key={event.id || event.title}
-              onClick={() => onSelect(index)}
-              className={selected === index ? "selected-row" : ""}
-            >
-              <td>
-                {event.url ? (
-                  <a
-                    href={event.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    style={{ color: 'inherit', textDecoration: 'underline' }}
-                    title="View original article"
-                  >
+          {rows.map((event, index) => {
+            const numSentiment = typeof event.sentiment === 'number' ? event.sentiment : parseFloat(event.sentiment) || 0;
+            const numImpact = typeof event.impact === 'number' ? event.impact : parseFloat(event.impact) || 0;
+            const sentimentClass = numSentiment > 0 ? "positive" : numSentiment < 0 ? "negative" : "neutral";
+            const sentimentStr = `${numSentiment > 0 ? "+" : ""}${numSentiment.toFixed(2)}`;
+            const impactStr = `${numImpact.toFixed(1)} / 10`;
+
+            return (
+              <tr
+                key={event.id || event.title || index}
+                onClick={() => onSelect(index)}
+                className={selected === index ? "selected-row" : ""}
+              >
+                <td title={event.title}>
+                  {event.url ? (
+                    <a
+                      href={event.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ color: 'inherit', textDecoration: 'underline' }}
+                      title="View original article"
+                    >
+                      <strong>{event.title}</strong>
+                    </a>
+                  ) : (
                     <strong>{event.title}</strong>
-                  </a>
-                ) : (
-                  <strong>{event.title}</strong>
-                )}
-              </td>
-              <td>{event.category}</td>
-              <td>{event.entity}</td>
-              <td>
-                <span
-                  className={event.sentiment >= 0 ? "positive" : "negative"}
-                >
-                  {event.sentiment > 0 ? "+" : ""}
-                  {typeof event.sentiment === 'number' ? event.sentiment.toFixed(2) : event.sentiment}
-                </span>
-              </td>
-              <td>
-                <b>{typeof event.impact === 'number' ? event.impact.toFixed(1) : event.impact}</b>
-              </td>
-              <td>
-                {event.url ? (
-                  <a
-                    href={event.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    style={{ color: '#3b82f6', textDecoration: 'none' }}
-                  >
-                    {event.source} ↗
-                  </a>
-                ) : (
-                  event.source
-                )}
-              </td>
-              <td>{event.time || event.date}</td>
-              {showStressAction && (
-                <td>
-                  <span
-                    className={
-                      event.impact >= 7
-                        ? "stress-triggered"
-                        : "stress-not-triggered"
-                    }
-                  >
-                    {event.impact >= 7 && <Icon name="scenario" size={13} />}
-                    {event.impact >= 7
-                      ? "Stress test triggered"
-                      : "— No trigger"}
+                  )}
+                </td>
+                <td title={event.category}>{event.category}</td>
+                <td title={event.entity}>
+                  <span className="entity-cell-text">{event.entity}</span>
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  <span className={`sentiment-badge ${sentimentClass}`}>
+                    {sentimentStr}
                   </span>
                 </td>
-              )}
-            </tr>
-          ))}
+                <td style={{ textAlign: 'right' }}>
+                  <b className="impact-badge">{impactStr}</b>
+                </td>
+                <td>
+                  {event.url ? (
+                    <a
+                      href={event.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ color: '#3b82f6', textDecoration: 'none' }}
+                    >
+                      {event.source} ↗
+                    </a>
+                  ) : (
+                    event.source
+                  )}
+                </td>
+                <td>{event.time || event.date}</td>
+                {showStressAction && (
+                  <td>
+                    <span
+                      className={
+                        numImpact >= 7
+                          ? "stress-triggered"
+                          : "stress-not-triggered"
+                      }
+                    >
+                      {numImpact >= 7 && <Icon name="scenario" size={13} />}
+                      {numImpact >= 7
+                        ? "Triggered"
+                        : "— No trigger"}
+                    </span>
+                  </td>
+                )}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
