@@ -194,51 +194,6 @@ npm test
 
 ---
 
-## 📤 How to Push to GitHub (Step-by-Step)
-
-Follow these exact steps to push this project cleanly to a new GitHub repository:
-
-### 1. Initialize Git (if not already initialized)
-```bash
-git init
-```
-
-### 2. Verify `.gitignore` Safety
-Ensure secrets are ignored:
-```bash
-git status
-```
-*Verify that `backend/.env`, `node_modules/`, and `dist/` do NOT appear in untracked files.*
-
-### 3. Stage All Clean Files
-```bash
-git add .
-```
-
-### 4. Commit Changes
-```bash
-git commit -m "Initial commit: VANTAGE Financial Risk Intelligence Platform"
-```
-
-### 5. Rename Main Branch
-```bash
-git branch -M main
-```
-
-### 6. Add Remote GitHub Repository URL
-Create a new empty repository on GitHub (e.g. `financial-risk-intelligence-platform`), then link it:
-
-```bash
-git remote add origin https://github.com/YOUR_GITHUB_USERNAME/financial-risk-intelligence-platform.git
-```
-
-### 7. Push to GitHub
-```bash
-git push -u origin main
-```
-
----
-
 ## 📄 License
 
 This project is open-source under the [ISC License](LICENSE).
