@@ -7,7 +7,7 @@ VANTAGE is an enterprise-grade financial risk management platform designed for p
 ## 🌟 Key Features
 
 1. **Multi-Source News Ingestion**: Automatically fetches, normalizes, and content-hashes financial news from AP News, Reuters, Bloomberg, ECB, Fed, and CNBC.
-2. **AI Risk Intelligence Engine**: Powered by Google Gemini AI (`@google/genai` SDK) to extract structured metrics (sentiment, impact, classification, signals, sentiment drivers, risk transmission flows).
+2. **Hybrid AI & Deterministic Risk Engine**: Powered by fine-tuned local ONNX models (**Phase 1D FinBERT** for authoritative sentiment and **Phase 2 Event Classifier** for 8-class event taxonomy) coupled with a pure **Deterministic Risk Engine** for portfolio-aware impact scoring, stress shock parameter generation, and dynamic loss attribution. Google Gemini AI provides optional semantic enrichment (entity resolution, risk flow explanations).
 3. **Portfolio Relevance Filtering**: Automatically checks ingested events against active equity holdings (`AAPL`, `MSFT`, `GOOGL`, `JPM`, `NVDA`, `AMZN`) and flags portfolio-wide or asset-specific impacts.
 4. **Event Explainability Breakdown**: Full transparency into classification reasons, impact factors, risk transmission steps, and direct clickable links to canonical news publisher sources.
 5. **Index Allocation Optimization**: Sentiment-adjusted portfolio rebalancing across equity index universes (`NIFTY50`, `S&P 500`).

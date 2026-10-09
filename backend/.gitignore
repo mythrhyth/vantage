@@ -12,6 +12,13 @@ dist/
 scratch/
 *.log
 
+# Large Model Weights (ONNX / PyTorch binaries)
+*.onnx
+*.safetensors
+*.bin
+*.pt
+*.pth
+
 # Agent directories
 .agents/
 .claude/
