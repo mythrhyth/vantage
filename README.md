@@ -95,6 +95,11 @@ Existing financial risk intelligence workflows suffer from four fundamental arch
 
 ## 🏗 End-to-End System Architecture
 
+![VANTAGE End-to-End System Architecture Pipeline](docs/assets/architecture_flow.svg)
+
+<details>
+<summary><b>📐 View Editable Mermaid Source Code</b></summary>
+
 ```mermaid
 flowchart TD
     subgraph Ingestion ["1. Multi-Source Financial Ingestion"]
@@ -113,8 +118,8 @@ flowchart TD
     end
 
     subgraph NLP ["3. Local ONNX Financial NLP Pipeline"]
-        C --> F[Phase 1D FinBERT ONNX Engine]
-        C --> G[Phase 2 Event Classifier ONNX]
+        C --> F[FinBERT ONNX Engine]
+        C --> G[Event Classifier ONNX]
         C -->|Optional Enrichment| H[Gemini AI Provider]
 
         F -->|Authoritative Sentiment| I[Risk Event Payload]
@@ -156,6 +161,7 @@ flowchart TD
         P --> R[Stress Testing & Explainability UI]
     end
 ```
+</details>
 
 ---
 

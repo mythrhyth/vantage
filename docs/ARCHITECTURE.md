@@ -17,14 +17,19 @@ VANTAGE is architected around four core design principles:
 
 ## 🏗 End-to-End Component Sequence Diagram
 
+![VANTAGE System Architecture Sequence Diagram](assets/sequence_diagram.svg)
+
+<details>
+<summary><b>📐 View Editable Mermaid Source Code</b></summary>
+
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as Risk Manager / User
     participant Ingest as Ingestion Service
     participant NLP as NlpService (Hybrid)
-    participant ONNX1 as Phase 1D FinBERT ONNX
-    participant ONNX2 as Phase 2 Event ONNX
+    participant ONNX1 as FinBERT ONNX
+    participant ONNX2 as Event Classifier ONNX
     participant DetEng as DeterministicRiskEngine
     participant ScenService as ScenarioService
     participant LossEng as RiskEngineService
@@ -58,6 +63,7 @@ sequenceDiagram
     DB-->>LossEng: Created StressTestRun (ID)
     LossEng-->>User: Stressed Valuation, Absolute Loss & Dynamic Attribution
 ```
+</details>
 
 ---
 
