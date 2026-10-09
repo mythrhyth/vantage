@@ -35,28 +35,7 @@
 
 Financial risk management teams and portfolio managers face an overwhelming volume of daily macroeconomic headlines, central bank announcements, and sector shocks. Traditional financial dashboards either rely on **generic sentiment scores** (which treat all negative news equally regardless of portfolio composition) or rely on **black-box LLMs** to hallucinate numerical financial loss figures.
 
-**VANTAGE** bridges the gap between unstructured financial NLP and rigorous financial quantitative risk modeling. By combining **fine-tuned local ONNX models** (Phase 1D FinBERT for continuous sentiment and Phase 2 fine-tuned ONNX for 8-class event taxonomy) with a **pure Deterministic Risk Engine**, VANTAGE translates real-time financial market signals directly into portfolio-specific exposure shifts, macro stress parameters (`rate`, `spread`, `liquidity`, `inflation`), and calculation-backed asset-class loss attribution.
-
-```
-Financial News Ingestion (AP, Reuters, Bloomberg, Fed, ECB)
-       │
-       ▼
-Local ONNX Financial NLP Pipeline
- ├── Phase 1D FinBERT ──► Continuous Sentiment s ∈ [-1, +1] & Confidence
- └── Phase 2 Classifier ─► Authoritative Category (Monetary policy, Credit, etc.)
-       │
-       ▼
-Portfolio Relevance Engine ──► Exposure Mapping (DIRECT, INDIRECT, PORTFOLIO_WIDE)
-       │
-       ▼
-Pure Deterministic Risk Engine (Zero LLM Numerical Calculations)
- ├── Event Severity S_event & Portfolio Vulnerability V_port
- ├── Portfolio Impact I_portfolio ∈ [1.0, 10.0]
- └── Boundary Integer Stress Parameter Shocks (rate, spread, liquidity, inflation)
-       │
-       ▼
-Production Risk Engine Service ──► Financial Loss & Dynamic Asset Attribution
-```
+**VANTAGE** bridges the gap between unstructured financial NLP and rigorous financial quantitative risk modeling. By combining **fine-tuned local ONNX models** (FinBERT for continuous sentiment and fine-tuned ONNX for 8-class event taxonomy) with a **pure Deterministic Risk Engine**, VANTAGE translates real-time financial market signals directly into portfolio-specific exposure shifts, macro stress parameters (`rate`, `spread`, `liquidity`, `inflation`), and calculation-backed asset-class loss attribution.
 
 ---
 
@@ -74,8 +53,8 @@ Existing financial risk intelligence workflows suffer from four fundamental arch
 ## 🚀 What Makes VANTAGE Different? (Unique Selling Proposition)
 
 ### 1. 100% Local ONNX Inference for Authoritative NLP
-- **Phase 1D FinBERT Sentiment**: Fine-tuned BERT model compiled to local ONNX format. Emits continuous sentiment $s \in [-1.0, +1.0]$ and confidence $c \in [0.0, 1.0]$ using transformers.js in Node.js.
-- **Phase 2 Event Classifier**: Fine-tuned ONNX model evaluating text across **8 authoritative production categories**: `Monetary policy`, `Credit`, `Macroeconomic`, `Commodities`, `Geopolitical`, `Sector outlook`, `Earnings`, and `Regulatory`.
+- **FinBERT Sentiment**: Fine-tuned BERT model compiled to local ONNX format. Emits continuous sentiment $s \in [-1.0, +1.0]$ and confidence $c \in [0.0, 1.0]$ using transformers.js in Node.js.
+- **Event Classifier**: Fine-tuned ONNX model evaluating text across **8 authoritative production categories**: `Monetary policy`, `Credit`, `Macroeconomic`, `Commodities`, `Geopolitical`, `Sector outlook`, `Earnings`, and `Regulatory`.
 - **Zero Cloud LLM Dependency for Numerical Risk**: Even when external APIs (like Gemini) hit HTTP 429 rate limits or 503 service outages, VANTAGE continues computing exact numerical risk scores, stress parameters, and portfolio losses.
 
 ### 2. Strict Separation of AI & Quantitative Responsibilities
@@ -205,7 +184,7 @@ $$V_{\text{port}} = E_{\text{effective}} \times T_{\text{port}} \times C_{\text{
 $$I_{\text{raw}} = 1.0 + (S_{\text{event}} - 1.0) \times V_{\text{port}}$$
 $$I_{\text{portfolio}} = \text{clamp}\left(1.0, 10.0, \text{round}(I_{\text{raw}}, 2)\right)$$
 
-*Note: $T_{\text{port}}$ appears **exactly once** in $V_{\text{port}}$, guaranteeing zero $T_{\text{port}}^2$ double counting.*
+> **Note**: $T_{\text{port}}$ appears **exactly once** in $V_{\text{port}}$, guaranteeing zero $T_{\text{port}}^2$ double counting.
 
 ---
 
@@ -236,8 +215,8 @@ $$\text{riskScore} = \min\left(100, \text{round}\left(\frac{\text{totalLoss}}{\t
 | **Styling** | Vanilla CSS, Tailwind CSS v4 | Glassmorphism UI, high-contrast dark theme, custom responsive data grids |
 | **Backend Service** | Node.js (v18+), Express 5 | REST API routing, RSS ingestion orchestrator, Prisma ORM service |
 | **Database** | PostgreSQL (Neon Cloud Platform) | Persistent `RiskEvent`, `Portfolio`, `Asset`, `Scenario`, `StressTestRun` models |
-| **Local Sentiment NLP** | Phase 1D FinBERT ONNX (`@xenova/transformers`) | Continuous financial sentiment $s \in [-1, +1]$ and confidence scoring |
-| **Local Event Classifier** | Phase 2 Event Classifier ONNX (`@xenova/transformers`) | 8-class event taxonomy prediction & top-2 candidate confidence scores |
+| **Local Sentiment NLP** | FinBERT ONNX (`@xenova/transformers`) | Continuous financial sentiment $s \in [-1, +1]$ and confidence scoring |
+| **Local Event Classifier** | Event Classifier ONNX (`@xenova/transformers`) | 8-class event taxonomy prediction & top-2 candidate confidence scores |
 | **Semantic AI Provider** | Google Gen AI SDK (`gemini-3.8-flash`) | Optional semantic enrichment (entities, signals, drivers, risk flow steps) |
 | **Risk Engine** | Pure TypeScript (`DeterministicRiskEngine`) | Deterministic severity, vulnerability, impact score, and parameter shocks |
 | **Loss Calculations** | `RiskEngineService` | Financial duration/spread loss execution & dynamic asset attribution |
@@ -257,8 +236,8 @@ financial-risk-intelligence-platform/
 │   ├── README.md                        # Backend Setup, Ingestion, and Developer Guide
 │   ├── models/nlp/                      # Production Local ONNX Model Artifacts
 │   │   ├── README.md                    # Model Provenance, Quantization Specs & Tokenizer Docs
-│   │   ├── phase1d-finbert/             # Phase 1D FinBERT ONNX weights & tokenizer
-│   │   └── phase2-event-classifier/     # Phase 2 ONNX Event Classifier weights & tokenizer
+│   │   ├── phase1d-finbert/             # FinBERT ONNX weights & tokenizer
+│   │   └── phase2-event-classifier/     # Event Classifier ONNX weights & tokenizer
 │   ├── prisma/                          # Database Configuration
 │   │   ├── migrations/                  # Versioned PostgreSQL migration scripts
 │   │   ├── schema.prisma                # Relational data schema (RiskEvent, Portfolio, Asset, Run)
@@ -273,9 +252,9 @@ financial-risk-intelligence-platform/
 │   │   │   ├── deduplication/           # SHA-256 Hashing & Title Deduplication
 │   │   │   └── ingestion.service.ts     # Multi-source Ingestion Manager
 │   │   ├── providers/nlp/               # NLP Inference Providers
-│   │   │   ├── finbert-sentiment.analyzer.ts # Local Phase 1D FinBERT ONNX Analyzer
-│   │   │   ├── financial-context.ts     # Phase 1C Contextual Adjustment Rules
-│   │   │   ├── phase2-event-classifier.ts    # Local Phase 2 ONNX Classifier Engine
+│   │   │   ├── finbert-sentiment.analyzer.ts # Local FinBERT ONNX Analyzer
+│   │   │   ├── financial-context.ts     # Contextual Adjustment Rules
+│   │   │   ├── phase2-event-classifier.ts    # Local ONNX Event Classifier Engine
 │   │   │   ├── gemini-nlp.provider.ts   # Optional Gemini AI Provider
 │   │   │   ├── development-nlp.provider.ts# Offline Fallback Rule Engine
 │   │   │   └── nlp.service.ts           # Hybrid Orchestrator & Deterministic Engine Wiring
@@ -295,8 +274,8 @@ financial-risk-intelligence-platform/
 │       ├── data/                        # Static Evaluation Datasets
 │       ├── test-deterministic-risk-engine.ts # 19 Property Invariants Test Suite
 │       ├── test-deterministic-e2e.ts    # End-to-End PostgreSQL Integration Test
-│       ├── test-phase1d-integration.ts  # Phase 1D FinBERT ONNX Tests
-│       ├── test-phase2-integration.ts  # Phase 2 ONNX Classifier Tests
+│       ├── test-phase1d-integration.ts  # FinBERT ONNX Integration Tests
+│       ├── test-phase2-integration.ts  # Event Classifier ONNX Integration Tests
 │       ├── test-real-ingestion-flow.ts  # Real Ingestion & DB Persistence Test
 │       ├── test-api.ts                  # API Endpoint Integration Tests
 │       └── test-nlp-pipeline.ts         # Validation Bounds & Error Tests
@@ -375,7 +354,7 @@ GEMINI_API_KEY="your_actual_gemini_api_key_here"
 NLP_PROVIDER=gemini
 ```
 
-*Note: Even without a `GEMINI_API_KEY`, VANTAGE runs 100% of numerical risk calculations locally via fine-tuned Phase 1D FinBERT ONNX and Phase 2 Event Classifier ONNX models.*
+*Note: Even without a `GEMINI_API_KEY`, VANTAGE runs 100% of numerical risk calculations locally via fine-tuned FinBERT ONNX and Event Classifier ONNX models.*
 
 ---
 
@@ -421,7 +400,7 @@ Complete request and response JSON schemas are documented in [`docs/API.md`](doc
 | :--- | :--- | :--- |
 | `GET` | `/api/events` | Query ingested risk events (filters: `portfolioId`, `category`, `source`, `sentiment`, `impact`) |
 | `GET` | `/api/events/:id` | Fetch event details, ONNX confidence scores, signals, and canonical source link |
-| `POST` | `/api/events/analyze` | Submit custom text for Phase 1D FinBERT + Phase 2 ONNX classification & risk analysis |
+| `POST` | `/api/events/analyze` | Submit custom text for FinBERT + Event Classifier ONNX classification & risk analysis |
 | `POST` | `/api/ingest` | Trigger manual news ingestion cycle across AP News, Reuters, Fed, ECB, and CNBC |
 | `GET` | `/api/portfolios` | List portfolios and baseline valuation (`baselineValue`) |
 | `PUT` | `/api/portfolios/:id` | Update portfolio baseline valuation and asset-class exposures |
