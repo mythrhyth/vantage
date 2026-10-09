@@ -1,0 +1,13 @@
+{
+  "id2label": {
+    "0": "positive",
+    "1": "negative",
+    "2": "neutral"
+  },
+  "label2id": {
+    "positive": 0,
+    "negative": 1,
+    "neutral": 2
+  },
+  "note": "Read from the model config (ProsusAI/finbert order); not reordered."
+}

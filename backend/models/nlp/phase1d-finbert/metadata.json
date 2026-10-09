@@ -1,0 +1,364 @@
+{
+  "phase": "1D",
+  "task": "3-class financial sentiment",
+  "base_model": "ProsusAI/finbert",
+  "architecture": "BertForSequenceClassification",
+  "model_type": "bert",
+  "number_of_classes": 3,
+  "id2label": {
+    "0": "positive",
+    "1": "negative",
+    "2": "neutral"
+  },
+  "label2id": {
+    "positive": 0,
+    "negative": 1,
+    "neutral": 2
+  },
+  "sentiment_score": "P(positive) - P(negative)",
+  "max_length": 128,
+  "epochs": 3,
+  "learning_rate": 2e-05,
+  "batch_size": 16,
+  "weight_decay": 0.01,
+  "warmup_ratio": 0.1,
+  "seed": 42,
+  "class_weights": false,
+  "fp16_amp": true,
+  "phrasebank_agreement_file_preference": "50agree",
+  "n_train": 3384,
+  "n_val": 725,
+  "n_test": 726,
+  "best_val_macro_f1": 0.8821,
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.29844347661677395,
+      "val_loss": 0.32950031465810276,
+      "val_acc": 0.8855172413793103,
+      "val_macro_f1": 0.8673819083634413
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.16655222014611903,
+      "val_loss": 0.38077387926371203,
+      "val_acc": 0.8813793103448276,
+      "val_macro_f1": 0.8685238661457447
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.07470116690723752,
+      "val_loss": 0.4051205933741901,
+      "val_acc": 0.8924137931034483,
+      "val_macro_f1": 0.8820669934640523
+    }
+  ],
+  "evaluated_on_primary": "internal_test_split",
+  "evaluation_primary": {
+    "finetuned_finbert": {
+      "accuracy": 0.9105,
+      "macro_precision": 0.894,
+      "macro_recall": 0.9163,
+      "macro_f1": 0.9046,
+      "high_conf_errors_80": 48,
+      "high_conf_errors_90": 41,
+      "avg_correct_confidence": 0.9803,
+      "avg_incorrect_confidence": 0.8667,
+      "confusion_matrix": [
+        [
+          85,
+          3,
+          2
+        ],
+        [
+          11,
+          393,
+          27
+        ],
+        [
+          1,
+          21,
+          183
+        ]
+      ],
+      "precision_negative": 0.8763,
+      "recall_negative": 0.9444,
+      "negative_f1": 0.9091,
+      "precision_neutral": 0.9424,
+      "recall_neutral": 0.9118,
+      "neutral_f1": 0.9269,
+      "precision_positive": 0.8632,
+      "recall_positive": 0.8927,
+      "positive_f1": 0.8777
+    },
+    "finetuned_context": {
+      "accuracy": 0.9105,
+      "macro_precision": 0.894,
+      "macro_recall": 0.9163,
+      "macro_f1": 0.9046,
+      "high_conf_errors_80": 48,
+      "high_conf_errors_90": 41,
+      "avg_correct_confidence": 0.98,
+      "avg_incorrect_confidence": 0.8667,
+      "confusion_matrix": [
+        [
+          85,
+          3,
+          2
+        ],
+        [
+          11,
+          393,
+          27
+        ],
+        [
+          1,
+          21,
+          183
+        ]
+      ],
+      "precision_negative": 0.8763,
+      "recall_negative": 0.9444,
+      "negative_f1": 0.9091,
+      "precision_neutral": 0.9424,
+      "recall_neutral": 0.9118,
+      "neutral_f1": 0.9269,
+      "precision_positive": 0.8632,
+      "recall_positive": 0.8927,
+      "positive_f1": 0.8777
+    }
+  },
+  "evaluation_internal_test": {
+    "finetuned_finbert": {
+      "accuracy": 0.9105,
+      "macro_precision": 0.894,
+      "macro_recall": 0.9163,
+      "macro_f1": 0.9046,
+      "high_conf_errors_80": 48,
+      "high_conf_errors_90": 41,
+      "avg_correct_confidence": 0.9803,
+      "avg_incorrect_confidence": 0.8667,
+      "confusion_matrix": [
+        [
+          85,
+          3,
+          2
+        ],
+        [
+          11,
+          393,
+          27
+        ],
+        [
+          1,
+          21,
+          183
+        ]
+      ],
+      "precision_negative": 0.8763,
+      "recall_negative": 0.9444,
+      "negative_f1": 0.9091,
+      "precision_neutral": 0.9424,
+      "recall_neutral": 0.9118,
+      "neutral_f1": 0.9269,
+      "precision_positive": 0.8632,
+      "recall_positive": 0.8927,
+      "positive_f1": 0.8777
+    },
+    "finetuned_context": {
+      "accuracy": 0.9105,
+      "macro_precision": 0.894,
+      "macro_recall": 0.9163,
+      "macro_f1": 0.9046,
+      "high_conf_errors_80": 48,
+      "high_conf_errors_90": 41,
+      "avg_correct_confidence": 0.98,
+      "avg_incorrect_confidence": 0.8667,
+      "confusion_matrix": [
+        [
+          85,
+          3,
+          2
+        ],
+        [
+          11,
+          393,
+          27
+        ],
+        [
+          1,
+          21,
+          183
+        ]
+      ],
+      "precision_negative": 0.8763,
+      "recall_negative": 0.9444,
+      "negative_f1": 0.9091,
+      "precision_neutral": 0.9424,
+      "recall_neutral": 0.9118,
+      "neutral_f1": 0.9269,
+      "precision_positive": 0.8632,
+      "recall_positive": 0.8927,
+      "positive_f1": 0.8777
+    }
+  },
+  "latency_ms_per_sample_finetuned": 8.46,
+  "weights_file": "model.safetensors",
+  "weights_sha256": "b4509be1d453a4848477aefb8a1a0ba7b8f1c44aa45d57ad1ef329e7c2f1e860",
+  "libraries": {
+    "python": "3.13.15",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.16.1",
+    "tokenizers": "0.23.1",
+    "safetensors": "0.8.0",
+    "sklearn": "1.6.1",
+    "numpy": "2.1.3",
+    "pandas": "2.3.3"
+  },
+  "reload_verification": {
+    "checks": [
+      {
+        "check": "model loads from exported directory",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "tokenizer loads from exported directory",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "id2label identical to the trained model",
+        "passed": true,
+        "detail": "{0: 'positive', 1: 'negative', 2: 'neutral'}"
+      },
+      {
+        "check": "all expected classes present",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "tokenizer output identical (original vs reloaded)",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "probability vector covers every class",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "probabilities within [0, 1]",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "probabilities sum to 1 (atol 1e-4)",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "predicted labels are valid",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "reloaded predictions == original predictions",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "max |prob difference| < 1e-4",
+        "passed": true,
+        "detail": "(max diff 0.00e+00)"
+      },
+      {
+        "check": "sentiment score P(pos)-P(neg) computable and within [-1, 1]",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "exported weights differ from the untouched base model (fine-tuning is present)",
+        "passed": true,
+        "detail": "(201/201 comparable tensors differ, max |delta|=2.848e-03)"
+      },
+      {
+        "check": "reproduces reported metrics on internal_test",
+        "passed": true,
+        "detail": "acc 0.9105 vs 0.9105; macro-F1 0.9046 vs 0.9046"
+      }
+    ],
+    "examples": [
+      {
+        "text": "The company reported a significant increase in quarterly net profit, beating analyst expectations.",
+        "reloaded_prediction": "positive",
+        "original_prediction": "positive",
+        "probs": {
+          "positive": 0.993841,
+          "negative": 0.003858,
+          "neutral": 0.0023
+        },
+        "sentiment_score": 0.989983
+      },
+      {
+        "text": "Shares plunged after the firm issued a profit warning and cut its full-year guidance.",
+        "reloaded_prediction": "negative",
+        "original_prediction": "negative",
+        "probs": {
+          "positive": 0.002491,
+          "negative": 0.9902,
+          "neutral": 0.007309
+        },
+        "sentiment_score": -0.987708
+      },
+      {
+        "text": "The board will hold its annual general meeting on 15 May at the company headquarters.",
+        "reloaded_prediction": "neutral",
+        "original_prediction": "neutral",
+        "probs": {
+          "positive": 0.000692,
+          "negative": 0.002026,
+          "neutral": 0.997282
+        },
+        "sentiment_score": -0.001333
+      },
+      {
+        "text": "Net sales decreased by 12% as demand weakened across all key markets.",
+        "reloaded_prediction": "negative",
+        "original_prediction": "negative",
+        "probs": {
+          "positive": 0.001724,
+          "negative": 0.991339,
+          "neutral": 0.006938
+        },
+        "sentiment_score": -0.989615
+      },
+      {
+        "text": "The bank's loan loss provisions fell sharply, signalling improving credit quality.",
+        "reloaded_prediction": "positive",
+        "original_prediction": "positive",
+        "probs": {
+          "positive": 0.993577,
+          "negative": 0.004268,
+          "neutral": 0.002155
+        },
+        "sentiment_score": 0.989309
+      },
+      {
+        "text": "Revenue was flat compared with the previous year.",
+        "reloaded_prediction": "negative",
+        "original_prediction": "negative",
+        "probs": {
+          "positive": 0.004432,
+          "negative": 0.986878,
+          "neutral": 0.00869
+        },
+        "sentiment_score": -0.982447
+      }
+    ]
+  },
+  "notes": [
+    "Metrics are those produced by the run that created these exact weights.",
+    "'finetuned_context' metrics include the rule-based FinancialContextLayer, which is post-processing code and is NOT contained in the model weights."
+  ]
+}
