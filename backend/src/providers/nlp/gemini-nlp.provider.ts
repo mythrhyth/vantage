@@ -14,7 +14,7 @@ export class GeminiNlpProvider implements RiskAnalysisProvider {
     
     // Initialize the official Google Gen AI SDK
     this.ai = new GoogleGenAI({ apiKey });
-    this.model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    this.model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
   }
 
   async analyzeRelevance(input: { text: string; portfolioAssets: any[] }): Promise<any> {

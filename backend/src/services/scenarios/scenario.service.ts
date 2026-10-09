@@ -1,5 +1,7 @@
 import { prisma } from '../../db';
 import { eventService } from '../events/event.service';
+import { portfolioService } from '../portfolios/portfolio.service';
+import { deterministicRiskEngine } from '../risk-engine/deterministic-risk-engine';
 
 export class ScenarioService {
   async getScenarios() {
@@ -40,24 +42,78 @@ export class ScenarioService {
     };
   }
 
-  async generateEventStressParameters(eventId: string, scenarioId: string) {
+  async generateEventStressParameters(eventId: string, scenarioId?: string) {
     const event = await eventService.getEventById(eventId);
-    const scenario = await this.getScenarioById(scenarioId);
+    let scenario = null;
+    if (scenarioId) {
+      try {
+        scenario = await this.getScenarioById(scenarioId);
+      } catch {
+        scenario = null;
+      }
+    }
 
-    if (!event || !scenario) {
+    if (!event) {
+      if (scenario) {
+        return {
+          rate: scenario.rate,
+          spread: scenario.spread,
+          probability: scenario.probability,
+          liquidity: scenario.liquidity,
+          inflation: scenario.inflation
+        };
+      }
       throw new Error('Event or Scenario not found');
     }
 
-    const impactMultiplier = event.impact / 5;
-    const sentimentSign = event.sentiment >= 0 ? -1 : 1;
+    const portfolios = await portfolioService.getPortfolios();
+    const mainPortfolio = portfolios[0];
 
-    return {
-      rate: Math.round(scenario.rate * impactMultiplier * sentimentSign),
-      spread: Math.round(scenario.spread * impactMultiplier),
-      probability: Math.round(scenario.probability * impactMultiplier),
-      liquidity: Math.round(scenario.liquidity * impactMultiplier),
-      inflation: Math.round(scenario.inflation * impactMultiplier * sentimentSign)
+    const affected = Array.isArray(event.affectedAssets) ? event.affectedAssets : [];
+    const relType = event.relevanceType || (affected.length > 0 ? 'DIRECT' : 'PORTFOLIO_WIDE');
+
+    const rawAssets = (mainPortfolio?.assets && mainPortfolio.assets.length > 0)
+      ? mainPortfolio.assets
+      : (mainPortfolio?.holdings || []);
+
+    const portInput = mainPortfolio ? {
+      portfolioId: mainPortfolio.id,
+      baselineValue: mainPortfolio.baselineValue || Number(mainPortfolio.baseline_value) || 1000.0,
+      holdings: rawAssets.map((a: any) => ({
+        assetId: a.id,
+        ticker: a.ticker || undefined,
+        company: a.company || undefined,
+        assetClass: (a.assetType || a.asset_type || '').toUpperCase() as any,
+        sector: a.sector || undefined,
+        currentValue: (a.exposureValue && Number(a.exposureValue) > 0) ? Number(a.exposureValue) : ((a.exposure_value && Number(a.exposure_value) > 0) ? Number(a.exposure_value) : 0),
+        currentWeight: a.currentWeight !== undefined ? Number(a.currentWeight) : (a.current_weight !== undefined ? Number(a.current_weight) : 0)
+      }))
+    } : {
+      portfolioId: 'default',
+      baselineValue: 1000.0,
+      holdings: []
     };
+
+    const detOutput = deterministicRiskEngine.calculateRisk(
+      {
+        id: event.id,
+        title: event.title,
+        category: event.category,
+        classificationConfidence: event.classificationConfidence || 0.9,
+        sentiment: event.sentiment,
+        sentimentConfidence: event.sentimentConfidence || 0.9,
+        horizon: event.horizon || 'SHORT_TERM'
+      },
+      portInput,
+      {
+        relevanceType: relType,
+        relevanceScore: event.relevanceScore || 1.0,
+        matchedHoldingIds: affected,
+        matchedSectors: affected
+      }
+    );
+
+    return detOutput.stressParameters;
   }
 }
 

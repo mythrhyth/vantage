@@ -14,11 +14,12 @@ export class AllocationService {
     // Calculate raw proposed weights based on sentiment and sensitivity
     let rawWeights = equities.map(a => {
       const sentimentDelta = a.sentiment - a.baseSentiment;
-      const change = sentimentDelta * sensMultiplier * (maxChange / 100);
+      const change = sentimentDelta * sensMultiplier * maxChange;
       let proposed = a.currentWeight + change;
       
       // Cap at maxWeight
-      if (proposed > maxWeight / 100) proposed = maxWeight / 100;
+      const maxWVal = maxWeight > 1 ? maxWeight : maxWeight * 100;
+      if (proposed > maxWVal) proposed = maxWVal;
       if (proposed < 0) proposed = 0;
       
       return {
@@ -36,13 +37,19 @@ export class AllocationService {
     const totalCurrentWeight = equities.reduce((sum, a) => sum + a.currentWeight, 0);
     const totalProposedRaw = rawWeights.reduce((sum, r) => sum + r.proposedWeight, 0);
 
-    const normalizedWeights = rawWeights.map(r => ({
-      ...r,
-      proposedWeight: totalProposedRaw > 0 ? (r.proposedWeight / totalProposedRaw) * totalCurrentWeight : r.currentWeight
-    }));
+    const normalizedWeights = rawWeights.map(r => {
+      const finalWeight = totalProposedRaw > 0 ? (r.proposedWeight / totalProposedRaw) * totalCurrentWeight : r.currentWeight;
+      return {
+        ...r,
+        proposedWeight: parseFloat(finalWeight.toFixed(2)),
+        proposed_weight: parseFloat(finalWeight.toFixed(2)),
+        proposedPct: parseFloat(finalWeight.toFixed(2))
+      };
+    });
 
     return {
-      proposed_weights: normalizedWeights
+      proposed_weights: normalizedWeights,
+      proposedWeights: normalizedWeights
     };
   }
 }

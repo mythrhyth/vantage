@@ -2,6 +2,10 @@ export interface RiskAnalysis {
   title: string;
   entity: string;
   classification: string;
+  classificationConfidence?: number;
+  top2Classification?: string;
+  top2Confidence?: number;
+  categoryProbabilities?: Record<string, number>;
   sentiment: number;
   sentimentConfidence: number;
   impact: number;
@@ -38,6 +42,9 @@ export interface SentimentResult {
   label: 'positive' | 'negative' | 'neutral';
   drivers: string[];
   model: string;
+  pPos?: number;
+  pNeg?: number;
+  pNeu?: number;
 }
 
 export interface ISentimentAnalyzer {

@@ -11,6 +11,8 @@ function mapEvent(e: any) {
     id: e.id,
     date: formattedDate,
     time: formattedTime,
+    publishedAt: dateObj.toISOString(),
+    createdAt: e.created_at ? new Date(e.created_at).toISOString() : dateObj.toISOString(),
     signals: e.signals || [],
     classificationReason: e.classification_reason,
     classificationConfidence: e.classification_confidence ? Math.round(Number(e.classification_confidence) * 100) : undefined,
@@ -24,7 +26,7 @@ function mapEvent(e: any) {
     sentiment: Number(e.sentiment),
     impact: Number(e.impact),
     url: article?.url || e.canonical_url || null,
-    affectedAssets: e.affected_assets || [],
+    affectedAssets: Array.from(new Set(Array.isArray(e.affected_assets) ? e.affected_assets : [])),
     relevanceType: e.relevance_type,
     relevanceReason: e.relevance_reason,
     relevanceScore: e.relevance_score ? Number(e.relevance_score) : null
@@ -38,7 +40,11 @@ export class EventService {
       where.category = filters.category;
     }
     if (filters.horizon && filters.horizon !== 'All horizons') {
-      where.horizon = filters.horizon;
+      const normalizedHorizon = filters.horizon.replace(/–/g, '-');
+      where.horizon = {
+        contains: normalizedHorizon,
+        mode: 'insensitive'
+      };
     }
     if (filters.sentiment !== undefined) {
       where.sentiment = {

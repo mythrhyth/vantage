@@ -15,19 +15,20 @@ async function main() {
     portfolio_id: portfolio.id,
     ticker: stock.ticker,
     company: stock.company,
-    asset_type: 'Stock',
+    asset_type: 'EQUITY',
     sector: stock.sector || 'Unknown',
-    current_weight: stock.current,
-    sentiment: stock.sentiment,
-    base_sentiment: stock.base
+    current_weight: stock.current / 100,
+    exposure_value: (stock.current / 100) * 2450.0,
+    sentiment: 0.0,
+    base_sentiment: 0.0
   }))
   await prisma.asset.createMany({ data: assetsToCreate })
 
   await prisma.asset.createMany({
     data: [
-      { portfolio_id: portfolio.id, asset_type: 'Loan', current_weight: 1360 / 2450 * 100, sentiment: 0, base_sentiment: 0 },
-      { portfolio_id: portfolio.id, asset_type: 'Bond', current_weight: 800 / 2450 * 100, sentiment: 0, base_sentiment: 0 },
-      { portfolio_id: portfolio.id, asset_type: 'Derivative', current_weight: 290 / 2450 * 100, sentiment: 0, base_sentiment: 0 }
+      { portfolio_id: portfolio.id, company: 'Corporate Loans Portfolio', asset_type: 'LOANS', sector: 'Banking & Credit', current_weight: 1360 / 2450, exposure_value: 1360.0, sentiment: 0.0, base_sentiment: 0.0 },
+      { portfolio_id: portfolio.id, company: 'Sovereign & Corporate Bonds', asset_type: 'BONDS', sector: 'Fixed Income', current_weight: 800 / 2450, exposure_value: 800.0, sentiment: 0.0, base_sentiment: 0.0 },
+      { portfolio_id: portfolio.id, company: 'Interest Rate Derivatives', asset_type: 'DERIVATIVES', sector: 'Hedging', current_weight: 290 / 2450, exposure_value: 290.0, sentiment: 0.0, base_sentiment: 0.0 }
     ]
   })
 
