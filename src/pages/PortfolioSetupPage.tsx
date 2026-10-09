@@ -73,24 +73,33 @@ export function PortfolioSetupPage({
       const data = await riskApi.getPortfolio(portfolioId)
       if (data) {
         setPortfolioName(data.name || "Main Banking Portfolio")
-        setTotalValue(data.baseline_value ?? 2450)
-        setIndexUniverse(data.index_universe || "NIFTY 50")
+        setTotalValue(data.baselineValue ?? data.baseline_value ?? 2450)
+        setIndexUniverse(data.indexUniverse || data.index_universe || "NIFTY 50")
         
         if (data.exposures) {
           setLoansExposure(data.exposures.loans ?? 0)
           setBondsExposure(data.exposures.bonds ?? 0)
           setDerivativesExposure(data.exposures.derivatives ?? 0)
+        } else {
+          setLoansExposure(data.loansExposure ?? 0)
+          setBondsExposure(data.bondsExposure ?? 0)
+          setDerivativesExposure(data.derivativesExposure ?? 0)
         }
 
-        if (Array.isArray(data.assets)) {
-          const equityAssets = data.assets
-            .filter((a: any) => a.asset_type === "Stock" || a.asset_type === "EQUITY")
+        const rawList = data.holdings || data.assets
+        if (Array.isArray(rawList)) {
+          const equityAssets = rawList
+            .filter((a: any) =>
+              a.assetType === "Stock" || a.assetType === "EQUITY" ||
+              a.asset_type === "Stock" || a.asset_type === "EQUITY" ||
+              (!a.assetType && !a.asset_type)
+            )
             .map((a: any) => ({
               id: a.id,
               ticker: a.ticker || "",
               company: a.company || a.ticker || "",
               sector: a.sector || "Technology",
-              currentWeight: Number(a.current_weight) || 0
+              currentWeight: Number(a.currentWeight ?? a.current_weight) || 0
             }))
           setHoldings(equityAssets)
         }
@@ -518,7 +527,7 @@ export function PortfolioSetupPage({
             </p>
 
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save Portfolio Setup"} <Icon name="arrow" size={15} />
+              {saving ? "Saving..." : "Save Portfolio Setup"}
             </Button>
           </div>
 

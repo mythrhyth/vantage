@@ -161,7 +161,6 @@ export function ProfilePage({
                 <b>Workspace settings</b>
                 <small>Theme, currency and analysis preferences</small>
               </span>
-              <Icon name="arrow" size={14} />
             </button>
             <button className="logout-action" onClick={onLogout}>
               <Icon name="user" size={16} />
@@ -169,7 +168,6 @@ export function ProfilePage({
                 <b>Log out</b>
                 <small>End the current analyst session</small>
               </span>
-              <Icon name="arrow" size={14} />
             </button>
           </section>
         </aside>

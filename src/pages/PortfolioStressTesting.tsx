@@ -273,7 +273,7 @@ export function PortfolioStressTesting({
               }
             }}
           >
-            Run Stress Test <Icon name="arrow" size={15} />
+            Run Stress Test
           </Button>
           <Button
             variant="text"

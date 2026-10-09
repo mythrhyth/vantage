@@ -652,7 +652,7 @@ export function Scenarios({
                 })
               }
             }}>
-              Recalculate Stress Test <Icon name="arrow" size={15} />
+              Recalculate Stress Test
             </Button>
           </aside>
         </div>

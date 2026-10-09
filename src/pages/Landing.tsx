@@ -55,7 +55,7 @@ export function Landing({ navigate }: { navigate: (page: Page) => void }) {
             resilience from one focused analytical workspace.
           </p>
           <Button onClick={() => navigate("Overview")}>
-            Open risk overview <Icon name="arrow" size={15} />
+            Open risk overview
           </Button>
         </div>
         <div className="landing-visual">
@@ -137,7 +137,6 @@ export function Landing({ navigate }: { navigate: (page: Page) => void }) {
                 <b>{tool.title}</b>
                 <small>{tool.copy}</small>
               </span>
-              <Icon name="arrow" size={15} />
             </button>
           ))}
         </div>
@@ -151,7 +150,7 @@ export function Landing({ navigate }: { navigate: (page: Page) => void }) {
               className="inline-link"
               onClick={() => navigate("Risk Intelligence")}
             >
-              View all <Icon name="arrow" size={13} />
+              View all
             </button>
           }
         />

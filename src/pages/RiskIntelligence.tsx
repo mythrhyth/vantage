@@ -56,6 +56,7 @@ export function RiskIntelligence({
   const [availableSources, setAvailableSources] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [ingestFeedback, setIngestFeedback] = useState<string | null>(null)
   const [ingesting, setIngesting] = useState(false)
 
   useEffect(() => {
@@ -74,7 +75,9 @@ export function RiskIntelligence({
         category,
         horizon,
         source: sourceFilter !== "All" ? sourceFilter : undefined,
-        freshness: freshnessFilter !== "All" ? freshnessFilter : undefined
+        freshness: freshnessFilter !== "All" ? freshnessFilter : undefined,
+        impact: impact > 0 ? impact : undefined,
+        sentiment: sentiment < 100 ? (sentiment / 100) : undefined
       })
         .then(data => {
           setEvents(data)
@@ -90,15 +93,16 @@ export function RiskIntelligence({
 
   const handleIngest = () => {
     setIngesting(true);
+    setIngestFeedback(null);
     import("../services/api").then(({ riskApi }) => {
       riskApi.runIngestion().then(res => {
-        if (res.stats) {
-          console.log("Ingestion execution stats:", res.stats);
-        }
+        const addedCount = res.stats?.newArticlesIngested ?? 0;
+        setIngestFeedback(res.message || `Ingestion complete (${addedCount} new articles).`);
+        setTimeout(() => setIngestFeedback(null), 5000);
         loadEvents();
       }).catch(e => {
         console.error('Ingestion failed:', e);
-        alert('Ingestion failed: ' + e.message);
+        setError('Ingestion failed: ' + e.message);
       }).finally(() => {
         setIngesting(false);
       });
@@ -107,7 +111,31 @@ export function RiskIntelligence({
 
   useEffect(() => {
     loadEvents();
-  }, [portfolioId, category, horizon, sourceFilter, freshnessFilter]);
+  }, [portfolioId, category, horizon, sourceFilter, freshnessFilter, impact, sentiment]);
+
+  const latestTimestamp = useMemo(() => {
+    if (events.length === 0) return null;
+    return events[0].publishedAt || events[0].createdAt || events[0].created_at || null;
+  }, [events]);
+
+  const relativeTimeLabel = useMemo(() => {
+    if (!latestTimestamp) return "Updated just now";
+    const date = new Date(latestTimestamp);
+    if (isNaN(date.getTime())) return "Updated recently";
+    const now = new Date();
+    const diffMs = Math.max(0, now.getTime() - date.getTime());
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return "Updated just now";
+    if (diffMins === 1) return "Updated 1 minute ago";
+    if (diffMins < 60) return `Updated ${diffMins} minutes ago`;
+    if (diffHours === 1) return "Updated 1 hour ago";
+    if (diffHours < 24) return `Updated ${diffHours} hours ago`;
+    if (diffDays === 1) return "Updated yesterday";
+    return `Updated ${diffDays} days ago`;
+  }, [latestTimestamp]);
 
   const filtered = events.filter(
     (item) =>
@@ -174,6 +202,11 @@ export function RiskIntelligence({
            {ingesting ? "Ingesting live news..." : "Ingest Live Events"}
         </Button>
       </PageHeading>
+      {ingestFeedback && (
+        <div className="ingest-feedback-banner" style={{ padding: '10px 16px', marginBottom: '14px', borderRadius: '6px', background: 'var(--accent-soft)', color: 'var(--accent)', fontSize: '11px', border: '1px solid var(--border)' }}>
+          {ingestFeedback}
+        </div>
+      )}
       <Summary
         items={[
           {
@@ -235,7 +268,7 @@ export function RiskIntelligence({
             <PanelTitle
               title="Event analysis"
               subtitle={`${filtered.length} structured financial events in the current view`}
-              side={<span className="updated">Updated 2 minutes ago</span>}
+              side={<span className="updated">{relativeTimeLabel}</span>}
             />
             {filtered.length ? (
               <EventTable
@@ -351,10 +384,10 @@ export function RiskIntelligence({
                   setSelectedId(null)
                 }}
               >
-                <option>All horizons</option>
-                <option>Immediate</option>
-                <option>1–4 weeks</option>
-                <option>1–3 months</option>
+                <option value="All horizons">All horizons</option>
+                <option value="Immediate">Immediate</option>
+                <option value="1-4 weeks">1-4 weeks</option>
+                <option value="1-3 months">1-3 months</option>
               </select>
             </label>
             <Button

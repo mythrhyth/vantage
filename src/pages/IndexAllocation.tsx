@@ -59,18 +59,29 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
       }).catch(console.error)
 
       riskApi.getPortfolioAssets(portfolioId).then(data => {
-        const stocksOnly = data.filter((a: any) => a.asset_type === "Stock" || a.asset_type === "EQUITY")
+        const stocksOnly = data.filter((a: any) =>
+          a.assetType === "Stock" || a.assetType === "EQUITY" ||
+          a.asset_type === "Stock" || a.asset_type === "EQUITY"
+        )
         const mappedAssets = stocksOnly.map((a: any) => ({
           company: a.company || a.ticker,
           ticker: a.ticker || "UNKNOWN",
-          current: Number(a.current_weight) || 0,
+          current: Number(a.currentWeight ?? a.current_weight) || 0,
           sentiment: Number(a.sentiment) || 0,
           sector: a.sector || "Unknown"
         }))
         setAssets(mappedAssets)
+
+        // Automatically derive proposed weights from AI/NLP layer
+        riskApi.simulateAllocation(portfolioId, sensitivity, maxWeight, maxChange).then(sim => {
+          if (sim && (sim.proposed_weights || sim.proposedWeights)) {
+            const list = sim.proposed_weights || sim.proposedWeights;
+            setProposed(list.map((w: any) => Number(w.proposedWeight ?? w.proposed_weight ?? w.proposedPct) || 0));
+          }
+        }).catch(console.error)
       }).catch(console.error)
     })
-  }, [portfolioId])
+  }, [portfolioId, sensitivity, maxWeight, maxChange])
 
   const totalEquityWeight = assets.reduce((sum, a) => sum + (Number(a.current) || 0), 0)
 
@@ -228,12 +239,15 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
             if (portfolioId) {
               import("../services/api").then(({ riskApi }) => {
                 riskApi.simulateAllocation(portfolioId, sensitivity, maxWeight, maxChange).then(sim => {
-                  setProposed(sim.proposed_weights.map((w: any) => Number(w.proposed_weight)))
+                  const list = sim?.proposed_weights || sim?.proposedWeights;
+                  if (list) {
+                    setProposed(list.map((w: any) => Number(w.proposedWeight ?? w.proposed_weight ?? w.proposedPct) || 0));
+                  }
                 })
               })
             }
           }}>
-            Recalculate Allocation <Icon name="arrow" size={15} />
+            Recalculate Allocation
           </Button>
           <Button
             variant="text"
