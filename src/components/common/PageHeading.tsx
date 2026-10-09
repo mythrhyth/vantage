@@ -32,12 +32,12 @@ export function PageHeading({
   children?: React.ReactNode
 }) {
   return (
-    <div className="page-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div>
+    <div className="page-heading">
+      <div className="page-heading-main">
         <div>{title}</div>
         <p>{description}</p>
       </div>
-      {children && <div>{children}</div>}
+      {children && <div className="page-heading-side">{children}</div>}
     </div>
   )
 }

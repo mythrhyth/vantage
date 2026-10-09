@@ -31,6 +31,8 @@ export function MiniDistribution({
   labels: string[]
   type?: "bars" | "dots"
 }) {
+  const maxVal = useMemo(() => Math.max(...values, 1), [values]);
+
   return (
     <div className="mini-chart">
       <div className="mini-y-axis">
@@ -44,16 +46,19 @@ export function MiniDistribution({
           <i />
           <i />
         </div>
-        {values.map((value, index) => (
-          <div className="mini-bar-column" key={labels[index]}>
-            <span className="mini-bar-area">
-              <i style={{ height: `${value}%` }}>
-                <b className="tooltip">{value} modeled events</b>
-              </i>
-            </span>
-            <small>{labels[index]}</small>
-          </div>
-        ))}
+        {values.map((value, index) => {
+          const heightPercent = value > 0 ? Math.max(8, Math.round((value / maxVal) * 85)) : 0;
+          return (
+            <div className="mini-bar-column" key={labels[index]}>
+              <span className="mini-bar-area">
+                <i style={{ height: `${heightPercent}%` }}>
+                  <b className="tooltip">{value} modeled event{value === 1 ? '' : 's'}</b>
+                </i>
+              </span>
+              <small>{labels[index]}</small>
+            </div>
+          );
+        })}
       </div>
     </div>
   )

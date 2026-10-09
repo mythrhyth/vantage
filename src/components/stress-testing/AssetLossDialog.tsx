@@ -1,34 +1,21 @@
-import React, { useState, useEffect, useMemo } from "react"
-import {
-  Page,
-  IconName,
-  ScenarioName,
-  ScenarioControls,
-  StressTestRun,
-  StressTestHistoryEntry,
-  AssetName,
-} from "../../types"
-import {
-  titleCase,
-  mappedScenarioForEvent,
-  signedValue,
-  generateEventStressParameters,
-  calculateScenarioLoss,
-} from "../../utils"
-import { Icon } from "../common/Icon"
+import React, { useEffect } from "react"
+import { AssetName } from "../../types"
 import { Button } from "../common/Button"
-import { PanelTitle } from "../common/PanelTitle"
-import { Slider } from "../common/Slider"
-import { Summary } from "../common/Summary"
-import { PageHeading } from "../common/PageHeading"
 
 export function AssetLossDialog({
   asset,
   loss,
+  attribution,
   onClose,
 }: {
   asset: AssetName
   loss: number
+  attribution?: {
+    loansLoss?: number
+    bondsLoss?: number
+    derivativesLoss?: number
+    equityLoss?: number
+  }
   onClose: () => void
 }) {
   useEffect(() => {
@@ -39,22 +26,40 @@ export function AssetLossDialog({
     return () => document.removeEventListener("keydown", closeOnEscape)
   }, [onClose])
 
-  const details = {
+  const dynamicShares = (() => {
+    if (attribution && (attribution.loansLoss || attribution.bondsLoss || attribution.derivativesLoss || attribution.equityLoss)) {
+      const lLoss = Math.max(0, attribution.loansLoss || 0)
+      const bLoss = Math.max(0, attribution.bondsLoss || 0)
+      const dLoss = Math.max(0, attribution.derivativesLoss || 0)
+      const eLoss = Math.max(0, attribution.equityLoss || 0)
+      const tot = lLoss + bLoss + dLoss + eLoss || loss || 1
+
+      return {
+        Loans: { share: Math.round((lLoss / tot) * 100), absLoss: lLoss },
+        Bonds: { share: Math.round((bLoss / tot) * 100), absLoss: bLoss },
+        Derivatives: { share: Math.round((dLoss / tot) * 100), absLoss: dLoss },
+        Liquidity: { share: Math.round((eLoss / tot) * 100), absLoss: eLoss },
+      }
+    }
+    return null
+  })()
+
+  const defaultDetails = {
     Loans: {
-      exposure: "₹1,360 Cr",
+      exposure: "Portfolio Loans",
       share: 47,
-      driver: "Default probability",
+      driver: "Credit-spread & rate sensitivity",
       reason:
-        "The scenario increases modeled default probability. Because the portfolio has significant loan exposure, higher expected credit losses produce the largest contribution to total portfolio loss.",
+        "Higher credit spreads and benchmark rate shifts increase expected credit loss allowances and discount rates, reducing modeled loan valuations.",
       chain: [
-        "Default probability ↑",
-        "Expected credit losses ↑",
-        "Loan portfolio loss ↑",
-        "Total stress loss",
+        "Credit spread & rate shift ↑",
+        "Discount rates & expected credit loss ↑",
+        "Loan portfolio valuation decline",
+        "Total stress loss contribution",
       ],
     },
     Bonds: {
-      exposure: "₹800 Cr",
+      exposure: "Portfolio Fixed Income",
       share: 31,
       driver: "Rate and spread duration",
       reason:
@@ -67,9 +72,9 @@ export function AssetLossDialog({
       ],
     },
     Derivatives: {
-      exposure: "₹290 Cr",
+      exposure: "Portfolio Derivatives",
       share: 12,
-      driver: "Counterparty exposure",
+      driver: "Liquidity haircut & rate shift",
       reason:
         "Market and rate stress changes mark-to-market values and increases modeled counterparty exposure across the derivatives portfolio.",
       chain: [
@@ -93,6 +98,13 @@ export function AssetLossDialog({
       ],
     },
   }[asset]
+
+  const details = {
+    ...defaultDetails,
+    share: dynamicShares && dynamicShares[asset as keyof typeof dynamicShares] !== undefined
+      ? dynamicShares[asset as keyof typeof dynamicShares].share
+      : defaultDetails.share
+  }
 
   return (
     <div

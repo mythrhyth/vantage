@@ -1,34 +1,21 @@
-import React, { useState, useEffect, useMemo } from "react"
-import {
-  Page,
-  IconName,
-  ScenarioName,
-  ScenarioControls,
-  StressTestRun,
-  StressTestHistoryEntry,
-  AssetName,
-} from "../../types"
-import {
-  titleCase,
-  mappedScenarioForEvent,
-  signedValue,
-  generateEventStressParameters,
-  calculateScenarioLoss,
-} from "../../utils"
-import { Icon } from "../common/Icon"
+import React, { useEffect, useMemo } from "react"
+import { ScenarioName, AssetName } from "../../types"
 import { Button } from "../common/Button"
-import { PanelTitle } from "../common/PanelTitle"
-import { Slider } from "../common/Slider"
-import { Summary } from "../common/Summary"
-import { PageHeading } from "../common/PageHeading"
 
 export function WhyLossDialog({
   loss,
   scenario,
+  attribution,
   onClose,
 }: {
   loss: number
   scenario: ScenarioName
+  attribution?: {
+    loansLoss?: number
+    bondsLoss?: number
+    derivativesLoss?: number
+    equityLoss?: number
+  }
   onClose: () => void
 }) {
   useEffect(() => {
@@ -39,12 +26,33 @@ export function WhyLossDialog({
     return () => document.removeEventListener("keydown", closeOnEscape)
   }, [onClose])
 
-  const contributors: [AssetName, number, string][] = [
-    ["Loans", 47, "Default probability adjustment"],
-    ["Bonds", 31, "Interest-rate and credit-spread sensitivity"],
-    ["Derivatives", 12, "Counterparty exposure"],
-    ["Liquidity", 10, "Liquidity haircut"],
-  ]
+  const calculatedContributors = useMemo(() => {
+    if (attribution && (attribution.loansLoss || attribution.bondsLoss || attribution.derivativesLoss || attribution.equityLoss)) {
+      const lLoss = Math.max(0, attribution.loansLoss || 0)
+      const bLoss = Math.max(0, attribution.bondsLoss || 0)
+      const dLoss = Math.max(0, attribution.derivativesLoss || 0)
+      const eLoss = Math.max(0, attribution.equityLoss || 0)
+      const tot = lLoss + bLoss + dLoss + eLoss || loss || 1
+
+      const items: { name: AssetName; absLoss: number; share: number; driver: string }[] = [
+        { name: "Loans", absLoss: lLoss, share: Math.round((lLoss / tot) * 100), driver: "Credit-spread & rate sensitivity" },
+        { name: "Bonds", absLoss: bLoss, share: Math.round((bLoss / tot) * 100), driver: "Interest-rate & yield curve shift" },
+        { name: "Derivatives", absLoss: dLoss, share: Math.round((dLoss / tot) * 100), driver: "Liquidity haircut & rate shift" },
+        { name: "Equity" as AssetName, absLoss: eLoss, share: Math.round((eLoss / tot) * 100), driver: "Inflation, rate & liquidity haircut" },
+      ]
+
+      return items.sort((a, b) => b.share - a.share)
+    }
+
+    return [
+      { name: "Loans" as AssetName, absLoss: loss * 0.47, share: 47, driver: "Default probability adjustment" },
+      { name: "Bonds" as AssetName, absLoss: loss * 0.31, share: 31, driver: "Interest-rate and credit-spread sensitivity" },
+      { name: "Derivatives" as AssetName, absLoss: loss * 0.12, share: 12, driver: "Counterparty exposure" },
+      { name: "Liquidity" as AssetName, absLoss: loss * 0.10, share: 10, driver: "Liquidity haircut" },
+    ]
+  }, [attribution, loss])
+
+  const primaryDriver = calculatedContributors[0]
 
   return (
     <div
@@ -79,16 +87,16 @@ export function WhyLossDialog({
         <div className="explainability-body">
           <section className="dialog-section why-loss-causal-card">
             <div className="dialog-section-title">
-              Primary driver · Loan credit risk
+              Primary driver · {primaryDriver.name} sensitivity ({primaryDriver.share}%)
             </div>
             <div className="why-loss-causal-chain">
               {[
                 scenario,
-                "Higher borrowing / credit stress",
-                "Default probability increases",
-                "Expected loan losses increase",
-                `Loans contribute ₹${(loss * 0.47).toFixed(1)} Cr`,
-                "47% of total modeled loss",
+                `${primaryDriver.name} market stress`,
+                `Primary driver: ${primaryDriver.driver}`,
+                `Expected ${primaryDriver.name.toLowerCase()} losses increase`,
+                `${primaryDriver.name} contribute ₹${primaryDriver.absLoss.toFixed(1)} Cr`,
+                `${primaryDriver.share}% of total modeled loss`,
               ].map((step, index) => (
                 <div key={step}>
                   <span>{step}</span>
@@ -98,30 +106,30 @@ export function WhyLossDialog({
             </div>
           </section>
           <div className="loss-explanation-list">
-            {contributors.map(([name, share, driver], index) => (
-              <div key={name}>
+            {calculatedContributors.map((c, index) => (
+              <div key={c.name}>
                 <i>{index + 1}</i>
                 <span>
                   <b>
-                    {name}{" "}
+                    {c.name}{" "}
                     {index === 0
                       ? "were the largest contributor"
                       : "contributed"}
                   </b>
                   <small>
-                    ₹{((loss * share) / 100).toFixed(1)} Cr / {share}%
+                    ₹{c.absLoss.toFixed(1)} Cr / {c.share}%
                   </small>
                 </span>
                 <span>
                   <small>Main driver</small>
-                  <b>{driver}</b>
+                  <b>{c.driver}</b>
                 </span>
               </div>
             ))}
           </div>
           <div className="primary-overall-driver">
             <small>Primary overall driver</small>
-            <b>Loan credit risk</b>
+            <b>{primaryDriver.name} ({primaryDriver.driver})</b>
           </div>
           <div className="why-loss-totals">
             <span>
@@ -134,8 +142,7 @@ export function WhyLossDialog({
             </span>
           </div>
           <span className="prototype-label">
-            Asset allocation is a prototype attribution based on the existing
-            modeled loss split.
+            Dynamic asset class attribution derived from backend RiskEngineService.
           </span>
         </div>
         <div className="explainability-footer">

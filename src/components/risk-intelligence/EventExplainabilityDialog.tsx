@@ -51,6 +51,10 @@ export function EventExplainabilityDialog({
   const stressTriggered = event.impact >= 7
   const mappedScenario = mappedScenarioForEvent(event.category)
   
+  const uniqueAssets = useMemo(() => {
+    const list = Array.isArray(event.affectedAssets) ? event.affectedAssets : [];
+    return Array.from(new Set(list.map((a: any) => String(a).trim()).filter(Boolean)));
+  }, [event.affectedAssets]);
 
   return (
     <div
@@ -375,7 +379,7 @@ export function EventExplainabilityDialog({
                     )
                   }
                 >
-                  View Source <Icon name="arrow" size={14} />
+                  View Source
                 </Button>
               ) : (
                 <div className="source-unavailable">
@@ -403,10 +407,10 @@ export function EventExplainabilityDialog({
                   <span>Relevance Reason</span>
                   <p>{event.relevanceReason}</p>
                 </div>
-                {event.affectedAssets && event.affectedAssets.length > 0 && (
+                {uniqueAssets.length > 0 && (
                   <div className="portfolio-areas">
                     <span>Affected Holdings:</span>
-                    {event.affectedAssets.map((asset: string) => (
+                    {uniqueAssets.map((asset: string) => (
                       <span key={asset}>
                         <b>{asset}</b>
                       </span>
@@ -431,7 +435,7 @@ export function EventExplainabilityDialog({
           </Button>
           {onRunStressTest && (
             <Button onClick={() => onRunStressTest(event)}>
-              Run Stress Test <Icon name="arrow" size={14} />
+              Run Stress Test
             </Button>
           )}
         </div>
