@@ -1,0 +1,54 @@
+{
+  "categories": [
+    "Monetary policy",
+    "Credit",
+    "Commodities",
+    "Earnings",
+    "Sector outlook",
+    "Geopolitical",
+    "Regulatory",
+    "Macroeconomic"
+  ],
+  "id2label": {
+    "0": "Monetary policy",
+    "1": "Credit",
+    "2": "Commodities",
+    "3": "Earnings",
+    "4": "Sector outlook",
+    "5": "Geopolitical",
+    "6": "Regulatory",
+    "7": "Macroeconomic"
+  },
+  "label2id": {
+    "Monetary policy": 0,
+    "Credit": 1,
+    "Commodities": 2,
+    "Earnings": 3,
+    "Sector outlook": 4,
+    "Geopolitical": 5,
+    "Regulatory": 6,
+    "Macroeconomic": 7
+  },
+  "topic_to_category": {
+    "Analyst Update": "Sector outlook",
+    "Fed | Central Banks": "Monetary policy",
+    "Company | Product News": "Sector outlook",
+    "Treasuries | Corporate Debt": "Credit",
+    "Dividend": "Earnings",
+    "Earnings": "Earnings",
+    "Energy | Oil": "Commodities",
+    "Financials": null,
+    "Currencies": "Macroeconomic",
+    "General News | Opinion": null,
+    "Gold | Metals | Materials": "Commodities",
+    "IPO": null,
+    "Legal | Regulation": "Regulatory",
+    "M&A | Investments": "Sector outlook",
+    "Macro": "Macroeconomic",
+    "Markets": "Macroeconomic",
+    "Politics": "Geopolitical",
+    "Personnel Change": null,
+    "Stock Commentary": "Sector outlook",
+    "Stock Movement": "Sector outlook"
+  }
+}

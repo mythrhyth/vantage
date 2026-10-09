@@ -1,0 +1,50 @@
+{
+  "add_cross_attention": false,
+  "architectures": [
+    "BertForSequenceClassification"
+  ],
+  "attention_probs_dropout_prob": 0.1,
+  "bos_token_id": null,
+  "classifier_dropout": null,
+  "dtype": "float32",
+  "eos_token_id": null,
+  "gradient_checkpointing": false,
+  "hidden_act": "gelu",
+  "hidden_dropout_prob": 0.1,
+  "hidden_size": 768,
+  "id2label": {
+    "0": "Monetary policy",
+    "1": "Credit",
+    "2": "Commodities",
+    "3": "Earnings",
+    "4": "Sector outlook",
+    "5": "Geopolitical",
+    "6": "Regulatory",
+    "7": "Macroeconomic"
+  },
+  "initializer_range": 0.02,
+  "intermediate_size": 3072,
+  "is_decoder": false,
+  "label2id": {
+    "Commodities": 2,
+    "Credit": 1,
+    "Earnings": 3,
+    "Geopolitical": 5,
+    "Macroeconomic": 7,
+    "Monetary policy": 0,
+    "Regulatory": 6,
+    "Sector outlook": 4
+  },
+  "layer_norm_eps": 1e-12,
+  "max_position_embeddings": 512,
+  "model_type": "bert",
+  "num_attention_heads": 12,
+  "num_hidden_layers": 12,
+  "pad_token_id": 0,
+  "position_embedding_type": "absolute",
+  "tie_word_embeddings": true,
+  "transformers_version": "5.16.1",
+  "type_vocab_size": 2,
+  "use_cache": true,
+  "vocab_size": 30522
+}

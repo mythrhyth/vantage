@@ -1,0 +1,537 @@
+{
+  "phase": "2",
+  "task": "8-class financial event classification",
+  "base_model": "ProsusAI/finbert",
+  "architecture": "BertForSequenceClassification",
+  "model_type": "bert",
+  "number_of_classes": 8,
+  "id2label": {
+    "0": "Monetary policy",
+    "1": "Credit",
+    "2": "Commodities",
+    "3": "Earnings",
+    "4": "Sector outlook",
+    "5": "Geopolitical",
+    "6": "Regulatory",
+    "7": "Macroeconomic"
+  },
+  "label2id": {
+    "Monetary policy": 0,
+    "Credit": 1,
+    "Commodities": 2,
+    "Earnings": 3,
+    "Sector outlook": 4,
+    "Geopolitical": 5,
+    "Regulatory": 6,
+    "Macroeconomic": 7
+  },
+  "taxonomy": [
+    "Monetary policy",
+    "Credit",
+    "Commodities",
+    "Earnings",
+    "Sector outlook",
+    "Geopolitical",
+    "Regulatory",
+    "Macroeconomic"
+  ],
+  "max_length": 96,
+  "epochs_configured": 5,
+  "epochs_run": 5,
+  "learning_rate": 3e-05,
+  "batch_size": 32,
+  "weight_decay": 0.01,
+  "warmup_ratio": 0.1,
+  "seed": 42,
+  "class_weights": "sqrt",
+  "label_smoothing": 0.05,
+  "split_mode": "pooled",
+  "fp16_amp": true,
+  "n_train": 11081,
+  "n_val": 2374,
+  "n_test": 2375,
+  "best_val_macro_f1": 0.9168,
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.1467781422461145,
+      "val_loss": 0.3516583525036511,
+      "val_acc": 0.9111204717775906,
+      "val_macro_f1": 0.8636091287412707
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.5560587708132412,
+      "val_loss": 0.2614627107977867,
+      "val_acc": 0.9448188711036226,
+      "val_macro_f1": 0.9105962974360988
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.473300525623371,
+      "val_loss": 0.28786988321103546,
+      "val_acc": 0.9397641112047178,
+      "val_macro_f1": 0.9085618187332913
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.43860516810966843,
+      "val_loss": 0.28499178313895274,
+      "val_acc": 0.9477674810446504,
+      "val_macro_f1": 0.9126839706430397
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.42450925115206056,
+      "val_loss": 0.29068584857802643,
+      "val_acc": 0.947346251053075,
+      "val_macro_f1": 0.9167576027554116
+    }
+  ],
+  "evaluation_internal_test": {
+    "n": 2375,
+    "accuracy": 0.9512,
+    "macro_precision": 0.9184,
+    "macro_recall": 0.9389,
+    "macro_f1": 0.9281,
+    "weighted_f1": 0.9514,
+    "per_class": {
+      "Monetary policy": {
+        "precision": 0.9496,
+        "recall": 0.904,
+        "f1": 0.9262,
+        "support": 125
+      },
+      "Credit": {
+        "precision": 0.8125,
+        "recall": 0.8864,
+        "f1": 0.8478,
+        "support": 44
+      },
+      "Commodities": {
+        "precision": 0.9029,
+        "recall": 0.9789,
+        "f1": 0.9394,
+        "support": 95
+      },
+      "Earnings": {
+        "precision": 0.9382,
+        "recall": 0.972,
+        "f1": 0.9548,
+        "support": 250
+      },
+      "Sector outlook": {
+        "precision": 0.9813,
+        "recall": 0.9632,
+        "f1": 0.9722,
+        "support": 1251
+      },
+      "Geopolitical": {
+        "precision": 0.925,
+        "recall": 0.9367,
+        "f1": 0.9308,
+        "support": 158
+      },
+      "Regulatory": {
+        "precision": 0.9286,
+        "recall": 0.9512,
+        "f1": 0.9398,
+        "support": 82
+      },
+      "Macroeconomic": {
+        "precision": 0.9091,
+        "recall": 0.9189,
+        "f1": 0.914,
+        "support": 370
+      }
+    },
+    "confusion_matrix": [
+      [
+        113,
+        3,
+        0,
+        0,
+        0,
+        1,
+        0,
+        8
+      ],
+      [
+        0,
+        39,
+        0,
+        1,
+        2,
+        1,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        93,
+        0,
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        243,
+        4,
+        0,
+        0,
+        3
+      ],
+      [
+        1,
+        5,
+        3,
+        14,
+        1205,
+        4,
+        4,
+        15
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        148,
+        2,
+        7
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        4,
+        0,
+        78,
+        0
+      ],
+      [
+        4,
+        1,
+        7,
+        1,
+        12,
+        5,
+        0,
+        340
+      ]
+    ],
+    "top_confusions": [
+      {
+        "true": "Sector outlook",
+        "predicted": "Macroeconomic",
+        "count": 15
+      },
+      {
+        "true": "Sector outlook",
+        "predicted": "Earnings",
+        "count": 14
+      },
+      {
+        "true": "Macroeconomic",
+        "predicted": "Sector outlook",
+        "count": 12
+      },
+      {
+        "true": "Monetary policy",
+        "predicted": "Macroeconomic",
+        "count": 8
+      },
+      {
+        "true": "Geopolitical",
+        "predicted": "Macroeconomic",
+        "count": 7
+      },
+      {
+        "true": "Macroeconomic",
+        "predicted": "Commodities",
+        "count": 7
+      }
+    ],
+    "top2_accuracy": 0.976,
+    "avg_correct_confidence": 0.9074,
+    "avg_incorrect_confidence": 0.8209,
+    "high_conf_errors_90": 40,
+    "ece": 0.0568,
+    "reliability": [
+      {
+        "conf": 0.3525,
+        "acc": 1.0,
+        "n": 1
+      },
+      {
+        "conf": 0.4641,
+        "acc": 0.4,
+        "n": 10
+      },
+      {
+        "conf": 0.5547,
+        "acc": 0.4444,
+        "n": 18
+      },
+      {
+        "conf": 0.6544,
+        "acc": 0.7,
+        "n": 20
+      },
+      {
+        "conf": 0.7537,
+        "acc": 0.5405,
+        "n": 37
+      },
+      {
+        "conf": 0.8799,
+        "acc": 0.9703,
+        "n": 1245
+      },
+      {
+        "conf": 0.9517,
+        "acc": 0.9617,
+        "n": 1044
+      }
+    ],
+    "coverage": [
+      {
+        "threshold": 0.5,
+        "coverage": 0.9954,
+        "accuracy": 0.9535
+      },
+      {
+        "threshold": 0.7,
+        "coverage": 0.9794,
+        "accuracy": 0.9596
+      },
+      {
+        "threshold": 0.8,
+        "coverage": 0.9638,
+        "accuracy": 0.9664
+      },
+      {
+        "threshold": 0.9,
+        "coverage": 0.4396,
+        "accuracy": 0.9617
+      }
+    ],
+    "latency_ms_per_item": 8.29
+  },
+  "evaluation_external_benchmark": null,
+  "bootstrap_macro_f1_diff_ft_minus_best_baseline": {
+    "mean": 0.0672,
+    "ci95_low": 0.0467,
+    "ci95_high": 0.0899
+  },
+  "latency_ms_per_item": 8.29,
+  "weights_file": "model.safetensors",
+  "weights_sha256": "d09a544b949e0833012b7cd68303fd2f10b416ef4f5877edc070363c8ad0f569",
+  "libraries": {
+    "python": "3.13.15",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.16.1",
+    "tokenizers": "0.23.1",
+    "safetensors": "0.8.0",
+    "sklearn": "1.6.1",
+    "numpy": "2.1.3",
+    "pandas": "2.3.3"
+  },
+  "reload_verification": {
+    "checks": [
+      {
+        "check": "model loads from exported directory",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "tokenizer loads from exported directory",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "id2label identical to the trained model",
+        "passed": true,
+        "detail": "{0: 'Monetary policy', 1: 'Credit', 2: 'Commodities', 3: 'Earnings', 4: 'Sector outlook', 5: 'Geopolitical', 6: 'Regulatory', 7: 'Macroeconomic'}"
+      },
+      {
+        "check": "id2label identical to the required label order",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "all expected classes present",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "tokenizer output identical (original vs reloaded)",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "probability vector covers every class",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "probabilities within [0, 1]",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "probabilities sum to 1 (atol 1e-4)",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "predicted labels are valid",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "reloaded predictions == original predictions",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "max |prob difference| < 1e-4",
+        "passed": true,
+        "detail": "(max diff 0.00e+00)"
+      },
+      {
+        "check": "exported weights differ from the untouched base model (fine-tuning is present)",
+        "passed": true,
+        "detail": "(199/199 comparable tensors differ, max |delta|=6.845e-03)"
+      },
+      {
+        "check": "every predicted category is one of the 8 production categories",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "reproduces reported metrics on internal_test",
+        "passed": true,
+        "detail": "acc 0.9512 vs 0.9512; macro-F1 0.9281 vs 0.9281"
+      }
+    ],
+    "examples": [
+      {
+        "text": "Fed signals it will hold interest rates steady as inflation cools",
+        "reloaded_prediction": "Monetary policy",
+        "original_prediction": "Monetary policy",
+        "probs": {
+          "Monetary policy": 0.965248,
+          "Credit": 0.008886,
+          "Commodities": 0.006046,
+          "Earnings": 0.00402,
+          "Sector outlook": 0.002349,
+          "Geopolitical": 0.004365,
+          "Regulatory": 0.006847,
+          "Macroeconomic": 0.00224
+        }
+      },
+      {
+        "text": "Brent crude jumps 3% as OPEC+ agrees to extend output cuts",
+        "reloaded_prediction": "Commodities",
+        "original_prediction": "Commodities",
+        "probs": {
+          "Monetary policy": 0.004449,
+          "Credit": 0.007418,
+          "Commodities": 0.971047,
+          "Earnings": 0.003105,
+          "Sector outlook": 0.001943,
+          "Geopolitical": 0.004494,
+          "Regulatory": 0.005636,
+          "Macroeconomic": 0.001909
+        }
+      },
+      {
+        "text": "Company beats Q3 earnings estimates and raises full-year guidance",
+        "reloaded_prediction": "Earnings",
+        "original_prediction": "Earnings",
+        "probs": {
+          "Monetary policy": 0.006719,
+          "Credit": 0.009783,
+          "Commodities": 0.00705,
+          "Earnings": 0.958183,
+          "Sector outlook": 0.0027,
+          "Geopolitical": 0.005752,
+          "Regulatory": 0.00698,
+          "Macroeconomic": 0.002832
+        }
+      },
+      {
+        "text": "SEC sues crypto exchange over unregistered securities offerings",
+        "reloaded_prediction": "Regulatory",
+        "original_prediction": "Regulatory",
+        "probs": {
+          "Monetary policy": 0.004841,
+          "Credit": 0.00832,
+          "Commodities": 0.00595,
+          "Earnings": 0.002661,
+          "Sector outlook": 0.001319,
+          "Geopolitical": 0.003269,
+          "Regulatory": 0.971258,
+          "Macroeconomic": 0.002383
+        }
+      },
+      {
+        "text": "US 10-year Treasury yield climbs as corporate bond spreads widen",
+        "reloaded_prediction": "Credit",
+        "original_prediction": "Credit",
+        "probs": {
+          "Monetary policy": 0.002366,
+          "Credit": 0.980387,
+          "Commodities": 0.003795,
+          "Earnings": 0.002756,
+          "Sector outlook": 0.001776,
+          "Geopolitical": 0.002984,
+          "Regulatory": 0.00388,
+          "Macroeconomic": 0.002057
+        }
+      },
+      {
+        "text": "Russia and Ukraine talks stall as new sanctions are announced",
+        "reloaded_prediction": "Macroeconomic",
+        "original_prediction": "Macroeconomic",
+        "probs": {
+          "Monetary policy": 0.006427,
+          "Credit": 0.012342,
+          "Commodities": 0.018875,
+          "Earnings": 0.00716,
+          "Sector outlook": 0.003559,
+          "Geopolitical": 0.010122,
+          "Regulatory": 0.012431,
+          "Macroeconomic": 0.929083
+        }
+      },
+      {
+        "text": "US GDP grew 2.1% in Q2 while unemployment ticked up",
+        "reloaded_prediction": "Macroeconomic",
+        "original_prediction": "Macroeconomic",
+        "probs": {
+          "Monetary policy": 0.008565,
+          "Credit": 0.016969,
+          "Commodities": 0.008651,
+          "Earnings": 0.006183,
+          "Sector outlook": 0.002834,
+          "Geopolitical": 0.008852,
+          "Regulatory": 0.011285,
+          "Macroeconomic": 0.936661
+        }
+      }
+    ]
+  },
+  "notes": [
+    "Metrics are those produced by the run that created these exact weights.",
+    "The 8-way head was newly initialised on top of the ProsusAI/finbert encoder."
+  ]
+}
