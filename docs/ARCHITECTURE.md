@@ -1,6 +1,6 @@
 # VANTAGE System Architecture & Technical Specification
 
-> **Deep-dive architectural specification detailing VANTAGE's multi-source ingestion pipeline, local ONNX NLP processing, deterministic quantitative risk engine, and database persistence schema.**
+> **Deep-dive architectural specification detailing VANTAGE's multi-source ingestion pipeline, local ONNX NLP processing, and deterministic quantitative risk engine.**
 
 ---
 
@@ -141,75 +141,3 @@ $$\text{riskScore} = \min\left(100, \text{round}\left(\frac{\text{totalLoss}}{\t
 
 ---
 
-## 🗄 Relational Database Schema (Prisma)
-
-```prisma
-model RiskEvent {
-  id                        String          @id @default(uuid())
-  title                     String
-  entity                    String?
-  category                  String
-  sentiment                 Decimal
-  sentiment_confidence      Decimal?
-  impact                    Decimal
-  impact_confidence         Decimal?
-  impact_reason             String?
-  classification_reason     String?
-  classification_confidence Decimal?
-  signals                   Json?
-  sentiment_drivers         Json?
-  impact_factors            Json?
-  affected_areas            Json?
-  risk_flow                 Json?
-  source                    String
-  excerpt                   String?
-  horizon                   String?
-  affected_assets           Json?
-  relevance_type            String?
-  relevance_score           Decimal?
-  relevance_reason          String?
-  created_at                DateTime        @default(now())
-  StressTestRun             StressTestRun[]
-}
-
-model Portfolio {
-  id             String          @id @default(uuid())
-  name           String
-  baseline_value Decimal
-  index_universe String?         @default("NIFTY50")
-  assets         Asset[]
-  runs           StressTestRun[]
-  created_at     DateTime        @default(now())
-}
-
-model Asset {
-  id             String    @id @default(uuid())
-  portfolio_id   String
-  portfolio      Portfolio @relation(fields: [portfolio_id], references: [id], onDelete: Cascade)
-  ticker         String?
-  company        String?
-  asset_type     String
-  sector         String?
-  current_weight Decimal
-  exposure_value Decimal?
-  sentiment      Decimal   @default(0.0)
-  base_sentiment Decimal   @default(0.0)
-  created_at     DateTime  @default(now())
-}
-
-model StressTestRun {
-  id                String    @id @default(uuid())
-  portfolio_id      String
-  portfolio         Portfolio @relation(fields: [portfolio_id], references: [id], onDelete: Cascade)
-  scenario_id       String?
-  event_id          String?
-  event             RiskEvent?@relation(fields: [event_id], references: [id], onDelete: SetNull)
-  parameters_used   Json
-  baseline_value    Decimal
-  stressed_value    Decimal
-  absolute_loss     Decimal
-  risk_score        Decimal
-  attribution_result Json?
-  executed_at       DateTime  @default(now())
-}
-```
