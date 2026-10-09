@@ -442,55 +442,6 @@ cd backend
 npm test
 ```
 
-### Verified Test Results Summary
-
-```text
-================================================================
-RUNNING FINBERT SENTIMENT ANALYSIS INTEGRATION & VERIFICATION
-================================================================
-✓ PASSED [Test 1-14]: Model path resolution, FinBERT sentiment scoring, label mapping, caching, context rules
-FINBERT INTEGRATION TEST SUITE SUMMARY: 14 / 14 PASSED
-
-================================================================
-RUNNING EVENT CLASSIFIER PRODUCTION INTEGRATION TESTS
-================================================================
-✓ PASSED [Test 1-18]: Model resolution, 8-class taxonomy mapping, confidence bounds, top-2 candidate extraction
-EVENT CLASSIFIER INTEGRATION TEST SUITE SUMMARY: 18 / 18 PASSED
-
-================================================================
-RUNNING DETERMINISTIC RISK ENGINE TEST SUITE (19 INVARIANTS)
-================================================================
-✓ Property Test 1: Determinism (Identical inputs => Identical outputs)
-✓ Property Test 2: Impact Boundedness (I_portfolio ∈ [1.0, 10.0])
-✓ Property Test 3: Event Severity Independence (S_event is portfolio independent)
-✓ Property Test 4: Portfolio Sensitivity (Different allocations => Different impacts)
-✓ Property Test 5: Exposure Monotonicity (Increasing exposed holding size cannot decrease impact)
-✓ Property Test 6: Transmission Sensitivity Monotonicity (Increasing high-sensitivity class allocation increases T_port)
-✓ Property Test 7: Concentration Monotonicity (Higher matched weight increases C_conc)
-✓ Property Test 8: Unrelated Holding Behavior (Direct exposure unaffected by un-impacted holdings)
-✓ Property Test 9: Gemini Independence (Calculation works without external LLM dependencies)
-✓ Property Test 10: Confidence Isolation (Confidence change does not alter S_event, I_portfolio, or E_stress)
-✓ Property Test 11: Zero Exposure Safety (IRRELEVANT event yields I_portfolio=1.0, E_stress=0.0, shocks=0)
-✓ Property Test 12: Universal Stress Availability (Engine accepts and calculates stress for low-impact events)
-✓ Property Test 13: Sector Outlook Category Integrity (SECTOR_OUTLOOK category supported end-to-end)
-✓ Property Test 14: Severity Scaling Calibration (Proportional severity scaling of stress parameters)
-✓ Property Test 15: Canonical Weight Normalization (Weight 45 and 0.45 produce identical normalized result 0.45)
-✓ Property Test 16: Portfolio-Wide Empty Affected Assets (PORTFOLIO_WIDE with empty affectedAssets transmits exposure)
-✓ Property Test 17: Irrelevant Event Zero Shock (IRRELEVANT relevance produces zero stress exposure)
-✓ Property Test 18: No T_port² Double Counting (V_port uses E_effective = 1.0 for PORTFOLIO_WIDE, not T_port)
-✓ Property Test 19: Production Loss Engine Compatibility (Engine outputs run cleanly through RiskEngineService)
-TEST SUITE SUMMARY: 19 / 19 PROPERTY TESTS PASSED
-
-================================================================
-REAL DATABASE & E2E INTEGRATION TEST PASSED SUCCESSFULLY
-================================================================
-✓ Step 1: Monetary policy rate hike ingested (FinBERT sentiment: 0.2406, Event Classifier ONNX: "Monetary policy", Impact: 4.58/10)
-✓ Step 2: Stress parameters generated ({ rate: 97, spread: 46, liquidity: 4, inflation: 58 })
-✓ Step 3: Executed RiskEngineService (Absolute Loss: ₹1006.20 Cr, Risk Score: 100/100, Bonds: ₹519.30 Cr, Loans: ₹421.50 Cr)
-✓ Step 4: IRRELEVANT event zero-exposure test (Impact: 1.0/10, Shocks: 0, Stressed Loss: ₹0.00 Cr)
-✓ Step 5: PostgreSQL database persistence verified via Prisma query
---- ALL BACKEND TESTS PASSED ---
-```
 
 ---
 
