@@ -194,7 +194,7 @@ $$T_{\text{port}} = \sum_{A \in \{\text{LOANS, BONDS, DERIVATIVES, EQUITY}\}} \l
 $$E_{\text{effective}} = \begin{cases} 
 E_{\text{direct}}, & \text{for DIRECT relevance} \\
 E_{\text{indirect}}, & \text{for INDIRECT relevance} \\
-1.0, & \text{for PORTFOLIO\_WIDE relevance} \\
+1.0, & \text{for PORTFOLIO-WIDE relevance} \\
 0.0, & \text{for IRRELEVANT events}
 \end{cases}$$
 
