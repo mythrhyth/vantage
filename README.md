@@ -25,7 +25,6 @@
 - [Installation & Quick Start Guide](#-installation--quick-start-guide)
 - [API Quick Reference](#-api-quick-reference)
 - [Automated Test Suite & Empirical Verification](#-automated-test-suite--empirical-verification)
-- [Hackathon Demo Walkthrough (5-Minute Scenario)](#-hackathon-demo-walkthrough-5-minute-scenario)
 - [Limitations & Responsible Analytical Use](#-limitations--responsible-analytical-use)
 - [Future Engineering Roadmap](#-future-engineering-roadmap)
 - [Credits & Licensing](#-credits--licensing)
@@ -441,16 +440,16 @@ npm test
 
 ```text
 ================================================================
-RUNNING PHASE 1D PRODUCTION BACKEND INTEGRATION & VERIFICATION
+RUNNING FINBERT SENTIMENT ANALYSIS INTEGRATION & VERIFICATION
 ================================================================
 ✓ PASSED [Test 1-14]: Model path resolution, FinBERT sentiment scoring, label mapping, caching, context rules
-PHASE 1D INTEGRATION TEST SUITE SUMMARY: 14 / 14 PASSED
+FINBERT INTEGRATION TEST SUITE SUMMARY: 14 / 14 PASSED
 
 ================================================================
-RUNNING PHASE 2 EVENT CLASSIFIER PRODUCTION INTEGRATION TESTS
+RUNNING EVENT CLASSIFIER PRODUCTION INTEGRATION TESTS
 ================================================================
 ✓ PASSED [Test 1-18]: Model resolution, 8-class taxonomy mapping, confidence bounds, top-2 candidate extraction
-PHASE 2 INTEGRATION TEST SUITE SUMMARY: 18 / 18 PASSED
+EVENT CLASSIFIER INTEGRATION TEST SUITE SUMMARY: 18 / 18 PASSED
 
 ================================================================
 RUNNING DETERMINISTIC RISK ENGINE TEST SUITE (19 INVARIANTS)
@@ -479,34 +478,13 @@ TEST SUITE SUMMARY: 19 / 19 PROPERTY TESTS PASSED
 ================================================================
 REAL DATABASE & E2E INTEGRATION TEST PASSED SUCCESSFULLY
 ================================================================
-✓ Step 1: Monetary policy rate hike ingested (Phase 1D FinBERT sentiment: 0.2406, Phase 2 ONNX: "Monetary policy", Impact: 4.58/10)
+✓ Step 1: Monetary policy rate hike ingested (FinBERT sentiment: 0.2406, Event Classifier ONNX: "Monetary policy", Impact: 4.58/10)
 ✓ Step 2: Stress parameters generated ({ rate: 97, spread: 46, liquidity: 4, inflation: 58 })
 ✓ Step 3: Executed RiskEngineService (Absolute Loss: ₹1006.20 Cr, Risk Score: 100/100, Bonds: ₹519.30 Cr, Loans: ₹421.50 Cr)
 ✓ Step 4: IRRELEVANT event zero-exposure test (Impact: 1.0/10, Shocks: 0, Stressed Loss: ₹0.00 Cr)
 ✓ Step 5: PostgreSQL database persistence verified via Prisma query
 --- ALL BACKEND TESTS PASSED ---
 ```
-
----
-
-## 🎬 Hackathon Demo Walkthrough (5-Minute Scenario)
-
-Follow this 5-step sequence to evaluate VANTAGE during a live hackathon demonstration:
-
-1. **Navigate to Risk Intelligence**:
-   Open `http://localhost:5173/risk-intelligence`. Observe real-time risk events classified into 8 canonical categories with continuous sentiment scores ($s \in [-1, +1]$) derived locally via Phase 1D FinBERT ONNX.
-2. **Inspect Event Explainability**:
-   Click on a **Monetary Policy** event (e.g. *"Federal Reserve Raises Benchmark Interest Rate by 50 bps"*). Open the **Explainability Dialog** to view the Phase 2 Event Classifier ONNX confidence ($95.3\%$), continuous sentiment score ($+0.2406$), and affected portfolio asset categories.
-3. **Execute Event-Driven Stress Test**:
-   Click **Run Stress Test** on the selected event. Watch VANTAGE invoke `DeterministicRiskEngine.generateStressParameters()` to emit rounded stress shocks (`rate: +97 bps`, `spread: +46 bps`, `liquidity: +4%`, `inflation: +58 bps`).
-4. **Analyze Calculation-Backed Loss Attribution**:
-   Review the executive loss breakdown in **Why Loss Dialog**:
-   - Total Loss: **₹1,006.20 Cr** (on a ₹3,000 Cr baseline portfolio)
-   - Bonds Loss: **₹519.30 Cr** (51.6% contribution due to interest rate duration shift)
-   - Loans Loss: **₹421.50 Cr** (41.9% contribution due to credit spread widening)
-   - Derivatives Loss: **₹65.40 Cr** (6.5% contribution)
-5. **Verify Zero-Exposure IRRELEVANT Safety**:
-   Select an agricultural event (e.g. *"Severe Drought Affects South American Soy Crop"*). Observe that VANTAGE flags the event as `IRRELEVANT` for an asset-backed financial portfolio, yielding $I_{\text{portfolio}} = 1.0$, zero stress parameters, and **₹0.00 Cr** modeled loss.
 
 ---
 
