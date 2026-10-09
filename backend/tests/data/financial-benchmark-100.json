@@ -1,0 +1,702 @@
+[
+  {
+    "id": "fin-bench-001",
+    "text": "Nvidia reported a 120% surge in quarterly revenue to $26 billion, beating analyst estimates as artificial intelligence chip demand reached unprecedented levels.",
+    "humanLabel": "positive",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-002",
+    "text": "Commercial real estate default rates climb to highest level since 2010 financial crisis as office vacancies expand.",
+    "humanLabel": "negative",
+    "eventType": "Credit",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-003",
+    "text": "Federal Reserve Open Market Committee leaves benchmark federal funds target range unchanged at 5.25%-5.50%.",
+    "humanLabel": "neutral",
+    "eventType": "Monetary policy",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-004",
+    "text": "Major national airline files for Chapter 11 bankruptcy protection after failing to restructure $4.2 billion in senior debt obligations.",
+    "humanLabel": "negative",
+    "eventType": "Credit",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-005",
+    "text": "Biotech firm receives full FDA approval for breakthrough oncology treatment after Phase 3 clinical trials demonstrated 45% improved survival rates.",
+    "humanLabel": "positive",
+    "eventType": "Regulatory",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-006",
+    "text": "European Central Bank publishes scheduled monthly financial stability report reviewing Eurozone banking capital ratios.",
+    "humanLabel": "neutral",
+    "eventType": "Monetary policy",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-007",
+    "text": "Crude oil prices plummet 6% following unexpected surge in US inventories and OPEC production quota increases.",
+    "humanLabel": "negative",
+    "eventType": "Commodities",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-008",
+    "text": "Global logistics provider expands automated distribution network across three key European trade corridors.",
+    "humanLabel": "positive",
+    "eventType": "Sector outlook",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-009",
+    "text": "Automaker issues voluntary safety recall for 150,000 electric vehicles due to potential high-voltage battery software defect.",
+    "humanLabel": "negative",
+    "eventType": "Regulatory",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-010",
+    "text": "US Treasury Department releases weekly auction timetable for upcoming 2-year, 5-year, and 10-year note issuances.",
+    "humanLabel": "neutral",
+    "eventType": "Macroeconomic",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-011",
+    "text": "Consumer price index inflation remains elevated at 3.6% annually, dampening market expectations for near-term interest rate cuts.",
+    "humanLabel": "negative",
+    "eventType": "Macroeconomic",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-012",
+    "text": "Interest rates remain unchanged following the central bank's monthly policy conference, matching broad consensus expectations.",
+    "humanLabel": "neutral",
+    "eventType": "Monetary policy",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-013",
+    "text": "Shares fall 8% despite strong earnings results after management warned of slowing order velocity for next quarter.",
+    "humanLabel": "negative",
+    "eventType": "Earnings",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-014",
+    "text": "Quarterly revenue rises 15% but operating margins deteriorate due to rising labor costs and higher raw material expenses.",
+    "humanLabel": "negative",
+    "eventType": "Earnings",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-015",
+    "text": "Net profit falls 12% despite top-line revenue growth as price discounting compressed gross margins.",
+    "humanLabel": "negative",
+    "eventType": "Earnings",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-016",
+    "text": "Tech conglomerate announces 10,000 workforce layoffs to streamline operational cost structure and increase profitability.",
+    "humanLabel": "negative",
+    "eventType": "Sector outlook",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-017",
+    "text": "Software provider raises guidance for full-year revenue and operating margin following strong enterprise contract renewals.",
+    "humanLabel": "positive",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-018",
+    "text": "Industrial manufacturer cuts guidance for annual operating profit citing persistent supply chain bottlenecks and weak demand.",
+    "humanLabel": "negative",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-019",
+    "text": "Credit rating downgraded to BB+ junk status by S&P ratings agency following sharp deterioration in leverage metrics.",
+    "humanLabel": "negative",
+    "eventType": "Credit",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-020",
+    "text": "Credit rating upgraded to A- investment grade by Moody's following debt reduction and strengthened free cash flow generation.",
+    "humanLabel": "positive",
+    "eventType": "Credit",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-021",
+    "text": "Oil prices rise 4% to $88 per barrel after Middle East supply disruptions threaten tanker traffic through strategic shipping straits.",
+    "humanLabel": "negative",
+    "eventType": "Commodities",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-022",
+    "text": "Oil prices fall to six-month lows as rising non-OPEC crude supplies exacerbate global oversupply concerns.",
+    "humanLabel": "positive",
+    "eventType": "Commodities",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-023",
+    "text": "Financial regulator imposes a $250 million fine on global bank for systemic compliance failures and Anti-Money Laundering lapses.",
+    "humanLabel": "negative",
+    "eventType": "Regulatory",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-024",
+    "text": "Struggling retailer avoids bankruptcy after securing a $500 million emergency refinancing facility from private equity sponsors.",
+    "humanLabel": "positive",
+    "eventType": "Credit",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-025",
+    "text": "Cross-border merger receives approval from anti-trust regulators without requiring significant asset divestitures.",
+    "humanLabel": "positive",
+    "eventType": "M&A",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-026",
+    "text": "Pharmaceutical giant acquires oncology specialist for $14 billion in cash, expanding its rare disease portfolio.",
+    "humanLabel": "positive",
+    "eventType": "M&A",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-027",
+    "text": "Proposed semiconductor merger blocked by federal trade commission over antitrust and national security concerns.",
+    "humanLabel": "negative",
+    "eventType": "M&A",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-028",
+    "text": "Bank of Japan maintains short-term policy interest rate target at 0.25% in line with market predictions.",
+    "humanLabel": "neutral",
+    "eventType": "Monetary policy",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-029",
+    "text": "Bank of England cuts benchmark interest rate by 25 basis points to 4.75% as UK inflation cools to target 2% rate.",
+    "humanLabel": "positive",
+    "eventType": "Monetary policy",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-030",
+    "text": "Goldman Sachs reports third-quarter net income increased 45% driven by surge in equity underwriting and asset management revenues.",
+    "humanLabel": "positive",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-031",
+    "text": "JPMorgan Chase sets aside $1.1 billion in loan loss provisions anticipating potential consumer credit defaults in coming quarters.",
+    "humanLabel": "negative",
+    "eventType": "Credit",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-032",
+    "text": "Treasury yield curve un-inverts as 10-year Treasury yield climbs above 2-year yield for first time in two years.",
+    "humanLabel": "positive",
+    "eventType": "Macroeconomic",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-033",
+    "text": "US non-farm payrolls added 254,000 jobs in September, far exceeding consensus estimates of 140,000 while unemployment rate ticked down to 4.1%.",
+    "humanLabel": "positive",
+    "eventType": "Macroeconomic",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-034",
+    "text": "European Union imposes tariffs up to 45% on imported electric vehicles, escalating trade tension with international manufacturers.",
+    "humanLabel": "negative",
+    "eventType": "Geopolitical",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-035",
+    "text": "OPEC+ members agree to extend voluntary oil output cuts of 2.2 million barrels per day through the end of the year.",
+    "humanLabel": "neutral",
+    "eventType": "Commodities",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-036",
+    "text": "Gold prices hit record high of $2,750 per ounce supported by central bank purchasing and safe-haven investor flows.",
+    "humanLabel": "positive",
+    "eventType": "Commodities",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-037",
+    "text": "Copper futures fall 3.5% on concerns over industrial demand growth across major emerging economies.",
+    "humanLabel": "negative",
+    "eventType": "Commodities",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-038",
+    "text": "Natural gas storage levels surpass 5-year historical average heading into winter heating season.",
+    "humanLabel": "neutral",
+    "eventType": "Commodities",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-039",
+    "text": "Corporate bond issuance reaches record monthly volume of $180 billion as corporations lock in lower funding costs.",
+    "humanLabel": "positive",
+    "eventType": "Credit",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-040",
+    "text": "High-yield bond spreads widen 45 basis points as investor risk appetite declines amid geopolitical instability.",
+    "humanLabel": "negative",
+    "eventType": "Credit",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-041",
+    "text": "Regional bank credit rating placed on review for downgrade following rapid concentration of uninsured commercial deposits.",
+    "humanLabel": "negative",
+    "eventType": "Credit",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-042",
+    "text": "Consumer credit card delinquency rates stabilize at 3.2%, ending a four-quarter consecutive upward trend.",
+    "humanLabel": "positive",
+    "eventType": "Credit",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-043",
+    "text": "Mortgage interest rates drop to lowest level in 18 months, triggering surge in refinancing applications.",
+    "humanLabel": "positive",
+    "eventType": "Sector outlook",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-044",
+    "text": "Housing starts fall 5.1% month-over-month as elevated construction costs continue to weigh on residential builders.",
+    "humanLabel": "negative",
+    "eventType": "Sector outlook",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-045",
+    "text": "National Association of Realtors reports existing home sales median price reached $416,700 in annual data release.",
+    "humanLabel": "neutral",
+    "eventType": "Sector outlook",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-046",
+    "text": "Retail sales increased 0.4% in September, showing sustained consumer spending resilience across core categories.",
+    "humanLabel": "positive",
+    "eventType": "Macroeconomic",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-047",
+    "text": "Manufacturing PMI falls to 46.5, signaling contraction in industrial activity for sixth consecutive month.",
+    "humanLabel": "negative",
+    "eventType": "Macroeconomic",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-048",
+    "text": "Services PMI expands to 55.2, reflecting strong order expansion across hospitality, health, and tech services.",
+    "humanLabel": "positive",
+    "eventType": "Macroeconomic",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-049",
+    "text": "Gross Domestic Product increased at an annualized rate of 2.8% in third quarter according to advance estimate.",
+    "humanLabel": "positive",
+    "eventType": "Macroeconomic",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-050",
+    "text": "Government budget deficit widens to $1.83 trillion for fiscal year as interest payments on public debt expand 30%.",
+    "humanLabel": "negative",
+    "eventType": "Macroeconomic",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-051",
+    "text": "Tech giant CEO sells $200 million in company stock under pre-established Rule 10b5-1 trading plan.",
+    "humanLabel": "neutral",
+    "eventType": "Earnings",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-052",
+    "text": "Cloud software company announces acquisition of AI cybersecurity startup for $2.5 billion in cash and stock.",
+    "humanLabel": "positive",
+    "eventType": "M&A",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-053",
+    "text": "Antitrust agency files lawsuit to block proposed merger between two major supermarket chains.",
+    "humanLabel": "negative",
+    "eventType": "M&A",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-054",
+    "text": "Private equity firm completes $8.5 billion leveraged buyout of industrial equipment distributor.",
+    "humanLabel": "positive",
+    "eventType": "M&A",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-055",
+    "text": "Shareholders approve $35 billion all-stock merger creating world's largest lithium mining enterprise.",
+    "humanLabel": "positive",
+    "eventType": "M&A",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-056",
+    "text": "Securities regulator adopts enhanced disclosure rules for climate-related financial risks and carbon emissions.",
+    "humanLabel": "neutral",
+    "eventType": "Regulatory",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-057",
+    "text": "Banking regulator increases capital buffer requirements for global systemically important banks by 50 basis points.",
+    "humanLabel": "negative",
+    "eventType": "Regulatory",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-058",
+    "text": "Federal Communications Commission approves spectrum transfer agreement following comprehensive public interest review.",
+    "humanLabel": "positive",
+    "eventType": "Regulatory",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-059",
+    "text": "Data protection authority levies $120 million fine on social media platform for privacy policy non-compliance.",
+    "humanLabel": "negative",
+    "eventType": "Regulatory",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-060",
+    "text": "Energy regulator grants operating license renewal for nuclear power plant through 2045.",
+    "humanLabel": "positive",
+    "eventType": "Regulatory",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-061",
+    "text": "Geopolitical sanctions imposed on major raw material exporter disrupt global titanium supply chains.",
+    "humanLabel": "negative",
+    "eventType": "Geopolitical",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-062",
+    "text": "Bilateral trade agreement signed between agricultural trading partners reducing import duties on grain exports.",
+    "humanLabel": "positive",
+    "eventType": "Geopolitical",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-063",
+    "text": "Maritime transit fees through Suez Canal adjusted by authority effective first quarter of upcoming fiscal year.",
+    "humanLabel": "neutral",
+    "eventType": "Geopolitical",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-064",
+    "text": "Cross-border conflict causes sudden energy price spikes across regional European wholesale electricity markets.",
+    "humanLabel": "negative",
+    "eventType": "Geopolitical",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-065",
+    "text": "Diplomatic summits reach agreement on standardized international digital tax compliance framework.",
+    "humanLabel": "neutral",
+    "eventType": "Geopolitical",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-066",
+    "text": "Semiconductor sector ETF surges 4.2% as global wafer shipment volumes hit quarterly benchmark record.",
+    "humanLabel": "positive",
+    "eventType": "Sector outlook",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-067",
+    "text": "Solar energy equipment makers face margin compression as panel oversupply drives wholesale prices down 25%.",
+    "humanLabel": "negative",
+    "eventType": "Sector outlook",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-068",
+    "text": "Global commercial aviation passenger traffic returns to 102% of pre-pandemic baseline volume.",
+    "humanLabel": "positive",
+    "eventType": "Sector outlook",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-069",
+    "text": "Commercial shipping container spot rates retreat 15% from seasonal peak as port congestion clears.",
+    "humanLabel": "neutral",
+    "eventType": "Sector outlook",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-070",
+    "text": "Cybersecurity industry spending projected to compound at 12% annually through 2030 according to industry research.",
+    "humanLabel": "positive",
+    "eventType": "Sector outlook",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-071",
+    "text": "Tesla reports third-quarter automotive gross profit margin excluding regulatory credits declined to 14.6%.",
+    "humanLabel": "negative",
+    "eventType": "Earnings",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-072",
+    "text": "Apple earnings per share beat expectations by $0.08 while iPhone revenue rose 6% in international markets.",
+    "humanLabel": "positive",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-073",
+    "text": "Amazon Web Services revenue grew 19% year-over-year to $27.5 billion, accelerating for third consecutive quarter.",
+    "humanLabel": "positive",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-074",
+    "text": "Microsoft Intelligent Cloud revenue increased 20% led by Azure growth of 33%, matching Wall Street targets.",
+    "humanLabel": "positive",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-075",
+    "text": "Alphabet capital expenditures jumped to $13 billion in quarter as search engine provider expands AI data center infrastructure.",
+    "humanLabel": "neutral",
+    "eventType": "Earnings",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-076",
+    "text": "Meta Platforms warnings of significant capital expenditure acceleration in 2025 overshadow quarterly revenue beat.",
+    "humanLabel": "negative",
+    "eventType": "Earnings",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-077",
+    "text": "Netflix added 5.1 million subscribers in quarter, easily topping expectations while operating margin expanded to 30%.",
+    "humanLabel": "positive",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-078",
+    "text": "Intel posts $16.6 billion net loss in third quarter following $15.9 billion in impairment and restructuring charges.",
+    "humanLabel": "negative",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-079",
+    "text": "AMD data center segment revenue more than doubled to $3.5 billion driven by Instinct AI accelerator shipments.",
+    "humanLabel": "positive",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-080",
+    "text": "Bank of America net interest income rose 3% sequentially while investment banking fees jumped 18%.",
+    "humanLabel": "positive",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-081",
+    "text": "Wells Fargo net interest income declined 11% year-over-year as higher deposit costs squeezed net interest margin.",
+    "humanLabel": "negative",
+    "eventType": "Earnings",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-082",
+    "text": "Citigroup reports net income of $3.2 billion as transformation expenses offset growth in services and investment banking.",
+    "humanLabel": "neutral",
+    "eventType": "Earnings",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-083",
+    "text": "Morgan Stanley wealth management net new assets totaled $64 billion while institutional securities revenue rose 20%.",
+    "humanLabel": "positive",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-084",
+    "text": "BlackRock total assets under management reached record $11.5 trillion following $221 billion quarterly net inflows.",
+    "humanLabel": "positive",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-085",
+    "text": "ExxonMobil third quarter net income declined 5% to $8.6 billion as lower natural gas prices offset record oil production.",
+    "humanLabel": "negative",
+    "eventType": "Earnings",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-086",
+    "text": "Chevron earnings fell 31% to $4.5 billion hit by lower refined product margins and weaker oil realizations.",
+    "humanLabel": "negative",
+    "eventType": "Earnings",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-087",
+    "text": "Global sovereign debt total exceeded $91 trillion according to International Monetary Fund global financial stability report.",
+    "humanLabel": "negative",
+    "eventType": "Macroeconomic",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-088",
+    "text": "Swiss National Bank lowers benchmark policy rate by 25 basis points to 1.0% to combat Swiss franc real appreciation.",
+    "humanLabel": "positive",
+    "eventType": "Monetary policy",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-089",
+    "text": "Riksbank cuts Sweden's key interest rate by 50 basis points to 2.75% to stimulate economic recovery.",
+    "humanLabel": "positive",
+    "eventType": "Monetary policy",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-090",
+    "text": "People's Bank of China cuts seven-day reverse repurchase rate by 20 basis points and lowers reserve requirement ratio by 50 bps.",
+    "humanLabel": "positive",
+    "eventType": "Monetary policy",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-091",
+    "text": "Reserve Bank of India maintains repo rate at 6.50% while shifting monetary policy stance to neutral from withdrawal of accommodation.",
+    "humanLabel": "neutral",
+    "eventType": "Monetary policy",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-092",
+    "text": "Global semiconductor equipment spending projected to rebound 17% in 2025 reaching $128 billion.",
+    "humanLabel": "positive",
+    "eventType": "Sector outlook",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-093",
+    "text": "Commercial property loan distress spreads from office buildings to regional suburban shopping centers.",
+    "humanLabel": "negative",
+    "eventType": "Credit",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-094",
+    "text": "Private credit assets under management grow to $1.7 trillion as non-bank direct lenders capture corporate borrowing market share.",
+    "humanLabel": "positive",
+    "eventType": "Credit",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-095",
+    "text": "Syndicated loan default rate among sub-investment grade borrowers rose to 4.1% over trailing 12-month window.",
+    "humanLabel": "negative",
+    "eventType": "Credit",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fin-bench-096",
+    "text": "Municipal bond market experiences 14 consecutive weeks of net fund inflows as state tax receipts exceed forecasts.",
+    "humanLabel": "positive",
+    "eventType": "Credit",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fin-bench-097",
+    "text": "International Monetary Fund raises 2025 global growth forecast to 3.2% while warning of persistent public debt vulnerabilities. Global trade volume is expected to expand 3.4% as supply chain pressures normalize across major economies. However, elevated interest rates and fiscal consolidation in developing markets present downside risks to corporate debt service capacity.",
+    "humanLabel": "neutral",
+    "eventType": "Macroeconomic",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-098",
+    "text": "Global banking sector profits hit record levels in 2024 as net interest margins expanded during central bank tightening cycle. Commercial banks across North America and Europe recorded high return on equity metrics while maintaining strong Tier 1 capital ratios. However, analysts warn that loan growth is slowing as higher borrowing costs temper business investment and consumer mortgage demand. Non-performing loan provisions are expected to rise moderately over the next 12 months.",
+    "humanLabel": "positive",
+    "eventType": "Sector outlook",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-099",
+    "text": "Commercial real estate market faces severe refinancing cliff as $1.5 trillion in debt matures through 2025 amidst depressed property valuations. Regional banks holding heavy exposure to office loans face potential rating downgrades and elevated capital reserve mandates from financial regulators. Property owners are increasingly handing key back to lenders as higher interest rates render legacy capital structures unsustainable. Industry experts warn of prolonged distress across secondary office markets.",
+    "humanLabel": "negative",
+    "eventType": "Credit",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fin-bench-100",
+    "text": "Global energy transition drives unprecedented capital investment in renewable power generation and grid modernization projects. Offshore wind and utility-scale solar installations expanded 28% year-over-year, supported by government clean energy tax incentives and declining battery storage costs. Major oil majors are reallocating up to 15% of annual capital expenditure toward low-carbon hydrogen and carbon capture infrastructure. However, grid interconnection queues and permitting delays remain primary bottlenecks to project execution.",
+    "humanLabel": "positive",
+    "eventType": "Sector outlook",
+    "difficulty": "medium"
+  }
+]

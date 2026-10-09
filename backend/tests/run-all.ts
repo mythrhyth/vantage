@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import http from 'http';
 
-function checkServerReady(url: string, timeout = 10000): Promise<void> {
+function checkServerReady(url: string, timeout = 30000): Promise<void> {
   return new Promise((resolve, reject) => {
     const start = Date.now();
     const interval = setInterval(() => {
@@ -40,9 +40,13 @@ async function runAllTests() {
     await checkServerReady('http://localhost:3000/api/events');
     console.log('Server is ready. Running integration tests...');
 
+    await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-phase1d-integration.ts']);
+    await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-phase2-integration.ts']);
+    await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-deterministic-risk-engine.ts']);
+    await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-real-ingestion-flow.ts']);
     await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-api.ts']);
     await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-nlp-pipeline.ts']);
-    await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-provider-direct.ts']);
+    await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-deterministic-e2e.ts']);
     
     console.log('\n--- ALL BACKEND TESTS PASSED ---');
   } catch (err: any) {
