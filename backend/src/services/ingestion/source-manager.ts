@@ -13,26 +13,22 @@ export class SourceAdapterManager {
   }
 
   async initializeSources(): Promise<SourceConfig[]> {
+    await prisma.ingestionSourceConfig.createMany({
+      data: INITIAL_TRUSTED_SOURCES.map(s => ({
+        id: s.id,
+        name: s.name,
+        domain: s.domain,
+        source_type: s.sourceType,
+        adapter_type: s.adapterType,
+        feed_url: s.feedUrl,
+        enabled: s.enabled,
+        fetch_interval: s.fetchInterval,
+        max_items_per_run: s.maxItemsPerRun
+      })),
+      skipDuplicates: true
+    });
+
     const existing = await prisma.ingestionSourceConfig.findMany();
-
-    if (existing.length === 0) {
-      console.log('[SourceAdapterManager] Initializing default ingestion source configs in database...');
-      await prisma.ingestionSourceConfig.createMany({
-        data: INITIAL_TRUSTED_SOURCES.map(s => ({
-          id: s.id,
-          name: s.name,
-          domain: s.domain,
-          source_type: s.sourceType,
-          adapter_type: s.adapterType,
-          feed_url: s.feedUrl,
-          enabled: s.enabled,
-          fetch_interval: s.fetchInterval,
-          max_items_per_run: s.maxItemsPerRun
-        }))
-      });
-      return INITIAL_TRUSTED_SOURCES;
-    }
-
     return existing.map(s => ({
       id: s.id,
       name: s.name,
