@@ -312,6 +312,94 @@ async function runPortfolioStressTestingTests() {
       console.log(`   - Restored original portfolio equity holdings successfully`)
     }
 
+    // 8. Testing Run Identity Model & Non-Persisting Preview Contracts (Phase 7 Audit)
+    console.log('\n--- 8. Testing Run Identity Model & Non-Persisted Preview Contracts ---')
+
+    // 8a. Preview Run Contract (persist = false)
+    const initialRunCount = await prisma.stressTestRun.count()
+    const previewRun = await riskEngineService.runStressTest(portfolio.id, { rate: 300 }, undefined, undefined, false)
+    const countAfterPreview = await prisma.stressTestRun.count()
+
+    assert(
+      previewRun.persisted === false && previewRun.id === null,
+      'Preview stress test execution returned calculated results without persisting a database ID'
+    )
+    assert(
+      countAfterPreview === initialRunCount,
+      `Preview calculation did not alter database run count (Before: ${initialRunCount}, After: ${countAfterPreview})`
+    )
+
+    // 8b. History retrieval safety (getHistory does not create records)
+    await riskEngineService.getHistory()
+    const countAfterHistoryGet = await prisma.stressTestRun.count()
+    assert(
+      countAfterHistoryGet === initialRunCount,
+      `Fetching stress test history did not persist new records (Count unchanged at ${countAfterHistoryGet})`
+    )
+
+    // 8c. Manual Stress Test identity persistence
+    const manualRun = await riskEngineService.runStressTest(portfolio.id, { rate: 250, spread: 120 }, undefined, undefined, true, 'manual')
+    assert(
+      manualRun.run_type === 'manual' && manualRun.parameter_source === 'manual',
+      `Manual stress test correctly identified as run_type: 'manual' (Source: ${manualRun.parameter_source})`
+    )
+
+    // 8d. Legacy record identity safety (No guessing on records with null scenario and null event)
+    const historyList = await riskEngineService.getHistory()
+    const legacyItem = historyList.find(r => r.scenario_id === null && r.event_id === null && (!r.parameters?.parameter_source || r.parameters?.parameter_source === 'unknown'))
+    if (legacyItem) {
+      assert(
+        legacyItem.run_type === 'unknown' && legacyItem.displayTitle === 'Legacy Run · Origin Unknown',
+        `Legacy record without metadata labeled strictly as 'Legacy Run · Origin Unknown' without guessing`
+      )
+    } else {
+      console.log('ℹ️ Note: No legacy records with missing metadata currently present in database')
+    }
+
+    // 8e. History entry null relation safety
+    // 9. Testing Calculation Trace & Loss Generation Explainability Contracts
+    console.log('\n--- 9. Testing Calculation Trace & Loss Generation Explainability Contracts ---')
+
+    const traceRun = await riskEngineService.runStressTest(portfolio.id, { rate: 250, spread: 120, probability: 2, liquidity: 8, inflation: 150 })
+    const traceData = (traceRun.attribution_result as any)?.calculation_trace
+
+    assert(
+      traceData !== undefined && Array.isArray(traceData.drivers),
+      'Engine attribution result contains auditable calculation_trace with drivers array'
+    )
+
+    assert(
+      traceData.drivers.length > 0 && traceData.drivers.every((d: any) => typeof d.label === 'string' && typeof d.formula === 'string'),
+      `Calculation trace contains ${traceData.drivers.length} structured driver definitions with formulas`
+    )
+
+    const rateDriver = traceData.drivers.find((d: any) => d.driver_key === 'interest_rate')
+    assert(
+      rateDriver && rateDriver.is_shared === true && rateDriver.affected_asset_classes.length > 1,
+      `Interest rate shock correctly identified as shared driver affecting multiple asset classes (${rateDriver?.affected_asset_classes?.join(', ')})`
+    )
+
+    const pdDriver = traceData.drivers.find((d: any) => d.driver_key === 'default_probability')
+    assert(
+      pdDriver && pdDriver.is_shared === false && pdDriver.affected_asset_classes[0] === 'Loans',
+      `Default probability adjustment correctly identified as targeted loan book driver`
+    )
+
+    // Dynamic scenario parameter update verification
+    const shiftedRun = await riskEngineService.runStressTest(portfolio.id, { rate: 400, spread: 200 })
+    const shiftedTrace = (shiftedRun.attribution_result as any)?.calculation_trace
+    const shiftedRateDriver = shiftedTrace?.drivers?.find((d: any) => d.driver_key === 'interest_rate')
+
+    assert(
+      shiftedRateDriver && shiftedRateDriver.modeled_loss > rateDriver.modeled_loss,
+      `Changing scenario parameters dynamically updated modeled driver loss (+250 bps: ₹${rateDriver.modeled_loss} Cr vs +400 bps: ₹${shiftedRateDriver?.modeled_loss} Cr)`
+    )
+
+    assert(
+      Math.abs((traceRun.baseline_value - traceRun.absolute_loss) - traceRun.stressed_value) < 0.1,
+      `Canonical reconciliation invariant holds: baseline (₹${traceRun.baseline_value}) - net_loss (₹${traceRun.absolute_loss.toFixed(1)}) = stressed (₹${traceRun.stressed_value.toFixed(1)})`
+    )
+
     console.log('\n====================================================')
     if (failed === 0) {
       console.log(`ALL PORTFOLIO STRESS TESTING TESTS PASSED! (${passed}/${passed}) 🎉`)

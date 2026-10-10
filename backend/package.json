@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "tsx tests/run-all.ts",
+    "test": "node --max-old-space-size=4096 node_modules/tsx/dist/cli.mjs tests/run-all.ts",
     "test:gemini": "tsx -r dotenv/config tests/test-real-gemini.ts",
     "test:provider": "tsx -r dotenv/config tests/test-provider.ts",
     "dev": "tsx watch src/server.ts",
