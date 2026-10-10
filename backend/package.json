@@ -9,6 +9,7 @@
     "test:provider": "tsx -r dotenv/config tests/test-provider.ts",
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
+    "models:download": "node scripts/download-models.cjs",
     "ingest": "tsx src/ingestion/ingest-once.ts",
     "ingest:worker": "tsx src/ingestion/worker.ts",
     "seed": "tsx prisma/seed.ts"
@@ -27,7 +28,8 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
-    "rss-parser": "^3.13.0"
+    "rss-parser": "^3.13.0",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@prisma/client": "^5.22.0",
@@ -35,7 +37,6 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.4",
     "prisma": "^5.22.0",
-    "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
 }

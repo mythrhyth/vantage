@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: vantage-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci --include=dev && npm run models:download && npx prisma generate
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: FINBERT_MODEL_URL
+        sync: false
+      - key: PHASE2_EVENT_MODEL_URL
+        sync: false

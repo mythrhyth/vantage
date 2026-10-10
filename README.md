@@ -305,6 +305,8 @@ financial-risk-intelligence-platform/
 
 ## ⚙️ Installation & Quick Start Guide
 
+For Render and Vercel deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
 ### Prerequisites
 - **Node.js**: `v18.0.0` or higher (v20+ recommended)
 - **npm**: `v9.0.0` or higher
