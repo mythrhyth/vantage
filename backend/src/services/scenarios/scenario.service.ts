@@ -2,21 +2,19 @@ import { prisma } from '../../db';
 import { eventService } from '../events/event.service';
 import { portfolioService } from '../portfolios/portfolio.service';
 import { deterministicRiskEngine } from '../risk-engine/deterministic-risk-engine';
+import { DEFAULT_SCENARIOS } from '../../config/portfolio-defaults';
 
 export class ScenarioService {
   async getScenarios() {
-    const scenarios = await prisma.scenario.findMany();
-    if (scenarios.length === 0) {
-      // Seed default scenarios
-      const defaults = await prisma.scenario.createMany({
-        data: [
-          { name: 'Interest Rate Shock', rate: 250, spread: 120, probability: 2, liquidity: 8, inflation: 150 },
-          { name: 'Credit Crisis', rate: -50, spread: 350, probability: 8, liquidity: 20, inflation: 50 },
-          { name: 'Combined Macro Stress', rate: 150, spread: 250, probability: 5, liquidity: 15, inflation: 200 }
-        ]
-      });
-      return prisma.scenario.findMany();
+    const existingScenarios = await prisma.scenario.findMany();
+    const existingNames = new Set(existingScenarios.map(scenario => scenario.name));
+    const missingDefaults = DEFAULT_SCENARIOS.filter(scenario => !existingNames.has(scenario.name));
+
+    if (missingDefaults.length > 0) {
+      await prisma.scenario.createMany({ data: [...missingDefaults] });
     }
+
+    const scenarios = missingDefaults.length > 0 ? await prisma.scenario.findMany() : existingScenarios;
     return scenarios.map(s => ({
       id: s.id,
       name: s.name,

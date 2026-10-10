@@ -1,37 +1,35 @@
 import { prisma } from '../../db';
+import { DEFAULT_PORTFOLIO_ASSETS, DEFAULT_PORTFOLIO_BASELINE } from '../../config/portfolio-defaults';
+
+export class PortfolioConfigurationError extends Error {}
+
+type EquityHoldingInput = {
+  ticker: string;
+  company: string;
+  currentWeight: number;
+  sector?: string;
+};
 
 export class PortfolioService {
   async getPortfolios() {
-    const portfolios = await prisma.portfolio.findMany({
+    const storedPortfolios = await prisma.portfolio.findMany({
       orderBy: { created_at: 'asc' },
       include: { assets: true }
     });
     
-    if (portfolios.length === 0) {
-      // Seed default portfolio if empty
+    if (storedPortfolios.length === 0) {
       const defaultPortfolio = await prisma.portfolio.create({
         data: {
           name: 'Main Wealth Fund Portfolio',
-          baseline_value: 2450.0,
+          baseline_value: DEFAULT_PORTFOLIO_BASELINE,
           index_universe: 'NIFTY50',
           assets: {
-            create: [
-              { ticker: 'AAPL', company: 'Apple Inc.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.06, exposure_value: 0.06 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'MSFT', company: 'Microsoft Corp.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.055, exposure_value: 0.055 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'GOOGL', company: 'Alphabet Inc.', asset_type: 'EQUITY', sector: 'Communication Services', current_weight: 0.045, exposure_value: 0.045 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'AMZN', company: 'Amazon.com Inc.', asset_type: 'EQUITY', sector: 'Consumer Staples', current_weight: 0.04, exposure_value: 0.04 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'NVDA', company: 'NVIDIA Corp.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.04, exposure_value: 0.04 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'JPM', company: 'JPMorgan Chase & Co.', asset_type: 'EQUITY', sector: 'Financial Services', current_weight: 0.035, exposure_value: 0.035 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'META', company: 'Meta Platforms Inc.', asset_type: 'EQUITY', sector: 'Communication Services', current_weight: 0.03, exposure_value: 0.03 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'TSLA', company: 'Tesla Inc.', asset_type: 'EQUITY', sector: 'Automotive', current_weight: 0.025, exposure_value: 0.025 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'RELIANCE', company: 'Reliance Industries Ltd', asset_type: 'EQUITY', sector: 'Energy', current_weight: 0.03, exposure_value: 0.03 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'TCS', company: 'Tata Consultancy Services', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.025, exposure_value: 0.025 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'HDFCBANK', company: 'HDFC Bank Ltd', asset_type: 'EQUITY', sector: 'Financial Services', current_weight: 0.025, exposure_value: 0.025 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'INFYS', company: 'Infosys Ltd', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.02, exposure_value: 0.02 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: null, company: 'Corporate Loans Portfolio', asset_type: 'LOANS', sector: 'Banking & Credit', current_weight: 0.30, exposure_value: 0.30 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: null, company: 'Sovereign & Corporate Bonds', asset_type: 'BONDS', sector: 'Fixed Income', current_weight: 0.17, exposure_value: 0.17 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: null, company: 'Interest Rate Derivatives', asset_type: 'DERIVATIVES', sector: 'Hedging', current_weight: 0.10, exposure_value: 0.10 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 }
-            ]
+            create: DEFAULT_PORTFOLIO_ASSETS.map(asset => ({
+              ...asset,
+              exposure_value: asset.current_weight * DEFAULT_PORTFOLIO_BASELINE,
+              sentiment: 0,
+              base_sentiment: 0
+            }))
           }
         },
         include: { assets: true }
@@ -39,6 +37,9 @@ export class PortfolioService {
       return [this.mapPortfolio(defaultPortfolio)];
     }
 
+    const portfolios = await Promise.all(
+      storedPortfolios.map(portfolio => this.reconcilePortfolio(portfolio.id))
+    );
     return portfolios.map(p => this.mapPortfolio(p));
   }
 
@@ -47,10 +48,7 @@ export class PortfolioService {
   }
 
   async getPortfolioById(id: string) {
-    const portfolio = await prisma.portfolio.findUnique({
-      where: { id },
-      include: { assets: true }
-    });
+    const portfolio = await this.reconcilePortfolio(id);
 
     if (!portfolio) return null;
     return this.mapPortfolio(portfolio);
@@ -67,6 +65,7 @@ export class PortfolioService {
     loansExposure?: number;
     bondsExposure?: number;
     derivativesExposure?: number;
+    holdings?: EquityHoldingInput[];
   }) {
     const existing = await prisma.portfolio.findUnique({
       where: { id },
@@ -75,38 +74,98 @@ export class PortfolioService {
 
     if (!existing) throw new Error('Portfolio not found');
 
-    const updateData: any = {};
-    if (data.name !== undefined) updateData.name = data.name;
-    if (data.baselineValue !== undefined) updateData.baseline_value = data.baselineValue;
-    if (data.indexUniverse !== undefined) updateData.index_universe = data.indexUniverse;
+    const baseline = data.baselineValue ?? Number(existing.baseline_value);
+    if (!Number.isFinite(baseline) || baseline <= 0) {
+      throw new PortfolioConfigurationError('Portfolio baseline must be a positive number.');
+    }
 
-    await prisma.portfolio.update({
-      where: { id },
-      data: updateData
+    const equityAssets = existing.assets.filter(asset => this.isEquityAsset(asset.asset_type));
+    const holdings = data.holdings ?? equityAssets.map(asset => ({
+      ticker: asset.ticker || '',
+      company: asset.company || asset.ticker || '',
+      sector: asset.sector || 'General',
+      currentWeight: this.toWeightPercent(Number(asset.current_weight))
+    }));
+    this.validateEquityHoldings(holdings);
+
+    const exposureConfig = [
+      { type: 'LOANS', name: 'Corporate Loans Portfolio', input: data.loansExposure, label: 'loans' },
+      { type: 'BONDS', name: 'Sovereign & Corporate Bonds', input: data.bondsExposure, label: 'bonds' },
+      { type: 'DERIVATIVES', name: 'Interest Rate Derivatives', input: data.derivativesExposure, label: 'derivatives' }
+    ].map(item => {
+      const current = existing.assets.find(asset => asset.asset_type.toUpperCase() === item.type);
+      const amount = item.input ?? (current
+        ? Number(current.exposure_value ?? this.toWeightDecimal(Number(current.current_weight)) * Number(existing.baseline_value))
+        : 0);
+      if (!Number.isFinite(amount) || amount < 0) {
+        throw new PortfolioConfigurationError(`${item.label} exposure must be a non-negative number.`);
+      }
+      return { ...item, amount, current };
     });
 
-    // Update exposure values for non-equity asset types if provided
-    const baseline = data.baselineValue !== undefined ? data.baselineValue : Number(existing.baseline_value);
+    const totalEquityExposure = holdings.reduce(
+      (sum, holding) => sum + (holding.currentWeight / 100) * baseline,
+      0
+    );
+    const totalExposure = exposureConfig.reduce((sum, item) => sum + item.amount, totalEquityExposure);
+    this.validatePortfolioBalance(totalExposure, baseline);
 
-    if (data.loansExposure !== undefined) {
-      await this.upsertNonEquityAsset(id, 'LOANS', 'Corporate Loans Portfolio', data.loansExposure, baseline);
-    }
-    if (data.bondsExposure !== undefined) {
-      await this.upsertNonEquityAsset(id, 'BONDS', 'Sovereign & Corporate Bonds', data.bondsExposure, baseline);
-    }
-    if (data.derivativesExposure !== undefined) {
-      await this.upsertNonEquityAsset(id, 'DERIVATIVES', 'Interest Rate Derivatives', data.derivativesExposure, baseline);
-    }
+    await prisma.$transaction(async transaction => {
+      await transaction.portfolio.update({
+        where: { id },
+        data: {
+          ...(data.name !== undefined ? { name: data.name } : {}),
+          baseline_value: baseline,
+          ...(data.indexUniverse !== undefined ? { index_universe: data.indexUniverse } : {})
+        }
+      });
+
+      await transaction.asset.deleteMany({
+        where: { portfolio_id: id, asset_type: { in: ['EQUITY', 'Stock', 'STOCK', 'equities', 'EQUITIES', 'stock', 'stocks', 'STOCKS'] } }
+      });
+      if (holdings.length > 0) {
+        await transaction.asset.createMany({
+          data: holdings.map(holding => ({
+            portfolio_id: id,
+            ticker: holding.ticker.trim().toUpperCase(),
+            company: holding.company.trim(),
+            asset_type: 'EQUITY',
+            sector: holding.sector || 'General',
+            current_weight: holding.currentWeight / 100,
+            exposure_value: (holding.currentWeight / 100) * baseline,
+            sentiment: 0,
+            base_sentiment: 0
+          }))
+        });
+      }
+
+      for (const item of exposureConfig) {
+        const assetData = {
+          current_weight: item.amount / baseline,
+          exposure_value: item.amount
+        };
+        if (item.current) {
+          await transaction.asset.update({ where: { id: item.current.id }, data: assetData });
+        } else {
+          await transaction.asset.create({
+            data: {
+              portfolio_id: id,
+              company: item.name,
+              asset_type: item.type,
+              sector: item.type === 'LOANS' ? 'Banking & Credit' : item.type === 'BONDS' ? 'Fixed Income' : 'Hedging',
+              ...assetData,
+              sentiment: 0,
+              base_sentiment: 0
+            }
+          });
+        }
+      }
+    });
 
     return this.getPortfolioById(id);
   }
 
-  async updateHoldings(id: string, holdings: Array<{
-    ticker: string;
-    company: string;
-    currentWeight: number;
-    sector?: string;
-  }>) {
+  async updateHoldings(id: string, holdings: EquityHoldingInput[]) {
     const portfolio = await prisma.portfolio.findUnique({
       where: { id },
       include: { assets: true }
@@ -114,56 +173,40 @@ export class PortfolioService {
 
     if (!portfolio) throw new Error('Portfolio not found');
 
-    // Validation
-    const tickers = holdings.map(h => h.ticker.trim().toUpperCase());
-    const uniqueTickers = new Set(tickers);
-    if (uniqueTickers.size !== tickers.length) {
-      throw new Error('Duplicate stock ticker detected in equity holdings');
-    }
-
-    for (const h of holdings) {
-      if (h.currentWeight < 0) {
-        throw new Error(`Holding weight for ${h.ticker} cannot be negative`);
-      }
-    }
-
-    const totalWeight = holdings.reduce((sum, h) => sum + (Number(h.currentWeight) || 0), 0);
-    const maxWeightAllowed = totalWeight > 1.0 ? 100.0 : 1.0;
-    if (totalWeight > maxWeightAllowed) {
-      throw new Error(`Total equity holdings weight (${totalWeight.toFixed(1)}%) cannot exceed 100%`);
-    }
-
+    this.validateEquityHoldings(holdings);
     const baseline = Number(portfolio.baseline_value);
+    const equityExposure = holdings.reduce((sum, holding) => sum + (holding.currentWeight / 100) * baseline, 0);
+    const nonEquityExposure = portfolio.assets
+      .filter(asset => !this.isEquityAsset(asset.asset_type))
+      .reduce((sum, asset) => sum + Number(asset.exposure_value ?? this.toWeightDecimal(Number(asset.current_weight)) * baseline), 0);
+    this.validatePortfolioBalance(equityExposure + nonEquityExposure, baseline);
 
-    // Remove existing equity assets
-    await prisma.asset.deleteMany({
-      where: {
-        portfolio_id: id,
-        asset_type: {
-          in: ['EQUITY', 'Stock', 'STOCK', 'equities', 'EQUITIES', 'stock', 'stocks', 'STOCKS']
+    await prisma.$transaction(async transaction => {
+      await transaction.asset.deleteMany({
+        where: {
+          portfolio_id: id,
+          asset_type: {
+            in: ['EQUITY', 'Stock', 'STOCK', 'equities', 'EQUITIES', 'stock', 'stocks', 'STOCKS']
+          }
         }
+      });
+
+      if (holdings.length > 0) {
+        await transaction.asset.createMany({
+          data: holdings.map(holding => ({
+            portfolio_id: id,
+            ticker: holding.ticker.trim().toUpperCase(),
+            company: holding.company.trim(),
+            asset_type: 'EQUITY',
+            sector: holding.sector || 'General',
+            current_weight: holding.currentWeight / 100,
+            exposure_value: (holding.currentWeight / 100) * baseline,
+            sentiment: 0,
+            base_sentiment: 0
+          }))
+        })
       }
     });
-
-    // Create new equity assets with decimal current weight
-    if (holdings.length > 0) {
-      await prisma.asset.createMany({
-        data: holdings.map(h => {
-          const weightDecimal = h.currentWeight > 1.0 ? h.currentWeight / 100 : h.currentWeight;
-          return {
-            portfolio_id: id,
-            ticker: h.ticker.toUpperCase(),
-            company: h.company,
-            asset_type: 'EQUITY',
-            sector: h.sector || 'General',
-            current_weight: weightDecimal,
-            exposure_value: weightDecimal * baseline,
-            sentiment: 0.0,
-            base_sentiment: 0.0
-          };
-        })
-      });
-    }
 
     return this.getPortfolioById(id);
   }
@@ -234,33 +277,98 @@ export class PortfolioService {
     }));
   }
 
-  private async upsertNonEquityAsset(portfolioId: string, assetType: string, companyName: string, exposureValue: number, baseline: number) {
-    const existing = await prisma.asset.findFirst({
-      where: { portfolio_id: portfolioId, asset_type: assetType }
+  private isEquityAsset(assetType: string): boolean {
+    return ['EQUITY', 'EQUITIES', 'STOCK', 'STOCKS'].includes(assetType.toUpperCase());
+  }
+
+  private async reconcilePortfolio(id: string) {
+    return prisma.$transaction(async transaction => {
+      const portfolio = await transaction.portfolio.findUnique({
+        where: { id },
+        include: { assets: true }
+      });
+      if (!portfolio || portfolio.assets.length === 0) {
+        return portfolio;
+      }
+
+      const baseline = Number(portfolio.baseline_value);
+      if (!Number.isFinite(baseline) || baseline <= 0) {
+        return portfolio;
+      }
+
+      const assetExposures = portfolio.assets.map(asset => {
+        const weight = this.toWeightDecimal(Number(asset.current_weight));
+        const exposure = asset.exposure_value === null
+          ? weight * baseline
+          : Number(asset.exposure_value);
+        return { asset, exposure };
+      });
+      const totalExposure = assetExposures.reduce((total, item) => total + item.exposure, 0);
+
+      if (!Number.isFinite(totalExposure) || totalExposure <= 0 || Math.abs(totalExposure - baseline) <= 1) {
+        return portfolio;
+      }
+
+      for (const { asset, exposure } of assetExposures) {
+        const weight = exposure / totalExposure;
+        await transaction.asset.update({
+          where: { id: asset.id },
+          data: {
+            current_weight: weight,
+            exposure_value: weight * baseline
+          }
+        });
+      }
+
+      return transaction.portfolio.findUnique({
+        where: { id },
+        include: { assets: true }
+      });
     });
+  }
 
-    const weight = baseline > 0 ? exposureValue / baseline : 0;
+  private toWeightPercent(weight: number): number {
+    return weight <= 1 ? weight * 100 : weight;
+  }
 
-    if (existing) {
-      await prisma.asset.update({
-        where: { id: existing.id },
-        data: {
-          exposure_value: exposureValue,
-          current_weight: weight
-        }
-      });
-    } else {
-      await prisma.asset.create({
-        data: {
-          portfolio_id: portfolioId,
-          company: companyName,
-          asset_type: assetType,
-          current_weight: weight,
-          exposure_value: exposureValue,
-          sentiment: 0.0,
-          base_sentiment: 0.0
-        }
-      });
+  private toWeightDecimal(weight: number): number {
+    return weight > 1 ? weight / 100 : weight;
+  }
+
+  private validateEquityHoldings(holdings: EquityHoldingInput[]): void {
+    if (!Array.isArray(holdings) || holdings.some(holding =>
+      !holding || typeof holding.ticker !== 'string' || typeof holding.company !== 'string'
+    )) {
+      throw new PortfolioConfigurationError('Each equity holding must include a ticker and company name.');
+    }
+    const tickers = holdings.map(holding => holding.ticker.trim().toUpperCase());
+    if (tickers.some(ticker => !ticker)) {
+      throw new PortfolioConfigurationError('Every equity holding must have a ticker.');
+    }
+    if (holdings.some(holding => !holding.company.trim())) {
+      throw new PortfolioConfigurationError('Every equity holding must have a company name.');
+    }
+    if (new Set(tickers).size !== tickers.length) {
+      throw new PortfolioConfigurationError('Duplicate stock ticker detected in equity holdings.');
+    }
+
+    for (const holding of holdings) {
+      if (!Number.isFinite(holding.currentWeight) || holding.currentWeight < 0 || holding.currentWeight > 100) {
+        throw new PortfolioConfigurationError(`Holding weight for ${holding.ticker} must be between 0% and 100%.`);
+      }
+    }
+
+    const totalWeight = holdings.reduce((sum, holding) => sum + holding.currentWeight, 0);
+    if (totalWeight > 100.0001) {
+      throw new PortfolioConfigurationError(`Total equity holdings weight (${totalWeight.toFixed(2)}%) cannot exceed 100%.`);
+    }
+  }
+
+  private validatePortfolioBalance(totalExposure: number, baseline: number): void {
+    if (Math.abs(totalExposure - baseline) > 1) {
+      throw new PortfolioConfigurationError(
+        `Asset exposures total ₹${totalExposure.toFixed(1)} Cr but the configured baseline is ₹${baseline.toFixed(1)} Cr. Adjust holdings and asset-class exposures so they reconcile within ₹1 Cr.`
+      );
     }
   }
 
@@ -294,20 +402,20 @@ export class PortfolioService {
         sector: a.sector,
         currentWeight: parseFloat(currentPct.toFixed(2)),
         current_weight: parseFloat(currentPct.toFixed(2)),
-        exposureValue: a.exposure_value ? Number(a.exposure_value) : Number(a.current_weight) * baseline,
-        exposure_value: a.exposure_value ? Number(a.exposure_value) : Number(a.current_weight) * baseline,
+        exposureValue: a.exposure_value === null ? this.toWeightDecimal(Number(a.current_weight)) * baseline : Number(a.exposure_value),
+        exposure_value: a.exposure_value === null ? this.toWeightDecimal(Number(a.current_weight)) * baseline : Number(a.exposure_value),
         sentiment: Number(a.sentiment)
       };
     });
 
     const mappedHoldings = mappedAssets.filter((a: any) => isAssetType(a.asset_type, 'EQUITY'));
-    const loansExp = loansAsset?.exposure_value ? Number(loansAsset.exposure_value) : (loansAsset?.current_weight ? Number(loansAsset.current_weight) * baseline : 0);
-    const bondsExp = bondsAsset?.exposure_value ? Number(bondsAsset.exposure_value) : (bondsAsset?.current_weight ? Number(bondsAsset.current_weight) * baseline : 0);
-    const derivExp = derivativesAsset?.exposure_value ? Number(derivativesAsset.exposure_value) : (derivativesAsset?.current_weight ? Number(derivativesAsset.current_weight) * baseline : 0);
+    const loansExp = loansAsset ? Number(loansAsset.exposure_value ?? this.toWeightDecimal(Number(loansAsset.current_weight)) * baseline) : 0;
+    const bondsExp = bondsAsset ? Number(bondsAsset.exposure_value ?? this.toWeightDecimal(Number(bondsAsset.current_weight)) * baseline) : 0;
+    const derivExp = derivativesAsset ? Number(derivativesAsset.exposure_value ?? this.toWeightDecimal(Number(derivativesAsset.current_weight)) * baseline) : 0;
 
     const equityExp = equityAssets.reduce((sum: number, a: any) => {
       const weightDecimal = Number(a.current_weight) > 1.0 ? Number(a.current_weight) / 100 : Number(a.current_weight);
-      return sum + (a.exposure_value ? Number(a.exposure_value) : weightDecimal * baseline);
+      return sum + (a.exposure_value === null ? weightDecimal * baseline : Number(a.exposure_value));
     }, 0);
     const totalEquityWeight = equityAssets.reduce((sum: number, a: any) => {
       const w = Number(a.current_weight);

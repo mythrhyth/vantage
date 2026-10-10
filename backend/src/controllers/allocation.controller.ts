@@ -95,11 +95,18 @@ export class AllocationController {
         });
       }
 
+      const portfolio = await portfolioService.getPortfolioById(portfolio_id);
+      if (!portfolio) {
+        return res.status(404).json({ error: { message: 'Portfolio not found' } });
+      }
+      const equityBudget = portfolio.exposures.total_equity_weight;
+      const proposedTotal = simResult.proposed_weights.reduce((total, item) => total + item.proposedWeight, 0);
+
       // Update actual holdings in database
       const newHoldings = simResult.proposed_weights.map(item => ({
         ticker: item.ticker,
         company: item.company,
-        currentWeight: item.proposedWeight,
+        currentWeight: proposedTotal > 0 ? item.proposedWeight * equityBudget / proposedTotal : 0,
         sector: item.sector
       }));
 
@@ -121,4 +128,3 @@ export class AllocationController {
 }
 
 export const allocationController = new AllocationController();
-

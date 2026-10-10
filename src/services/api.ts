@@ -7,6 +7,20 @@ import type {
   StressTestRun 
 } from '../types';
 
+export interface IngestionSource {
+  id: string;
+  name: string;
+  domain: string;
+  sourceType: string;
+  adapterType: string;
+  feedUrl: string;
+  enabled: boolean;
+  fetchInterval: number;
+  maxItemsPerRun: number;
+}
+
+export type IngestionSourceInput = Omit<IngestionSource, 'id' | 'adapterType'>;
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -47,7 +61,13 @@ export const riskApi = {
     body: JSON.stringify({ window })
   }),
 
-  getSources: () => fetchApi<Array<{ id: string; name: string; enabled: boolean; type?: string }>>(`/ingestion/sources`),
+  getSources: () => fetchApi<IngestionSource[]>(`/ingestion/sources`),
+
+  createSource: (data: IngestionSourceInput) =>
+    fetchApi<IngestionSource>(`/ingestion/sources`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
 
   toggleSource: (id: string, enabled: boolean) =>
     fetchApi<{ id: string; enabled: boolean }>(`/ingestion/sources/${id}`, {
@@ -55,9 +75,9 @@ export const riskApi = {
       body: JSON.stringify({ enabled })
     }),
 
-  updateSource: (id: string, data: Record<string, unknown>) =>
-    fetchApi<Record<string, unknown>>(`/ingestion/sources/${id}`, {
-      method: 'PATCH',
+  updateSource: (id: string, data: Partial<IngestionSourceInput>) =>
+    fetchApi<IngestionSource>(`/ingestion/sources/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(data)
     }),
 
@@ -86,6 +106,12 @@ export const riskApi = {
     loansExposure?: number;
     bondsExposure?: number;
     derivativesExposure?: number;
+    holdings?: Array<{
+      ticker: string;
+      company: string;
+      currentWeight: number;
+      sector?: string;
+    }>;
   }) => fetchApi<Portfolio>(`/portfolios/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data)
@@ -103,7 +129,15 @@ export const riskApi = {
 
   getPortfolioAssets: (portfolioId: string) => fetchApi<AssetHolding[]>(`/portfolio/${portfolioId}/assets`),
 
-  getScenarios: () => fetchApi<Array<{ id: string; name: string; description?: string; parameters: StressTestParameters }>>(`/scenarios`),
+  getScenarios: () => fetchApi<Array<{
+    id: string;
+    name: string;
+    rate: number;
+    spread: number;
+    probability: number;
+    liquidity: number;
+    inflation: number;
+  }>>(`/scenarios`),
 
   getScenario: (id: string) => fetchApi<{ id: string; name: string; parameters: StressTestParameters }>(`/scenarios/${id}`),
 
@@ -154,4 +188,3 @@ export const riskApi = {
 
   getStressRun: (id: string) => fetchApi<StressTestRun>(`/stress-tests/${id}`)
 };
-

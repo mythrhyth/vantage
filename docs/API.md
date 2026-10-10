@@ -111,7 +111,7 @@ Submit custom financial news text for Phase 1D FinBERT sentiment analysis, Phase
 ## 2. Ingestion Endpoints
 
 ### `POST /api/ingest`
-Trigger a manual news ingestion cycle across configured RSS feeds (AP News, Reuters, Bloomberg, Fed, ECB, CNBC).
+Trigger a manual news ingestion cycle across configured RSS feeds.
 
 #### Response `200 OK`
 ```json
@@ -122,6 +122,36 @@ Trigger a manual news ingestion cycle across configured RSS feeds (AP News, Reut
   "timestamp": "2026-10-09T10:05:00.000Z"
 }
 ```
+
+### Ingestion source configuration
+
+The default RSS sources are inserted into the database only when their IDs are missing. Existing database settings remain authoritative, and sources created or updated through these endpoints are used by later ingestion cycles. The background worker respects each enabled source's fetch interval; a manual `POST /api/ingest` run fetches every enabled source immediately.
+
+#### `GET /api/ingestion/sources`
+List configured sources and their current enabled state, feed URL, interval, and per-run item limit.
+
+#### `POST /api/ingestion/sources`
+Add a database-backed RSS source.
+
+```json
+{
+  "name": "Example Financial News",
+  "domain": "https://example.com",
+  "sourceType": "Financial News",
+  "feedUrl": "https://example.com/rss",
+  "enabled": true,
+  "fetchInterval": 15,
+  "maxItemsPerRun": 20
+}
+```
+
+`name`, `domain`, `sourceType`, and `feedUrl` are required. URLs must use HTTP or HTTPS. `fetchInterval` defaults to 15 minutes; `maxItemsPerRun` defaults to 20 and must be between 1 and 100.
+
+#### `PUT /api/ingestion/sources/:id`
+Update any provided source fields from the create payload. Existing settings not included in the request are preserved.
+
+#### `PATCH /api/ingestion/sources/:id`
+Set the source's `enabled` state.
 
 ---
 
@@ -160,7 +190,7 @@ List active portfolios, baseline valuation, asset-class exposures, and holdings.
 ---
 
 ### `PUT /api/portfolios/:id`
-Update portfolio baseline valuation and non-equity asset class exposures.
+Update portfolio baseline valuation, asset-class exposures, and optionally its equity holdings as one atomic operation. The baseline remains authoritative; all constituent exposures must reconcile to it within ₹1 Cr or the request is rejected.
 
 #### Request Body
 ```json
@@ -168,9 +198,19 @@ Update portfolio baseline valuation and non-equity asset class exposures.
   "baselineValue": 3500.0,
   "loansExposure": 1750.0,
   "bondsExposure": 1050.0,
-  "derivativesExposure": 350.0
+  "derivativesExposure": 350.0,
+  "holdings": [
+    {
+      "ticker": "RELIANCE",
+      "company": "Reliance Industries Ltd",
+      "sector": "Energy",
+      "currentWeight": 10.0
+    }
+  ]
 }
 ```
+
+Equity weights are percentages of the configured baseline. The request is saved transactionally so the portfolio metadata and constituent assets cannot be left partially updated. Existing seeded portfolio data is preserved by subsequent seed runs. The `20261010125000_reconcile_portfolio_seed_exposures` migration reconciles legacy constituent exposure totals to their configured baseline while preserving their relative allocation.
 
 #### Response `200 OK`
 ```json

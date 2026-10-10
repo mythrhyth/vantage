@@ -1,28 +1,14 @@
 import React, { useState, useEffect } from "react"
-import { ScenarioName } from "../../types"
 import { Button } from "../common/Button"
 
-const PRESET_SCENARIO_CONFIGS: Record<string, { params: any; label: string }> = {
-  "Interest Rate Shock": {
-    params: { rate: 250, spread: 120, liquidity: 8, inflation: 150 },
-    label: "Interest Rate Shock"
-  },
-  "Credit Crisis": {
-    params: { rate: -50, spread: 350, liquidity: 20, inflation: 50 },
-    label: "Credit Crisis"
-  },
-  "Combined Macro Stress": {
-    params: { rate: 150, spread: 250, liquidity: 15, inflation: 200 },
-    label: "Combined Macro Stress"
-  },
-  "Equity Market Crash": {
-    params: { sp: 70, technology: 60, rates: 120, inflation: 120 },
-    label: "Equity Market Crash"
-  },
-  "Oil Shock": {
-    params: { oil: 140, dollar: 115, rates: 110, inflation: 130 },
-    label: "Oil Shock"
-  }
+interface ScenarioConfig {
+  id: string
+  name: string
+  rate: number
+  spread: number
+  probability: number
+  liquidity: number
+  inflation: number
 }
 
 interface ComparisonRow {
@@ -42,14 +28,11 @@ export function ScenarioComparisonDialog({
   baseline?: number
   onClose: () => void
 }) {
-  const [selectedScenarios, setSelectedScenarios] = useState<string[]>([
-    "Interest Rate Shock",
-    "Credit Crisis",
-    "Combined Macro Stress",
-    "Equity Market Crash"
-  ])
+  const [availableScenarios, setAvailableScenarios] = useState<ScenarioConfig[]>([])
+  const [selectedScenarios, setSelectedScenarios] = useState<string[]>([])
   const [results, setResults] = useState<Record<string, ComparisonRow>>({})
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
 
   useEffect(() => {
     const closeOnEscape = (input: KeyboardEvent) => {
@@ -60,6 +43,7 @@ export function ScenarioComparisonDialog({
   }, [onClose])
 
   const runComparisons = async () => {
+    if (availableScenarios.length === 0 || selectedScenarios.length === 0) return
     setLoading(true)
     try {
       const { riskApi } = await import("../../services/api")
@@ -77,11 +61,17 @@ export function ScenarioComparisonDialog({
 
       await Promise.all(
         selectedScenarios.map(async (name) => {
-          const config = PRESET_SCENARIO_CONFIGS[name]
+          const config = availableScenarios.find(scenario => scenario.name === name)
           if (!config) return
 
           try {
-            const res = await riskApi.runStressTest(targetId!, config.params, undefined, undefined, false, 'preset')
+            const res = await riskApi.runStressTest(targetId!, {
+              rate: config.rate,
+              spread: config.spread,
+              probability: config.probability,
+              liquidity: config.liquidity,
+              inflation: config.inflation
+            }, undefined, undefined, false, 'preset')
             const rawLoss = Number(res.absolute_loss) || 0
             const portBaseline = Number(res.baseline_value) || baseline || 1000
             const loss = isNaN(rawLoss) ? 0 : Math.max(0, rawLoss)
@@ -115,8 +105,32 @@ export function ScenarioComparisonDialog({
   }
 
   useEffect(() => {
+    let cancelled = false
+    import("../../services/api").then(({ riskApi }) => riskApi.getScenarios())
+      .then(scenarios => {
+        if (cancelled) return
+        if (scenarios.length === 0) {
+          setLoadError("No saved scenario configurations are available.")
+          setLoading(false)
+          return
+        }
+        setAvailableScenarios(scenarios)
+        setSelectedScenarios(scenarios.slice(0, Math.min(4, scenarios.length)).map(scenario => scenario.name))
+      })
+      .catch((error: Error) => {
+        if (!cancelled) {
+          setLoadError(`Failed to load saved scenarios: ${error.message}`)
+          setLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
     runComparisons()
-  }, [selectedScenarios, portfolioId])
+  }, [selectedScenarios, portfolioId, availableScenarios])
 
   const toggleScenario = (name: string) => {
     setSelectedScenarios((current) => {
@@ -163,7 +177,7 @@ export function ScenarioComparisonDialog({
         </div>
         <div className="explainability-body">
           <div className="scenario-choice-grid">
-            {Object.keys(PRESET_SCENARIO_CONFIGS).map((name) => (
+            {availableScenarios.map(({ name }) => (
               <Button
                 key={name}
                 variant="outline"
@@ -180,6 +194,10 @@ export function ScenarioComparisonDialog({
             {loading ? (
               <div className="empty-state" style={{ padding: "32px", textAlign: "center" }}>
                 <span>Calculating scenario comparisons against risk engine...</span>
+              </div>
+            ) : loadError ? (
+              <div role="alert" className="empty-state" style={{ padding: "32px", textAlign: "center" }}>
+                {loadError}
               </div>
             ) : (
               <div className="table-wrap">
@@ -230,4 +248,3 @@ export function ScenarioComparisonDialog({
     </div>
   )
 }
-

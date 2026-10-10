@@ -50,6 +50,7 @@ export function Scenarios({
 }) {
   const [backendResult, setBackendResult] = useState<any>(null)
   const [portfolioMeta, setPortfolioMeta] = useState<any>(null)
+  const [scenarioOptions, setScenarioOptions] = useState(defaultScenarioData)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -73,6 +74,43 @@ export function Scenarios({
   const [eventComparisonOpen, setEventComparisonOpen] = useState(false)
   const [riskInfoOpen, setRiskInfoOpen] = useState(false)
   const [selectedRunDetails, setSelectedRunDetails] = useState<StressTestHistoryEntry | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    import("../services/api").then(({ riskApi }) => {
+      riskApi.getScenarios().then(scenarios => {
+        if (cancelled) return
+        if (scenarios.length === 0) {
+          throw new Error("No scenario configurations are available.")
+        }
+        const persistedOptions = Object.fromEntries(scenarios.map(item => [
+          item.name,
+          {
+            rate: item.rate,
+            spread: item.spread,
+            probability: item.probability,
+            liquidity: item.liquidity,
+            inflation: item.inflation
+          }
+        ])) as Record<string, ScenarioControls>
+        setScenarioOptions(persistedOptions)
+        if (!stressRun) {
+          const selectedName = persistedOptions[scenario] ? scenario : scenarios[0].name
+          const selectedParameters = persistedOptions[selectedName]
+          setScenario(selectedName as ScenarioName)
+          setControls(selectedParameters)
+          setApplied(selectedParameters)
+        }
+      }).catch((error: Error) => {
+        if (!cancelled) setError(`Failed to load saved scenarios: ${error.message}`)
+      })
+    }).catch((error: Error) => {
+      if (!cancelled) setError(`Failed to load saved scenarios: ${error.message}`)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const runScenarioStressTest = async (
     paramControls = controls,
@@ -171,7 +209,11 @@ export function Scenarios({
 
   const changeScenario = (name: ScenarioName) => {
     setScenario(name)
-    const newParams = defaultScenarioData[name] || defaultScenarioData["Interest Rate Shock"]
+    const newParams = scenarioOptions[name] || scenarioOptions[Object.keys(scenarioOptions)[0]]
+    if (!newParams) {
+      setError("No saved scenario configurations are available.")
+      return
+    }
     setControls(newParams)
     runScenarioStressTest(newParams, name)
   }
@@ -641,7 +683,7 @@ export function Scenarios({
                     changeScenario(event.target.value as ScenarioName)
                   }
                 >
-                  {Object.keys(defaultScenarioData).map((name) => (
+                  {Object.keys(scenarioOptions).map((name) => (
                     <option key={name}>{name}</option>
                   ))}
                 </select>

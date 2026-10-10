@@ -11,14 +11,17 @@ export class IngestionService {
     return crypto.createHash('sha256').update(content.trim()).digest('hex');
   }
 
-  async runIngestion(window: string = 'LAST_24_HOURS'): Promise<{ success: boolean; stats: IngestionStats }> {
+  async runIngestion(
+    window: string = 'LAST_24_HOURS',
+    respectSourceIntervals = false
+  ): Promise<{ success: boolean; stats: IngestionStats }> {
     console.log(`[IngestionService] Starting multi-source ingestion cycle. Window: ${window}`);
     
     const settings = await prisma.ingestionSystemSettings.findFirst() || await prisma.ingestionSystemSettings.create({ data: { id: 'default' } });
     const timeWindow = (window || settings.freshness_window) as any;
     const similarityThreshold = settings.similarity_threshold;
 
-    const activePairs = await sourceAdapterManager.getActiveAdapters(timeWindow);
+    const activePairs = await sourceAdapterManager.getActiveAdapters(timeWindow, respectSourceIntervals);
 
     const stats: IngestionStats = {
       sourcesFetched: activePairs.length,

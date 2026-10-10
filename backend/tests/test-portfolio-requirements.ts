@@ -17,6 +17,13 @@ async function testPortfolioWorkflow() {
   const testPortId = portfolios[0].id;
   console.log(`✅ 1. Found active portfolio ID: ${testPortId}`);
 
+  const newHoldings = [
+    { ticker: 'AAPL', company: 'Apple Inc.', currentWeight: 4, sector: 'Technology' },
+    { ticker: 'MSFT', company: 'Microsoft Corp.', currentWeight: 3, sector: 'Technology' },
+    { ticker: 'GOOGL', company: 'Alphabet Inc.', currentWeight: 2, sector: 'Technology' },
+    { ticker: 'JPM', company: 'JPMorgan Chase & Co.', currentWeight: 1, sector: 'Financials' }
+  ];
+
   // 2. Fetch full portfolio details
   const initialPort = await portfolioService.getPortfolio(testPortId);
   console.log(`✅ 2. Loaded initial portfolio details:`, {
@@ -35,7 +42,8 @@ async function testPortfolioWorkflow() {
     indexUniverse: 'S&P 500',
     loansExposure: 1500,
     bondsExposure: 900,
-    derivativesExposure: 300
+    derivativesExposure: 300,
+    holdings: newHoldings
   });
 
   if (
@@ -89,17 +97,10 @@ async function testPortfolioWorkflow() {
 
   // 7. Test Valid Equity Holdings Save
   console.log('\n--- Testing Valid Equity Holdings Update ---');
-  const newHoldings = [
-    { ticker: 'AAPL', company: 'Apple Inc.', currentWeight: 10, sector: 'Technology' },
-    { ticker: 'MSFT', company: 'Microsoft Corp.', currentWeight: 8, sector: 'Technology' },
-    { ticker: 'GOOGL', company: 'Alphabet Inc.', currentWeight: 7, sector: 'Technology' },
-    { ticker: 'JPM', company: 'JPMorgan Chase & Co.', currentWeight: 5, sector: 'Financials' }
-  ];
-
   const savedPort = await portfolioService.updateHoldings(testPortId, newHoldings);
   const stockAssets = savedPort?.assets.filter(a => a.asset_type === 'Stock' || a.asset_type === 'EQUITY');
 
-  if (stockAssets?.length === 4 && savedPort?.exposures.total_equity_weight === 30) {
+  if (stockAssets?.length === 4 && savedPort?.exposures.total_equity_weight === 10) {
     console.log('✅ 7. Valid holdings saved and weight calculations match:', {
       stocksCount: stockAssets.length,
       totalEquityWeight: savedPort.exposures.total_equity_weight,
@@ -109,6 +110,18 @@ async function testPortfolioWorkflow() {
     console.error('❌ FAIL: Saved holdings mismatch:', stockAssets);
     process.exit(1);
   }
+
+  let imbalanceRejected = false;
+  try {
+    await portfolioService.updateHoldings(testPortId, [
+      ...newHoldings,
+      { ticker: 'TSLA', company: 'Tesla Inc.', currentWeight: 1, sector: 'Automotive' }
+    ]);
+  } catch (error) {
+    imbalanceRejected = error instanceof Error && error.message.includes('Asset exposures total');
+  }
+  assert(imbalanceRejected, 'Equity update must reject asset exposures that exceed the configured baseline');
+  console.log('✅ 7a. Rejection of unreconciled portfolio exposures verified');
 
   // 8. Re-verify database persistence directly from Prisma
   console.log('\n--- Testing DB Persistence ---');

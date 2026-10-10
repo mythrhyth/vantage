@@ -200,25 +200,30 @@ export function PortfolioSetupPage({
       return
     }
 
+    if (Math.abs(totalExposuresSum - totalValue) > 1) {
+      setStatusMsg({
+        type: "error",
+        text: `Total assets are ₹${totalExposuresSum.toFixed(1)} Cr, but the portfolio baseline is ₹${totalValue.toFixed(1)} Cr. Adjust exposures or equity weights so they reconcile within ₹1 Cr.`
+      })
+      return
+    }
+
     setSaving(true)
     try {
-      // 1. Update Portfolio master info & non-equity exposures
       await riskApi.updatePortfolio(portfolioId, {
         name: portfolioName,
         baselineValue: totalValue,
         indexUniverse,
         loansExposure,
         bondsExposure,
-        derivativesExposure
+        derivativesExposure,
+        holdings: holdings.map(h => ({
+          ticker: h.ticker,
+          company: h.company,
+          currentWeight: h.currentWeight,
+          sector: h.sector
+        }))
       })
-
-      // 2. Update Equity Holdings
-      await riskApi.updateHoldings(portfolioId, holdings.map(h => ({
-        ticker: h.ticker,
-        company: h.company,
-        currentWeight: h.currentWeight,
-        sector: h.sector
-      })))
 
       setStatusMsg({ type: "success", text: "Portfolio configuration and holdings updated successfully." })
       if (onSaveSuccess) onSaveSuccess()
@@ -344,7 +349,10 @@ export function PortfolioSetupPage({
 
           {/* Exposures Section */}
           <section className="data-section" style={{ marginBottom: "24px" }}>
-            <PanelTitle title="2. Asset Class Exposures" subtitle="Banking & fixed income positions (₹ Cr)" />
+            <PanelTitle
+              title="2. Asset Class Exposures"
+              subtitle={`Constituent assets: ₹${totalExposuresSum.toFixed(1)} Cr of ₹${totalValue.toFixed(1)} Cr baseline`}
+            />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", padding: "18px" }}>
               <label className="field-label" style={{ padding: 0 }}>
                 <span>Loans Exposure (₹ Cr)</span>

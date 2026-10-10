@@ -37,6 +37,17 @@ import { EventStressComparisonDialog } from "../components/stress-testing/EventS
 import { ScenarioComparisonDialog } from "../components/scenario-analysis/ScenarioComparisonDialog"
 
 import { PortfolioSetupPage } from "./PortfolioSetupPage"
+import { IngestionSourceInput, riskApi } from "../services/api"
+
+const emptySourceDraft: IngestionSourceInput = {
+  name: "",
+  domain: "",
+  sourceType: "Financial News",
+  feedUrl: "",
+  enabled: true,
+  fetchInterval: 15,
+  maxItemsPerRun: 20,
+}
 
 export function WorkspaceSettingsPage({
   dark,
@@ -56,45 +67,100 @@ export function WorkspaceSettingsPage({
   const [saved, setSaved] = useState(false)
 
   // Ingestion settings state
-  const [sources, setSources] = useState<any[]>([])
+  const [sources, setSources] = useState<Awaited<ReturnType<typeof riskApi.getSources>>>([])
+  const [sourceFormOpen, setSourceFormOpen] = useState(false)
+  const [editingSourceId, setEditingSourceId] = useState<string | null>(null)
+  const [sourceDraft, setSourceDraft] = useState<IngestionSourceInput>(emptySourceDraft)
+  const [sourceError, setSourceError] = useState("")
   const [freshnessWindow, setFreshnessWindow] = useState("LAST_24_HOURS")
   const [maxArticles, setMaxArticles] = useState(20)
   const [autoAnalyze, setAutoAnalyze] = useState(true)
   const [deduplicateSimilar, setDeduplicateSimilar] = useState(true)
 
   useEffect(() => {
-    import("../services/api").then(({ riskApi }) => {
-      riskApi.getSources().then(setSources).catch(console.error);
-      riskApi.getSettings().then(st => {
-        if (st) {
-          if (st.freshness_window) setFreshnessWindow(st.freshness_window);
-          if (st.max_items_per_source) setMaxArticles(st.max_items_per_source);
-          if (st.auto_analyze !== undefined) setAutoAnalyze(st.auto_analyze);
-          if (st.deduplicate_similar !== undefined) setDeduplicateSimilar(st.deduplicate_similar);
-        }
-      }).catch(console.error);
+    riskApi.getSources().then(setSources).catch((error: Error) => {
+      setSourceError(`Failed to load ingestion sources: ${error.message}`);
+    });
+    riskApi.getSettings().then(st => {
+      if (typeof st.freshness_window === "string") setFreshnessWindow(st.freshness_window);
+      if (typeof st.max_items_per_source === "number") setMaxArticles(st.max_items_per_source);
+      if (typeof st.auto_analyze === "boolean") setAutoAnalyze(st.auto_analyze);
+      if (typeof st.deduplicate_similar === "boolean") setDeduplicateSimilar(st.deduplicate_similar);
+    }).catch((error: Error) => {
+      setSourceError(`Failed to load ingestion settings: ${error.message}`);
     });
   }, []);
 
-  const handleToggleSource = (id: string, enabled: boolean) => {
-    setSources(prev => prev.map(s => s.id === id ? { ...s, enabled } : s));
-    import("../services/api").then(({ riskApi }) => {
-      riskApi.toggleSource(id, enabled).catch(console.error);
+  const handleToggleSource = async (id: string, enabled: boolean) => {
+    const originalEnabled = sources.find(source => source.id === id)?.enabled;
+    setSources(prev => prev.map(source => source.id === id ? { ...source, enabled } : source));
+    setSourceError("");
+    try {
+      await riskApi.toggleSource(id, enabled);
+    } catch (error) {
+      setSources(prev => prev.map(source =>
+        source.id === id ? { ...source, enabled: originalEnabled ?? source.enabled } : source
+      ));
+      setSourceError(`Failed to update source: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+
+  const openNewSourceForm = () => {
+    setSourceDraft(emptySourceDraft);
+    setEditingSourceId(null);
+    setSourceFormOpen(true);
+    setSourceError("");
+  };
+
+  const openEditSourceForm = (source: (typeof sources)[number]) => {
+    setSourceDraft({
+      name: source.name,
+      domain: source.domain,
+      sourceType: source.sourceType,
+      feedUrl: source.feedUrl,
+      enabled: source.enabled,
+      fetchInterval: source.fetchInterval,
+      maxItemsPerRun: source.maxItemsPerRun,
     });
+    setEditingSourceId(source.id);
+    setSourceFormOpen(true);
+    setSourceError("");
+  };
+
+  const closeSourceForm = () => {
+    setSourceFormOpen(false);
+    setEditingSourceId(null);
+    setSourceDraft(emptySourceDraft);
+    setSourceError("");
+  };
+
+  const handleSourceSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSourceError("");
+    try {
+      if (editingSourceId) {
+        const updated = await riskApi.updateSource(editingSourceId, sourceDraft);
+        setSources(prev => prev.map(source => source.id === updated.id ? updated : source));
+      } else {
+        const created = await riskApi.createSource(sourceDraft);
+        setSources(prev => [...prev, created]);
+      }
+      closeSourceForm();
+    } catch (error) {
+      setSourceError(`Failed to save source: ${error instanceof Error ? error.message : String(error)}`);
+    }
   };
 
   const handleSaveChanges = () => {
-    import("../services/api").then(({ riskApi }) => {
-      riskApi.updateSettings({
-        freshnessWindow,
-        maxItemsPerSource: maxArticles,
-        autoAnalyze,
-        deduplicateSimilar
-      }).then(() => {
-        setSaved(true);
-        window.setTimeout(() => setSaved(false), 2200);
-      }).catch(err => alert("Failed to save settings: " + err.message));
-    });
+    riskApi.updateSettings({
+      freshnessWindow,
+      maxItemsPerSource: maxArticles,
+      autoAnalyze,
+      deduplicateSimilar
+    }).then(() => {
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 2200);
+    }).catch(err => alert("Failed to save settings: " + err.message));
   };
 
   return (
@@ -186,22 +252,81 @@ export function WorkspaceSettingsPage({
           <section className="settings-page-section">
             <PanelTitle
               title="Trusted News Sources"
-              subtitle="Configure enabled news feeds and maximum items per source"
+              subtitle="Manage RSS feeds used directly by ingestion"
             />
             <div className="settings-content">
+              {sourceError && (
+                <div role="alert" style={{ color: "var(--negative)", padding: "10px 0" }}>{sourceError}</div>
+              )}
+              <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 0" }}>
+                <Button variant="outline" onClick={openNewSourceForm}>Add source</Button>
+              </div>
+              {sourceFormOpen && (
+                <form
+                  onSubmit={handleSourceSubmit}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+                    gap: "12px",
+                    padding: "14px",
+                    marginBottom: "14px",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  <label className="field-label">
+                    <span>Source name</span>
+                    <input required value={sourceDraft.name} onChange={event => setSourceDraft({ ...sourceDraft, name: event.target.value })} />
+                  </label>
+                  <label className="field-label">
+                    <span>Website URL</span>
+                    <input required type="url" value={sourceDraft.domain} onChange={event => setSourceDraft({ ...sourceDraft, domain: event.target.value })} />
+                  </label>
+                  <label className="field-label">
+                    <span>Source type</span>
+                    <input required value={sourceDraft.sourceType} onChange={event => setSourceDraft({ ...sourceDraft, sourceType: event.target.value })} />
+                  </label>
+                  <label className="field-label">
+                    <span>RSS feed URL</span>
+                    <input required type="url" value={sourceDraft.feedUrl} onChange={event => setSourceDraft({ ...sourceDraft, feedUrl: event.target.value })} />
+                  </label>
+                  <label className="field-label">
+                    <span>Fetch interval (minutes)</span>
+                    <input required type="number" min={1} step={1} value={sourceDraft.fetchInterval} onChange={event => setSourceDraft({ ...sourceDraft, fetchInterval: Number(event.target.value) })} />
+                  </label>
+                  <label className="field-label">
+                    <span>Maximum items per run</span>
+                    <input required type="number" min={1} max={100} step={1} value={sourceDraft.maxItemsPerRun} onChange={event => setSourceDraft({ ...sourceDraft, maxItemsPerRun: Number(event.target.value) })} />
+                  </label>
+                  <label className="settings-row" style={{ gridColumn: "1 / -1" }}>
+                    <span><b>Enabled</b></span>
+                    <input type="checkbox" checked={sourceDraft.enabled} onChange={event => setSourceDraft({ ...sourceDraft, enabled: event.target.checked })} />
+                  </label>
+                  <div style={{ display: "flex", gap: "8px", gridColumn: "1 / -1" }}>
+                    <button className="button button-primary" type="submit">
+                      {editingSourceId ? "Save source" : "Add source"}
+                    </button>
+                    <Button variant="secondary" onClick={closeSourceForm}>Cancel</Button>
+                  </div>
+                </form>
+              )}
               <div className="sources-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {sources.map((src) => (
                   <div key={src.id} className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span>
                       <b>{src.name}</b>
-                      <small style={{ display: 'block', color: 'var(--text-muted, #888)' }}>{src.domain} · {src.sourceType}</small>
+                      <small style={{ display: 'block', color: 'var(--text-muted, #888)' }}>{src.domain} · {src.sourceType} · max {src.maxItemsPerRun}/run</small>
                     </span>
-                    <button
-                      className={`switch ${src.enabled ? "active" : ""}`}
-                      onClick={() => handleToggleSource(src.id, !src.enabled)}
-                    >
-                      <i />
-                    </button>
+                    <span style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <Button variant="text" onClick={() => openEditSourceForm(src)}>Edit</Button>
+                      <button
+                        className={`switch ${src.enabled ? "active" : ""}`}
+                        aria-label={`${src.enabled ? "Disable" : "Enable"} ${src.name}`}
+                        aria-pressed={src.enabled}
+                        onClick={() => handleToggleSource(src.id, !src.enabled)}
+                      >
+                        <i />
+                      </button>
+                    </span>
                   </div>
                 ))}
               </div>
