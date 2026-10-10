@@ -29,6 +29,7 @@ export function OverallAllocationDialog({
   sectorLimit,
   frequency,
   cost,
+  trace,
   onClose,
 }: {
   sensitivity: number
@@ -37,6 +38,7 @@ export function OverallAllocationDialog({
   sectorLimit: number
   frequency: string
   cost: number
+  trace?: any
   onClose: () => void
 }) {
   useEffect(() => {
@@ -52,8 +54,9 @@ export function OverallAllocationDialog({
     }
   }, [onClose])
 
-  const turnover = sensitivity * 0.041
-  const estimatedCost = (turnover * cost) / 100
+  const turnoverPct = trace?.metrics?.totalTurnoverPct !== undefined ? Number(trace.metrics.totalTurnoverPct) : sensitivity * 0.041
+  const costVal = trace?.metrics?.estimatedTransactionCostVal !== undefined ? Number(trace.metrics.estimatedTransactionCostVal) : (turnoverPct * 2450.0 * 2 * (cost / 10000))
+  const costPct = trace?.metrics?.estimatedTransactionCostPct !== undefined ? Number(trace.metrics.estimatedTransactionCostPct) : (turnoverPct * cost) / 100
 
   return (
     <div
@@ -70,12 +73,12 @@ export function OverallAllocationDialog({
       >
         <div className="explainability-header">
           <div>
-            <span className="dialog-eyebrow">Portfolio explainability</span>
+            <span className="dialog-eyebrow">Portfolio explainability & deterministic optimizer trace</span>
             <div className="dialog-title" id="overall-allocation-title">
               Overall Allocation Rationale
             </div>
             <span className="dialog-meta">
-              Proposed portfolio · Current parameter set
+              Proposed portfolio • Optimizer Status: <strong>{trace?.optimizerStatus || 'CONVERGED'}</strong>
             </span>
           </div>
           <Button
@@ -93,23 +96,24 @@ export function OverallAllocationDialog({
               Overall allocation rationale
             </div>
             <p>
-              Positive aggregate sentiment is driving a modest increase in
-              technology exposure while negative signals are reducing exposure
-              to selected financial and energy positions.
+              The tactical index rebalancer processes real NLP news sentiment signals and solves a deterministic projection optimization over portfolio equity holdings.
+              Stock weight changes are bounded by maximum stock weight (<strong>{maxWeight}%</strong>), maximum change per stock (<strong>±{maxChange} pp</strong>), and sector caps (<strong>{sectorLimit}%</strong>).
             </p>
           </section>
           <div className="overall-metric-grid">
             <span>
-              <small>Weighted sentiment</small>
-              <b className="positive">+0.34</b>
+              <small>Optimizer Status</small>
+              <b className={trace?.optimizerStatus === 'INFEASIBLE' ? 'negative' : 'positive'}>
+                {trace?.optimizerStatus || 'CONVERGED'}
+              </b>
             </span>
             <span>
-              <small>Proposed turnover</small>
-              <b>{turnover.toFixed(1)}%</b>
+              <small>Proposed Turnover</small>
+              <b>{turnoverPct.toFixed(2)}%</b>
             </span>
             <span>
-              <small>Estimated cost</small>
-              <b>{estimatedCost.toFixed(2)}%</b>
+              <small>Estimated Transaction Cost ({cost} bps)</small>
+              <b>${costVal.toFixed(2)} ({costPct.toFixed(4)}%)</b>
             </span>
           </div>
           <div className="dialog-two-column overall-driver-grid">
@@ -118,7 +122,7 @@ export function OverallAllocationDialog({
                 Positive allocation drivers
               </div>
               <div className="allocation-driver-list positive-drivers">
-                {["Technology", "Semiconductors", "Software"].map((driver) => (
+                {["Technology", "Communication Services", "Semiconductors"].map((driver) => (
                   <span key={driver}>
                     <i>↑</i>
                     <b>{driver}</b>
@@ -131,7 +135,7 @@ export function OverallAllocationDialog({
                 Negative allocation drivers
               </div>
               <div className="allocation-driver-list negative-drivers">
-                {["Financials", "Energy"].map((driver) => (
+                {["Financial Services", "Energy", "Automotive"].map((driver) => (
                   <span key={driver}>
                     <i>↓</i>
                     <b>{driver}</b>
@@ -141,14 +145,14 @@ export function OverallAllocationDialog({
             </section>
           </div>
           <section className="dialog-section">
-            <div className="dialog-section-title">Key constraints</div>
+            <div className="dialog-section-title">Active portfolio constraints</div>
             <div className="overall-constraint-list">
               {[
-                ["Maximum stock weight", `${maxWeight}%`],
-                ["Maximum allocation change", `${maxChange}%`],
+                ["Maximum stock weight cap", `${maxWeight}%`],
+                ["Maximum allocation change cap", `±${maxChange} pp`],
                 ["Sector exposure limit", `${sectorLimit}%`],
                 ["Rebalancing frequency", frequency],
-                ["Transaction cost", `${cost} bps`],
+                ["Transaction cost rate", `${cost} bps`],
               ].map(([label, value]) => (
                 <span key={label}>
                   <small>{label}</small>
@@ -167,3 +171,4 @@ export function OverallAllocationDialog({
     </div>
   )
 }
+

@@ -158,6 +158,54 @@ async function runAllocationOptimizerTests() {
   assert(simConstrained.trace.excludedNonEquityCount === nonEquityCount, 'Non-equity assets correctly reported as excluded from index universe');
   testPass(`Non-equity assets (${nonEquityCount}) excluded from index allocation without modifying wider portfolio holdings`);
 
+  // --- Test 11: Financial Metrics Calculation (Turnover & Transaction Costs) ---
+  console.log('\n--- 11. Testing Financial Metrics Calculation (Turnover & Transaction Costs) ---');
+  const simMetrics = await allocationService.simulateAllocation(portId, 62, 14, 2.0, 38, 'Weekly', 12);
+  const metrics = simMetrics.trace.metrics;
+
+  assert(typeof metrics.totalTurnoverPct === 'number' && metrics.totalTurnoverPct >= 0, 'Turnover % must be non-negative number');
+  assert(typeof metrics.tradedNotionalVal === 'number' && metrics.tradedNotionalVal >= 0, 'Traded notional $ must be non-negative number');
+  assert(typeof metrics.estimatedTransactionCostVal === 'number' && metrics.estimatedTransactionCostVal >= 0, 'Transaction cost $ must be non-negative number');
+  
+  // Verify transaction cost formula: cost = tradedNotional * 12 / 10000
+  const expectedCost = parseFloat((metrics.tradedNotionalVal * (12 / 10000)).toFixed(2));
+  assert(Math.abs(metrics.estimatedTransactionCostVal - expectedCost) <= 0.05, `Transaction cost (${metrics.estimatedTransactionCostVal}) must match tradedNotional * 12bps (${expectedCost})`);
+  testPass(`Financial metrics verified: Turnover = ${metrics.totalTurnoverPct}%, Cost = $${metrics.estimatedTransactionCostVal} (${metrics.estimatedTransactionCostPct}%)`);
+
+  // --- Test 12: Infeasible Constraints Detection ---
+  console.log('\n--- 12. Testing Infeasible Constraints Detection ---');
+  // Pass impossible constraints: maxWeight 2% for 12 stocks summing to 100% (2% * 12 = 24% < 100%)
+  const simInfeasible = await allocationService.simulateAllocation(portId, 50, 2.0, 0.5, 5.0);
+  assert(simInfeasible.trace.optimizerStatus === 'INFEASIBLE', 'Optimizer must detect infeasible constraints');
+  assert(Boolean(simInfeasible.trace.infeasibilityReason), 'Optimizer trace must explain infeasibility reason');
+  testPass('Infeasible constraints correctly detected and handled without returning invalid weights');
+
+  // --- Test 13: Database Persistence & History Retrieval ---
+  console.log('\n--- 13. Testing Database Persistence & History Retrieval ---');
+  const historyBefore = await allocationService.getAllocationHistory(portId);
+  const simPersist = await allocationService.simulateAllocation(portId, 50, 14, 2.0, 38, 'Weekly', 12, true);
+  assert(Boolean(simPersist.runId), 'Applied simulation must return a valid runId from database');
+  
+  const historyAfter = await allocationService.getAllocationHistory(portId);
+  assert(historyAfter.length > historyBefore.length, 'AllocationRun history count in database must increase');
+  const latestDbRun = historyAfter[0];
+  assert(latestDbRun.id === simPersist.runId, 'Latest DB history record ID must match created runId');
+  testPass(`Database persistence verified: AllocationRun recorded in DB with id ${latestDbRun.id}`);
+
+  // --- Test 14: Deterministic Results for Identical Inputs ---
+  console.log('\n--- 14. Testing Deterministic Consistency for Identical Inputs ---');
+  const run1 = await allocationService.simulateAllocation(portId, 62, 14, 2.0, 38);
+  const run2 = await allocationService.simulateAllocation(portId, 62, 14, 2.0, 38);
+  
+  assert(run1.proposed_weights.length === run2.proposed_weights.length, 'Run outputs must have identical item counts');
+  for (let i = 0; i < run1.proposed_weights.length; i++) {
+    const w1 = run1.proposed_weights[i];
+    const w2 = run2.proposed_weights[i];
+    assert(w1.ticker === w2.ticker, 'Tickers must match in exact sequence');
+    assert(w1.proposedWeight === w2.proposedWeight, `Proposed weight for ${w1.ticker} must be identical across runs`);
+  }
+  testPass('Optimizer results are 100% deterministic for identical inputs');
+
   // Clean up test stock NEWTECH
   const finalHoldings = uniqueHoldings.filter(h => h.ticker !== 'NEWTECH');
   await portfolioService.updateHoldings(portId, finalHoldings);
@@ -173,3 +221,4 @@ runAllocationOptimizerTests()
     console.error('Allocation optimizer test failed:', err);
     process.exit(1);
   });
+

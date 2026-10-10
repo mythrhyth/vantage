@@ -15,6 +15,7 @@ model Portfolio {
   created_at     DateTime        @default(now())
   assets         Asset[]
   stress_runs    StressTestRun[]
+  allocation_runs AllocationRun[]
 
   @@map("portfolios")
 }
@@ -153,4 +154,26 @@ model IngestionSystemSettings {
 
   @@map("ingestion_system_settings")
 }
+
+model AllocationRun {
+  id                   String    @id @default(uuid()) @db.Uuid
+  portfolio_id         String    @db.Uuid
+  portfolio            Portfolio @relation(fields: [portfolio_id], references: [id], onDelete: Cascade)
+  timestamp            DateTime  @default(now())
+  sensitivity          Decimal
+  max_weight           Decimal
+  max_change           Decimal
+  sector_limit         Decimal
+  frequency            String    @default("Weekly")
+  transaction_cost_bps Decimal   @default(12)
+  turnover             Decimal
+  transaction_cost_val Decimal
+  is_simulated         Boolean   @default(true)
+  is_applied           Boolean   @default(false)
+  trace_summary        Json
+  items                Json
+
+  @@map("allocation_runs")
+}
+
 

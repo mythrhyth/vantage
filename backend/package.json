@@ -10,7 +10,11 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "ingest": "tsx src/ingestion/ingest-once.ts",
-    "ingest:worker": "tsx src/ingestion/worker.ts"
+    "ingest:worker": "tsx src/ingestion/worker.ts",
+    "seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",

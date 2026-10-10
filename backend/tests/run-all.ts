@@ -49,6 +49,8 @@ async function runAllTests() {
     await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-deterministic-e2e.ts']);
     await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-stress-testing-reconciliation.ts']);
     await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-overview-landing-integration.ts']);
+    await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-allocation-optimizer.ts']);
+    await runScript('npx.cmd', ['tsx', '-r', 'dotenv/config', 'tests/test-portfolio-holdings-integration.ts']);
     
     console.log('\n--- ALL BACKEND TESTS PASSED ---');
   } catch (err: any) {

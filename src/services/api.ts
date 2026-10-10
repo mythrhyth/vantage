@@ -107,10 +107,35 @@ export const riskApi = {
 
   getScenario: (id: string) => fetchApi<{ id: string; name: string; parameters: StressTestParameters }>(`/scenarios/${id}`),
 
-  simulateAllocation: (portfolioId: string, sensitivity: number, maxWeight: number, maxChange: number, sectorLimit?: number) => 
-    fetchApi<{ proposed_weights: ProposedWeight[] }>(`/allocations/simulate`, {
+  simulateAllocation: (portfolioId: string, sensitivity: number, maxWeight: number, maxChange: number, sectorLimit?: number, frequency?: string, transactionCostBps?: number) => 
+    fetchApi<{ runId?: string; proposed_weights: ProposedWeight[]; proposedWeights: ProposedWeight[]; trace: any; isSimulated: boolean; isApplied: boolean }>(`/allocations/simulate`, {
       method: 'POST',
-      body: JSON.stringify({ portfolio_id: portfolioId, sensitivity, maxWeight, maxChange, sectorLimit })
+      body: JSON.stringify({ portfolio_id: portfolioId, sensitivity, maxWeight, maxChange, sectorLimit, frequency, transactionCostBps })
+    }),
+
+  getAllocationHistory: (portfolioId: string, limit: number = 20) =>
+    fetchApi<Array<{
+      id: string;
+      portfolioId: string;
+      timestamp: string;
+      sensitivity: number;
+      maxWeight: number;
+      maxChange: number;
+      sectorLimit: number;
+      frequency: string;
+      transactionCostBps: number;
+      turnover: number;
+      transactionCostVal: number;
+      isSimulated: boolean;
+      isApplied: boolean;
+      traceSummary: any;
+      items: any[];
+    }>>(`/allocations/history?portfolio_id=${encodeURIComponent(portfolioId)}&limit=${limit}`),
+
+  applyAllocation: (portfolioId: string, sensitivity: number, maxWeight: number, maxChange: number, sectorLimit?: number, frequency?: string, transactionCostBps?: number) =>
+    fetchApi<{ success: boolean; message: string; runId?: string; result: any }>(`/allocations/apply`, {
+      method: 'POST',
+      body: JSON.stringify({ portfolio_id: portfolioId, sensitivity, maxWeight, maxChange, sectorLimit, frequency, transactionCostBps })
     }),
 
   generateParameters: (eventId: string, scenarioId: string) =>

@@ -3,6 +3,7 @@ import { prisma } from '../../db';
 export class PortfolioService {
   async getPortfolios() {
     const portfolios = await prisma.portfolio.findMany({
+      orderBy: { created_at: 'asc' },
       include: { assets: true }
     });
     
@@ -203,36 +204,14 @@ export class PortfolioService {
   }
 
   async getPortfolioAssets(portfolioId: string) {
-    let assets = await prisma.asset.findMany({
+    const portfolio = await prisma.portfolio.findUnique({ where: { id: portfolioId } });
+    if (!portfolio) {
+      throw new Error('Portfolio not found');
+    }
+
+    const assets = await prisma.asset.findMany({
       where: { portfolio_id: portfolioId }
     });
-
-    if (assets.length === 0) {
-      const portfolio = await prisma.portfolio.findUnique({ where: { id: portfolioId } });
-      if (portfolio) {
-        const baseline = Number(portfolio.baseline_value) || 2450.0;
-        await prisma.asset.createMany({
-          data: [
-            { portfolio_id: portfolioId, ticker: 'AAPL', company: 'Apple Inc.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.06, exposure_value: 0.06 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'MSFT', company: 'Microsoft Corp.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.055, exposure_value: 0.055 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'GOOGL', company: 'Alphabet Inc.', asset_type: 'EQUITY', sector: 'Communication Services', current_weight: 0.045, exposure_value: 0.045 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'AMZN', company: 'Amazon.com Inc.', asset_type: 'EQUITY', sector: 'Consumer Staples', current_weight: 0.04, exposure_value: 0.04 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'NVDA', company: 'NVIDIA Corp.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.04, exposure_value: 0.04 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'JPM', company: 'JPMorgan Chase & Co.', asset_type: 'EQUITY', sector: 'Financial Services', current_weight: 0.035, exposure_value: 0.035 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'META', company: 'Meta Platforms Inc.', asset_type: 'EQUITY', sector: 'Communication Services', current_weight: 0.03, exposure_value: 0.03 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'TSLA', company: 'Tesla Inc.', asset_type: 'EQUITY', sector: 'Automotive', current_weight: 0.025, exposure_value: 0.025 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'RELIANCE', company: 'Reliance Industries Ltd', asset_type: 'EQUITY', sector: 'Energy', current_weight: 0.03, exposure_value: 0.03 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'TCS', company: 'Tata Consultancy Services', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.025, exposure_value: 0.025 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'HDFCBANK', company: 'HDFC Bank Ltd', asset_type: 'EQUITY', sector: 'Financial Services', current_weight: 0.025, exposure_value: 0.025 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'INFYS', company: 'Infosys Ltd', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.02, exposure_value: 0.02 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: null, company: 'Corporate Loans Portfolio', asset_type: 'LOANS', sector: 'Banking & Credit', current_weight: 0.30, exposure_value: 0.30 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: null, company: 'Sovereign & Corporate Bonds', asset_type: 'BONDS', sector: 'Fixed Income', current_weight: 0.17, exposure_value: 0.17 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: null, company: 'Interest Rate Derivatives', asset_type: 'DERIVATIVES', sector: 'Hedging', current_weight: 0.10, exposure_value: 0.10 * baseline, sentiment: 0.0, base_sentiment: 0.0 }
-          ]
-        });
-        assets = await prisma.asset.findMany({ where: { portfolio_id: portfolioId } });
-      }
-    }
 
     return Promise.all(assets.map(async a => {
       const nlpSentiment = await this.getAssetNlpSentiment(a.ticker, a.company, a.sector);

@@ -28,6 +28,9 @@ export class PortfolioController {
       const updated = await portfolioService.updatePortfolio(req.params.id, req.body);
       res.json(updated);
     } catch (e: any) {
+      if (e.message === 'Portfolio not found') {
+        return res.status(404).json({ error: { message: 'Portfolio not found' } });
+      }
       res.status(500).json({ error: { message: e.message } });
     }
   }
@@ -41,6 +44,9 @@ export class PortfolioController {
       const updated = await portfolioService.updateHoldings(req.params.id, holdings);
       res.json(updated);
     } catch (e: any) {
+      if (e.message === 'Portfolio not found') {
+        return res.status(404).json({ error: { message: 'Portfolio not found' } });
+      }
       res.status(500).json({ error: { message: e.message } });
     }
   }
@@ -50,6 +56,9 @@ export class PortfolioController {
       const assets = await portfolioService.getPortfolioAssets(req.params.id);
       res.json(assets);
     } catch (e: any) {
+      if (e.message === 'Portfolio not found') {
+        return res.status(404).json({ error: { message: 'Portfolio not found' } });
+      }
       res.status(500).json({ error: { message: e.message } });
     }
   }

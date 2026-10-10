@@ -151,10 +151,38 @@ export function generateHistorySeries(techWeight: number, finWeight: number, sen
   })
 }
 
+export interface HistoricalRunRecord {
+  id: string
+  timestamp: string
+  sensitivity: number
+  maxWeight: number
+  maxChange: number
+  sectorLimit: number;
+  frequency: string
+  transactionCostBps: number
+  turnover: number
+  transactionCostVal: number
+  isSimulated: boolean
+  isApplied: boolean
+  items: any[]
+}
+
+export interface AllocationHistoryProps {
+  portfolioId?: string | null
+  sensitivity?: number
+  assets?: Asset[]
+  proposed?: number[] | Record<string, any>
+  historyRuns?: HistoricalRunRecord[]
+  isLoading?: boolean
+  isError?: boolean
+}
+
 export function AllocationHistory({
+  portfolioId,
   sensitivity = 50,
   assets = [],
   proposed = [],
+  historyRuns = [],
   isLoading = false,
   isError = false,
 }: AllocationHistoryProps) {
@@ -162,7 +190,6 @@ export function AllocationHistory({
   const [containerWidth, setContainerWidth] = useState<number>(800)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Track container width for responsive tick density and layout
   useEffect(() => {
     if (!containerRef.current) return
     const el = containerRef.current
@@ -177,75 +204,124 @@ export function AllocationHistory({
     return () => observer.disconnect()
   }, [])
 
-  // Compute aggregate weights for Technology and Financials
-  const { techWeight, finWeight } = useMemo(
-    () => computeAggregateWeights(assets, proposed),
-    [assets, proposed]
-  )
+  // Process historical series from real DB runs if available
+  const historyData = useMemo(() => {
+    if (historyRuns && historyRuns.length > 0) {
+      // Sort chronologically ascending
+      const sorted = [...historyRuns].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+      return sorted.map((run, i) => {
+        const dateObj = new Date(run.timestamp)
+        const timeStr = `${dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" })} ${dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}`
 
-  // Construct 12-month historical series
-  const historyData = useMemo(
-    () => generateHistorySeries(techWeight, finWeight, sensitivity),
-    [techWeight, finWeight, sensitivity]
-  )
+        let techSum = 0
+        let finSum = 0
+        const items = Array.isArray(run.items) ? run.items : []
+        items.forEach((item: any) => {
+          const sec = (item.sector || "").toLowerCase()
+          const w = Number(item.proposedWeight ?? item.proposed_weight ?? item.currentWeight ?? 0)
+          if (sec.includes("tech")) techSum += w
+          if (sec.includes("finan") || sec.includes("bank")) finSum += w
+        })
+
+        const techVal = parseFloat(techSum.toFixed(2))
+        const finVal = parseFloat(finSum.toFixed(2))
+        const prevRun = i > 0 ? sorted[i - 1] : null
+
+        let prevTech = techVal
+        let prevFin = finVal
+        if (prevRun) {
+          let pTech = 0
+          let pFin = 0
+          const pItems = Array.isArray(prevRun.items) ? prevRun.items : []
+          pItems.forEach((item: any) => {
+            const sec = (item.sector || "").toLowerCase()
+            const w = Number(item.proposedWeight ?? item.proposed_weight ?? item.currentWeight ?? 0)
+            if (sec.includes("tech")) pTech += w
+            if (sec.includes("finan") || sec.includes("bank")) pFin += w
+          })
+          prevTech = pTech
+          prevFin = pFin
+        }
+
+        return {
+          id: run.id,
+          month: timeStr,
+          tech: techVal,
+          fin: finVal,
+          techMom: i > 0 ? parseFloat((techVal - prevTech).toFixed(2)) : 0,
+          finMom: i > 0 ? parseFloat((finVal - prevFin).toFixed(2)) : 0,
+          turnover: Number(run.turnover || 0),
+          costVal: Number(run.transactionCostVal || 0),
+          isApplied: run.isApplied,
+          isSimulated: run.isSimulated,
+          isLatest: i === sorted.length - 1
+        }
+      })
+    }
+
+    // Fallback if no runs persisted yet: compute baseline point from current assets
+    const { techWeight, finWeight } = computeAggregateWeights(assets, proposed)
+    return [
+      {
+        id: 'current',
+        month: 'Current Baseline',
+        tech: techWeight,
+        fin: finWeight,
+        techMom: 0,
+        finMom: 0,
+        turnover: 0,
+        costVal: 0,
+        isApplied: true,
+        isSimulated: false,
+        isLatest: true
+      }
+    ]
+  }, [historyRuns, assets, proposed])
 
   const latest = historyData[historyData.length - 1]
   const initial = historyData[0]
-  const tech12mChange = parseFloat((latest.tech - initial.tech).toFixed(2))
-  const fin12mChange = parseFloat((latest.fin - initial.fin).toFixed(2))
+  const techChange = parseFloat((latest.tech - initial.tech).toFixed(2))
+  const finChange = parseFloat((latest.fin - initial.fin).toFixed(2))
 
-  // Y-axis bounds & dynamic ticks
   const { maxY, yTicks } = useMemo(() => {
     let max = 0
     historyData.forEach((d) => {
       if (d.tech > max) max = d.tech
       if (d.fin > max) max = d.fin
     })
-    const ceiling = Math.max(25, Math.ceil((max + 3) / 5) * 5)
+    const ceiling = Math.max(25, Math.ceil((max + 5) / 5) * 5)
     const step = ceiling / 5
-    const ticks = [
-      ceiling,
-      ceiling - step,
-      ceiling - 2 * step,
-      ceiling - 3 * step,
-      ceiling - 4 * step,
-      0,
-    ]
+    const ticks = [ceiling, ceiling - step, ceiling - 2 * step, ceiling - 3 * step, ceiling - 4 * step, 0]
     return { maxY: ceiling, yTicks: ticks }
   }, [historyData])
 
-  // SVG dimensions & scales
   const svgWidth = 800
   const svgHeight = 220
-  const plotLeft = 45
-  const plotRight = 775
+  const plotLeft = 55
+  const plotRight = 765
   const plotTop = 20
   const plotBottom = 180
   const plotWidth = plotRight - plotLeft
   const plotHeight = plotBottom - plotTop
 
-  const getX = (i: number) => plotLeft + i * (plotWidth / 11)
+  const getX = (i: number) => {
+    if (historyData.length === 1) return (plotLeft + plotRight) / 2
+    return plotLeft + i * (plotWidth / (historyData.length - 1))
+  }
   const getY = (val: number) => plotBottom - (val / maxY) * plotHeight
 
-  const techPoints = historyData.map((d, i) => ({
-    x: getX(i),
-    y: getY(d.tech),
-  }))
-  const finPoints = historyData.map((d, i) => ({
-    x: getX(i),
-    y: getY(d.fin),
-  }))
+  const techPoints = historyData.map((d, i) => ({ x: getX(i), y: getY(d.tech) }))
+  const finPoints = historyData.map((d, i) => ({ x: getX(i), y: getY(d.fin) }))
 
   const getSmoothPath = (pts: { x: number; y: number }[]) => {
     if (pts.length === 0) return ""
+    if (pts.length === 1) return `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`
     let path = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`
     for (let i = 0; i < pts.length - 1; i++) {
       const cur = pts[i]
       const nxt = pts[i + 1]
       const cX = (cur.x + nxt.x) / 2
-      path += ` C ${cX.toFixed(1)} ${cur.y.toFixed(1)}, ${cX.toFixed(
-        1
-      )} ${nxt.y.toFixed(1)}, ${nxt.x.toFixed(1)} ${nxt.y.toFixed(1)}`
+      path += ` C ${cX.toFixed(1)} ${cur.y.toFixed(1)}, ${cX.toFixed(1)} ${nxt.y.toFixed(1)}, ${nxt.x.toFixed(1)} ${nxt.y.toFixed(1)}`
     }
     return path
   }
@@ -253,26 +329,20 @@ export function AllocationHistory({
   const techPath = getSmoothPath(techPoints)
   const finPath = getSmoothPath(finPoints)
 
-  const activeIndex = hoverIndex !== null ? hoverIndex : 11
-  const activePoint = historyData[activeIndex]
+  const activeIndex = hoverIndex !== null ? hoverIndex : historyData.length - 1
+  const activePoint = historyData[activeIndex] || latest
   const activeX = getX(activeIndex)
-
-  // Visible x-axis ticks based on container width
-  const visibleTickIndices = useMemo(
-    () => getResponsiveTickIndices(containerWidth, historyData.length),
-    [containerWidth, historyData.length]
-  )
 
   if (isLoading) {
     return (
       <section className="line-chart-panel">
         <PanelTitle
           title="Historical allocation trend"
-          subtitle="12 months · Simulated baseline"
+          subtitle="Persisted rebalancing runs from database"
         />
         <div className="trend-chart-skeleton">
           <div className="skeleton-line" />
-          <span>Loading historical allocation trend...</span>
+          <span>Loading historical allocation runs...</span>
         </div>
       </section>
     )
@@ -283,20 +353,22 @@ export function AllocationHistory({
       <section className="line-chart-panel">
         <PanelTitle
           title="Historical allocation trend"
-          subtitle="12 months · Simulated baseline"
+          subtitle="Persisted rebalancing runs from database"
         />
         <div className="trend-chart-error">
-          <span>Unable to load historical allocation trend</span>
+          <span>Unable to retrieve historical allocation runs</span>
         </div>
       </section>
     )
   }
 
+  const isSinglePoint = historyData.length === 1
+
   return (
     <section className="line-chart-panel" ref={containerRef}>
       <PanelTitle
         title="Historical allocation trend"
-        subtitle="12 months · Simulated baseline"
+        subtitle={historyRuns.length > 0 ? `${historyRuns.length} persisted rebalancing runs` : "Baseline allocation state"}
         side={
           <div className="trend-metrics-strip">
             <div className="trend-metric-badge">
@@ -309,14 +381,9 @@ export function AllocationHistory({
                   {latest.tech.toFixed(1)}%
                 </strong>
                 <span
-                  className={`trend-metric-change ${
-                    tech12mChange >= 0 ? "positive" : "negative"
-                  }`}
+                  className={`trend-metric-change ${techChange >= 0 ? "positive" : "negative"}`}
                 >
-                  {tech12mChange >= 0
-                    ? `+${tech12mChange.toFixed(1)}%`
-                    : `${tech12mChange.toFixed(1)}%`}
-                  <small className="trend-metric-period"> 12m</small>
+                  {techChange >= 0 ? `+${techChange.toFixed(1)}%` : `${techChange.toFixed(1)}%`}
                 </span>
               </div>
             </div>
@@ -331,14 +398,9 @@ export function AllocationHistory({
                   {latest.fin.toFixed(1)}%
                 </strong>
                 <span
-                  className={`trend-metric-change ${
-                    fin12mChange >= 0 ? "positive" : "negative"
-                  }`}
+                  className={`trend-metric-change ${finChange >= 0 ? "positive" : "negative"}`}
                 >
-                  {fin12mChange >= 0
-                    ? `+${fin12mChange.toFixed(1)}%`
-                    : `${fin12mChange.toFixed(1)}%`}
-                  <small className="trend-metric-period"> 12m</small>
+                  {finChange >= 0 ? `+${finChange.toFixed(1)}%` : `${finChange.toFixed(1)}%`}
                 </span>
               </div>
             </div>
@@ -347,13 +409,18 @@ export function AllocationHistory({
       />
 
       <div className="trend-chart-wrapper">
+        {historyRuns.length === 0 && (
+          <div className="history-empty-banner" style={{ margin: "8px 16px", padding: "8px 12px", borderRadius: "6px", background: "rgba(255,255,255,0.03)", border: "1px dashed var(--border)", fontSize: "12px", color: "var(--secondary)" }}>
+            ℹ️ <strong>Persisted Run History:</strong> Recalculate or Apply allocations to record persistent historical rebalancing runs.
+          </div>
+        )}
+
         <svg
           className="trend-chart-svg"
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           preserveAspectRatio="xMidYMid meet"
           onMouseLeave={() => setHoverIndex(null)}
         >
-          {/* Subtle Horizontal Gridlines & Y-Axis Ticks */}
           {yTicks.map((tick, i) => {
             const y = getY(tick)
             return (
@@ -382,7 +449,6 @@ export function AllocationHistory({
             )
           })}
 
-          {/* Active Vertical Crosshair */}
           {hoverIndex !== null && (
             <line
               x1={activeX}
@@ -396,37 +462,35 @@ export function AllocationHistory({
             />
           )}
 
-          {/* Series Lines */}
-          <path
-            d={techPath}
-            fill="none"
-            stroke="var(--accent)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d={finPath}
-            fill="none"
-            stroke="#38bdf8"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          {!isSinglePoint && (
+            <>
+              <path
+                d={techPath}
+                fill="none"
+                stroke="var(--accent)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d={finPath}
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </>
+          )}
 
-          {/* Minimal Endpoint Dots (Latest Values) & Hover Dots */}
           {historyData.map((d, i) => {
-            const isHovered = i === hoverIndex
-            const isEnd = i === 11
-            if (!isHovered && !isEnd) return null
-
             const x = getX(i)
             const yTech = getY(d.tech)
             const yFin = getY(d.fin)
+            const isHovered = i === hoverIndex || isSinglePoint
 
             return (
               <g key={`dots-${i}`}>
-                {/* Tech point */}
                 <circle
                   cx={x}
                   cy={yTech}
@@ -435,7 +499,6 @@ export function AllocationHistory({
                   stroke="var(--panel)"
                   strokeWidth={isHovered ? 2 : 1.5}
                 />
-                {/* Fin point */}
                 <circle
                   cx={x}
                   cy={yFin}
@@ -448,21 +511,15 @@ export function AllocationHistory({
             )
           })}
 
-          {/* Responsive X-Axis Month Labels */}
-          {visibleTickIndices.map((i) => {
-            const d = historyData[i]
+          {historyData.map((d, i) => {
             const x = getX(i)
-            let anchor: "start" | "middle" | "end" = "middle"
-            if (i === 0) anchor = "start"
-            if (i === 11) anchor = "end"
-            const isActive = i === activeIndex && hoverIndex !== null
-
+            const isActive = i === activeIndex
             return (
               <text
                 key={`month-tick-${i}`}
                 x={x}
                 y={plotBottom + 20}
-                textAnchor={anchor}
+                textAnchor={isSinglePoint ? "middle" : i === 0 ? "start" : i === historyData.length - 1 ? "end" : "middle"}
                 fill={isActive ? "var(--text)" : "var(--secondary)"}
                 fontSize="11"
                 fontWeight={isActive ? "600" : "400"}
@@ -472,10 +529,9 @@ export function AllocationHistory({
             )
           })}
 
-          {/* Interactive Touch / Mouse Hover Overlay Strips */}
           {historyData.map((_, i) => {
             const x = getX(i)
-            const w = plotWidth / 11
+            const w = isSinglePoint ? plotWidth : plotWidth / Math.max(1, historyData.length - 1)
             return (
               <rect
                 key={`hover-strip-${i}`}
@@ -491,24 +547,20 @@ export function AllocationHistory({
           })}
         </svg>
 
-        {/* Clean Interactive Hover Tooltip */}
         {hoverIndex !== null && activePoint && (
           <div
             className="trend-tooltip"
             style={{
               top: "12px",
               left: `${(activeX / svgWidth) * 100}%`,
-              transform:
-                activeIndex > 7
-                  ? "translateX(calc(-100% - 10px))"
-                  : "translateX(10px)",
+              transform: activeIndex > Math.floor(historyData.length / 2) ? "translateX(calc(-100% - 10px))" : "translateX(10px)",
             }}
           >
-            <div className="trend-tooltip-title">
+            <div className="trend-tooltip-title" style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
               <span>{activePoint.month}</span>
-              {activePoint.isLatest && (
-                <span className="tooltip-badge">Current</span>
-              )}
+              <span className={`tooltip-badge ${activePoint.isApplied ? "applied" : "simulated"}`} style={{ fontSize: "10px", padding: "1px 4px", borderRadius: "3px", background: activePoint.isApplied ? "var(--positive)" : "var(--accent)", color: "#fff" }}>
+                {activePoint.isApplied ? "Applied Run" : "Simulated"}
+              </span>
             </div>
             <div className="trend-tooltip-row">
               <div className="label-wrap">
@@ -517,16 +569,6 @@ export function AllocationHistory({
               </div>
               <div className="val-wrap">
                 <span className="val">{activePoint.tech.toFixed(1)}%</span>
-                {activeIndex > 0 && (
-                  <small
-                    className={`mom ${
-                      activePoint.techMom >= 0 ? "positive" : "negative"
-                    }`}
-                  >
-                    ({activePoint.techMom >= 0 ? "+" : ""}
-                    {activePoint.techMom.toFixed(1)}%)
-                  </small>
-                )}
               </div>
             </div>
             <div className="trend-tooltip-row">
@@ -536,21 +578,17 @@ export function AllocationHistory({
               </div>
               <div className="val-wrap">
                 <span className="val">{activePoint.fin.toFixed(1)}%</span>
-                {activeIndex > 0 && (
-                  <small
-                    className={`mom ${
-                      activePoint.finMom >= 0 ? "positive" : "negative"
-                    }`}
-                  >
-                    ({activePoint.finMom >= 0 ? "+" : ""}
-                    {activePoint.finMom.toFixed(1)}%)
-                  </small>
-                )}
               </div>
             </div>
+            {activePoint.turnover > 0 && (
+              <div className="trend-tooltip-row" style={{ fontSize: "10px", color: "var(--secondary)", marginTop: "4px", paddingTop: "4px", borderTop: "1px stroke var(--border)" }}>
+                <span>Turnover: {activePoint.turnover.toFixed(2)}% (${activePoint.costVal.toFixed(2)} cost)</span>
+              </div>
+            )}
           </div>
         )}
       </div>
     </section>
   )
 }
+
