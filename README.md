@@ -82,8 +82,8 @@ Existing financial risk intelligence workflows suffer from four fundamental arch
 ```mermaid
 flowchart TD
     subgraph Ingestion ["1. Multi-Source Financial Ingestion"]
-        A1[AP News / Reuters / Bloomberg] --> B[Ingestion Orchestrator]
-        A2[ECB / Federal Reserve / CNBC] --> B
+        A1[AP News / Reuters / Bloomberg / Economic Times / Mint / Moneycontrol] --> B[Ingestion Orchestrator]
+        A2[ECB / Federal Reserve / CNBC / Business Standard / CNBC TV18] --> B
         B --> C[SHA-256 Deduplication & Content Hash]
     end
 
@@ -401,7 +401,7 @@ Complete request and response JSON schemas are documented in [`docs/API.md`](doc
 | `GET` | `/api/events` | Query ingested risk events (filters: `portfolioId`, `category`, `source`, `sentiment`, `impact`) |
 | `GET` | `/api/events/:id` | Fetch event details, ONNX confidence scores, signals, and canonical source link |
 | `POST` | `/api/events/analyze` | Submit custom text for FinBERT + Event Classifier ONNX classification & risk analysis |
-| `POST` | `/api/ingest` | Trigger manual news ingestion cycle across AP News, Reuters, Fed, ECB, and CNBC |
+| `POST` | `/api/ingest` | Trigger manual news ingestion cycle across AP News, Reuters, Bloomberg, Fed, ECB, CNBC, and major Indian financial outlets |
 | `GET` | `/api/portfolios` | List portfolios and baseline valuation (`baselineValue`) |
 | `PUT` | `/api/portfolios/:id` | Update portfolio baseline valuation and asset-class exposures |
 | `PUT` | `/api/portfolios/:id/holdings` | Update equity holdings and stock weights |
