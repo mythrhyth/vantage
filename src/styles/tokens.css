@@ -1,0 +1,52 @@
+/* Design Tokens & CSS Custom Properties */
+
+:root {
+  font-family: "Inter", sans-serif;
+  font-synthesis: none;
+}
+
+.app {
+  --bg: #f5f6fa;
+  --panel: #ffffff;
+  --panel-subtle: #fafbfc;
+  --text: #20232b;
+  --secondary: #707786;
+  --tertiary: #a5abb7;
+  --border: #e7e9ef;
+  --border-strong: #d9dde7;
+  --accent: #6579c9;
+  --accent-soft: #eef0fa;
+  --positive: #4f8d73;
+  --negative: #b75f64;
+  --warning: #a47e4c;
+  --grid: #edf0f4;
+  --bar: #7e8fd3;
+  --bar-soft: #dce1f4;
+  --brand-secondary: #3f968f;
+  --shadow: 0 1px 2px rgba(23, 29, 45, .025);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background .2s, color .2s;
+}
+
+.app[data-theme="dark"] {
+  --bg: #111318;
+  --panel: #191d25;
+  --panel-subtle: #161a21;
+  --text: #f1f3f7;
+  --secondary: #a0a7b5;
+  --tertiary: #6f7786;
+  --border: #2b303b;
+  --border-strong: #383e4a;
+  --accent: #8295e5;
+  --accent-soft: #242b42;
+  --positive: #69a58b;
+  --negative: #cf7479;
+  --warning: #bb9460;
+  --grid: #252a34;
+  --bar: #8295e5;
+  --bar-soft: #333b5a;
+  --brand-secondary: #64b8ae;
+  --shadow: none;
+}

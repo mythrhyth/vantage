@@ -1,0 +1,60 @@
+/* Global Element Defaults, Base Resets & Universal Utility Classes */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+button, input, select {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+/* Animation Keyframes */
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+/* State & Signal Utility Colors */
+.positive { color: var(--positive)!important; }
+.negative { color: var(--negative)!important; }
+.risk { color: var(--warning)!important; }
+.neutral { color: var(--secondary); font-weight: 500; }
+.factor-up { color: var(--positive); }
+.factor-down { color: var(--negative); }
+.factor-limit { color: var(--warning); }
+.factor-neutral { color: var(--secondary); }
+
+/* Universal Dashboard & Page Typography Responsiveness */
+h1, h2, h3, h4, h5, h6,
+.page-heading-title, .page-heading-desc,
+.panel-title, .panel-subtitle,
+.dialog-title, .dialog-subtitle,
+.summary-item strong, .summary-item span, .summary-item small,
+.selected-event-card strong, .selected-event-card p,
+.tool-link b, .tool-link small,
+.landing-title, .landing-intro p,
+.context-note p, .context-note strong,
+.ingest-feedback-banner {
+  max-width: 100%;
+  box-sizing: border-box;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.ingest-feedback-banner {
+  font-size: clamp(11px, 0.75vw + 7px, 13px);
+  max-width: 100%;
+  box-sizing: border-box;
+}
