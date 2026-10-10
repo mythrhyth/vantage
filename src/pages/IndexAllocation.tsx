@@ -45,43 +45,126 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
   const [frequency, setFrequency] = useState("Weekly")
   const [cost, setCost] = useState(12)
   const [calculated, setCalculated] = useState(true)
+  const [recalculating, setRecalculating] = useState(false)
   const [selectedStock, setSelectedStock] = useState<number | null>(null)
   const [overallExplanationOpen, setOverallExplanationOpen] = useState(false)
   const [portfolioMeta, setPortfolioMeta] = useState<any>(null)
   const [assets, setAssets] = useState<any[]>([])
   const [proposed, setProposed] = useState<number[]>([])
 
-  useEffect(() => {
-    if (!portfolioId) return
-    import("../services/api").then(({ riskApi }) => {
-      riskApi.getPortfolio(portfolioId).then(p => {
-        if (p) setPortfolioMeta(p)
-      }).catch(console.error)
+  const [applying, setApplying] = useState(false);
+  const [applySuccess, setApplySuccess] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
-      riskApi.getPortfolioAssets(portfolioId).then(data => {
-        const stocksOnly = data.filter((a: any) =>
-          a.assetType === "Stock" || a.assetType === "EQUITY" ||
-          a.asset_type === "Stock" || a.asset_type === "EQUITY"
-        )
+  const handleRecalculate = async () => {
+    if (recalculating) return;
+    setRecalculating(true);
+    setCalculated(true);
+    setApplySuccess(false);
+    try {
+      const { riskApi } = await import("../services/api");
+      let targetId = portfolioId;
+      if (!targetId) {
+        const ports = await riskApi.getPortfolios().catch(() => []);
+        if (ports && ports.length > 0) targetId = ports[0].id;
+      }
+      if (targetId) {
+        const sim = await riskApi.simulateAllocation(targetId, sensitivity, maxWeight, maxChange, sectorLimit);
+        const list = sim?.proposed_weights || sim?.proposedWeights;
+        if (list) {
+          setProposed(list.map((w: any) => Number(w.proposedWeight ?? w.proposed_weight ?? w.proposedPct) || 0));
+        }
+      }
+    } catch (err) {
+      console.error("Recalculation error:", err);
+    } finally {
+      setRecalculating(false);
+    }
+  };
+
+  const handleApplyAllocation = async () => {
+    if (applying || assets.length === 0) return;
+    setApplying(true);
+    setApplySuccess(false);
+    setApplyError(null);
+
+    try {
+      const { riskApi } = await import("../services/api");
+      let targetId = portfolioId;
+      if (!targetId) {
+        const ports = await riskApi.getPortfolios().catch(() => []);
+        if (ports && ports.length > 0) targetId = ports[0].id;
+      }
+      if (!targetId) throw new Error("No active portfolio selected");
+
+      const newHoldings = assets.map((a, i) => ({
+        ticker: a.ticker,
+        company: a.company,
+        sector: a.sector,
+        currentWeight: proposed[i] !== undefined ? proposed[i] : a.current
+      }));
+
+      await riskApi.updateHoldings(targetId, newHoldings);
+
+      const refreshed = await riskApi.getPortfolioAssets(targetId);
+      const stocksOnly = refreshed.filter((a: any) => {
+        const type = (a.assetType || a.asset_type || "").toUpperCase();
+        return type === "STOCK" || type === "EQUITY" || type === "EQUITIES" || Boolean(a.ticker);
+      });
+      const mappedAssets = stocksOnly.map((a: any) => ({
+        company: a.company || a.ticker,
+        ticker: a.ticker || "UNKNOWN",
+        current: Number(a.currentWeight ?? a.current_weight) || 0,
+        sentiment: Number(a.sentiment) || 0,
+        sector: a.sector || "Unknown"
+      }));
+      setAssets(mappedAssets);
+      setApplySuccess(true);
+    } catch (err: any) {
+      console.error("Failed to apply allocation:", err);
+      setApplyError(err?.message || "Failed to apply allocation to portfolio.");
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  useEffect(() => {
+    import("../services/api").then(async ({ riskApi }) => {
+      let targetId = portfolioId;
+      if (!targetId) {
+        const ports = await riskApi.getPortfolios().catch(() => []);
+        if (ports && ports.length > 0) targetId = ports[0].id;
+      }
+      if (!targetId) return;
+
+      riskApi.getPortfolio(targetId).then(p => {
+        if (p) setPortfolioMeta(p);
+      }).catch(console.error);
+
+      riskApi.getPortfolioAssets(targetId).then(data => {
+        const stocksOnly = data.filter((a: any) => {
+          const type = (a.assetType || a.asset_type || "").toUpperCase();
+          return type === "STOCK" || type === "EQUITY" || type === "EQUITIES" || Boolean(a.ticker);
+        });
         const mappedAssets = stocksOnly.map((a: any) => ({
           company: a.company || a.ticker,
           ticker: a.ticker || "UNKNOWN",
           current: Number(a.currentWeight ?? a.current_weight) || 0,
           sentiment: Number(a.sentiment) || 0,
           sector: a.sector || "Unknown"
-        }))
-        setAssets(mappedAssets)
+        }));
+        setAssets(mappedAssets);
 
         // Automatically derive proposed weights from AI/NLP layer
-        riskApi.simulateAllocation(portfolioId, sensitivity, maxWeight, maxChange).then(sim => {
+        riskApi.simulateAllocation(targetId, sensitivity, maxWeight, maxChange, sectorLimit).then(sim => {
           if (sim && (sim.proposed_weights || sim.proposedWeights)) {
             const list = sim.proposed_weights || sim.proposedWeights;
             setProposed(list.map((w: any) => Number(w.proposedWeight ?? w.proposed_weight ?? w.proposedPct) || 0));
           }
-        }).catch(console.error)
-      }).catch(console.error)
-    })
-  }, [portfolioId, sensitivity, maxWeight, maxChange])
+        }).catch(console.error);
+      }).catch(console.error);
+    });
+  }, [portfolioId, sensitivity, maxWeight, maxChange, sectorLimit])
 
   const totalEquityWeight = assets.reduce((sum, a) => sum + (Number(a.current) || 0), 0)
 
@@ -110,7 +193,7 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
       <div className="workspace-grid">
         <div className="analysis-column">
           <AllocationChart assets={assets} proposed={calculated} sensitivity={sensitivity} />
-          <AllocationHistory sensitivity={sensitivity} />
+          <AllocationHistory sensitivity={sensitivity} assets={assets} proposed={proposed} />
           <section className="data-section">
             <PanelTitle
               title="Allocation detail"
@@ -234,27 +317,41 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
               onChange={setCost}
             />
           </div>
-          <Button onClick={() => {
-            setCalculated(true)
-            if (portfolioId) {
-              import("../services/api").then(({ riskApi }) => {
-                riskApi.simulateAllocation(portfolioId, sensitivity, maxWeight, maxChange).then(sim => {
-                  const list = sim?.proposed_weights || sim?.proposedWeights;
-                  if (list) {
-                    setProposed(list.map((w: any) => Number(w.proposedWeight ?? w.proposed_weight ?? w.proposedPct) || 0));
-                  }
-                })
-              })
-            }
-          }}>
-            Recalculate Allocation
-          </Button>
-          <Button
-            variant="text"
-            onClick={() => setOverallExplanationOpen(true)}
-          >
-            Why this allocation?
-          </Button>
+          {applySuccess && (
+            <div className="stress-status-banner" style={{ margin: "12px 18px 0", fontSize: "11px", color: "var(--positive)" }}>
+              <span>✅ Proposed weights saved & applied to portfolio baseline</span>
+            </div>
+          )}
+          {applyError && (
+            <div className="stress-error-card" style={{ margin: "12px 18px 0", fontSize: "11px" }}>
+              <span>⚠️ {applyError}</span>
+            </div>
+          )}
+          <div className="control-actions" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <Button
+              icon="reset"
+              disabled={recalculating || applying}
+              className={`recalculate-btn ${recalculating ? "loading" : ""}`}
+              onClick={handleRecalculate}
+            >
+              {recalculating ? "Recalculating..." : "Recalculate Allocation"}
+            </Button>
+            <Button
+              variant="primary"
+              loading={applying}
+              disabled={applying || recalculating || assets.length === 0}
+              onClick={handleApplyAllocation}
+            >
+              {applying ? "Applying to Portfolio..." : "Apply Proposed Allocation"}
+            </Button>
+            <Button
+              variant="text"
+              className="why-allocation-btn"
+              onClick={() => setOverallExplanationOpen(true)}
+            >
+              Why this allocation?
+            </Button>
+          </div>
         </aside>
       </div>
       {selectedStock !== null && assets[selectedStock] && (

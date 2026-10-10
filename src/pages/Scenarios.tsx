@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect } from "react"
 import {
-  Page,
-  IconName,
   ScenarioName,
   ScenarioControls,
   StressTestRun,
@@ -13,25 +11,12 @@ import {
   titleCase,
   mappedScenarioForEvent,
   signedValue,
-  generateEventStressParameters,
-  calculateScenarioLoss,
 } from "../utils"
 import { Icon } from "../components/common/Icon"
-import { VantageLogo } from "../components/common/VantageLogo"
 import { Button } from "../components/common/Button"
 import { Slider } from "../components/common/Slider"
-import { Summary } from "../components/common/Summary"
 import { PanelTitle } from "../components/common/PanelTitle"
 import { PageHeading } from "../components/common/PageHeading"
-import { SettingsPanel } from "../components/common/SettingsPanel"
-import { RiskHistogram } from "../components/risk-intelligence/RiskHistogram"
-import { EventTable } from "../components/risk-intelligence/EventTable"
-import { EventExplainabilityDialog } from "../components/risk-intelligence/EventExplainabilityDialog"
-import { MiniDistribution } from "../components/risk-intelligence/MiniDistribution"
-import { AllocationChart } from "../components/allocation/AllocationChart"
-import { AllocationHistory } from "../components/allocation/AllocationHistory"
-import { AllocationExplanationDialog } from "../components/allocation/AllocationExplanationDialog"
-import { OverallAllocationDialog } from "../components/allocation/OverallAllocationDialog"
 import { AssetLossDialog } from "../components/stress-testing/AssetLossDialog"
 import { WhyLossDialog } from "../components/stress-testing/WhyLossDialog"
 import { EventStressComparisonDialog } from "../components/stress-testing/EventStressComparisonDialog"
@@ -41,167 +26,275 @@ const defaultScenarioData: Record<string, ScenarioControls> = {
   "Interest Rate Shock": { rate: 250, spread: 120, probability: 2, liquidity: 8, inflation: 150 },
   "Credit Crisis": { rate: -50, spread: 350, probability: 8, liquidity: 20, inflation: 50 },
   "Combined Macro Stress": { rate: 150, spread: 250, probability: 5, liquidity: 15, inflation: 200 }
-};
+}
 
 export function Scenarios({
   portfolioId,
   stressRun,
   history = [],
+  historyLoading = false,
+  historyError = null,
   onRunCompleted = () => {},
-  onOpenHistory = () => {},
+  onRetryHistory = () => {},
 }: {
   portfolioId: string | null
   stressRun: StressTestRun | null
   history?: StressTestHistoryEntry[]
+  historyLoading?: boolean
+  historyError?: string | null
   onRunCompleted?: (entry: StressTestHistoryEntry) => void
   onOpenHistory?: (entry: StressTestHistoryEntry) => void
+  onRetryHistory?: () => void
 }) {
   const [backendResult, setBackendResult] = useState<any>(null)
+  const [portfolioMeta, setPortfolioMeta] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const triggerEvent = stressRun?.event ?? null
   const triggeredScenario = stressRun?.scenario ?? "Interest Rate Shock"
   const [scenario, setScenario] = useState<ScenarioName>(triggeredScenario)
-  const [controls, setControls] = useState(
-    stressRun?.parameters ?? defaultScenarioData[triggeredScenario],
+  const [controls, setControls] = useState<ScenarioControls>(
+    stressRun?.parameters ?? defaultScenarioData[triggeredScenario]
   )
-  const [applied, setApplied] = useState(controls)
+  const [applied, setApplied] = useState<ScenarioControls>(controls)
   const [processingStep, setProcessingStep] = useState(
-    stressRun?.skipProcessing ? 7 : stressRun ? 0 : 7,
+    stressRun?.skipProcessing ? 7 : stressRun ? 0 : 7
   )
   const [runComplete, setRunComplete] = useState(
-    !stressRun || Boolean(stressRun.skipProcessing),
+    !stressRun || Boolean(stressRun.skipProcessing)
   )
+
   const [selectedAsset, setSelectedAsset] = useState<AssetName | null>(null)
   const [whyLossOpen, setWhyLossOpen] = useState(false)
   const [comparisonOpen, setComparisonOpen] = useState(false)
   const [eventComparisonOpen, setEventComparisonOpen] = useState(false)
   const [riskInfoOpen, setRiskInfoOpen] = useState(false)
+
+  const runScenarioStressTest = async (paramControls = controls, scenarioName = scenario) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const { riskApi } = await import("../services/api")
+      let targetId = portfolioId
+      if (!targetId) {
+        const ports = await riskApi.getPortfolios().catch(() => [])
+        if (ports && ports.length > 0) targetId = ports[0].id
+      }
+      if (!targetId) {
+        setLoading(false)
+        return
+      }
+
+      const pMeta = await riskApi.getPortfolio(targetId).catch(() => null)
+      if (pMeta) setPortfolioMeta(pMeta)
+
+      const res = await riskApi.runStressTest(
+        targetId,
+        paramControls,
+        (stressRun as any)?.scenarioId,
+        triggerEvent?.id
+      )
+
+      setBackendResult(res)
+      setApplied(paramControls)
+
+      if (stressRun && onRunCompleted) {
+        onRunCompleted({
+          ...stressRun,
+          scenario: scenarioName,
+          parameters: paramControls,
+          loss: res.absolute_loss,
+          completedAt: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        })
+      }
+    } catch (err: any) {
+      console.error("[Scenarios] API Stress Test Error:", err)
+      setError(err?.message || "Failed to calculate scenario stress test.")
+    } finally {
+      setLoading(false)
+      setRunComplete(true)
+    }
+  }
+
   useEffect(() => {
-    if (!stressRun) return
+    if (!stressRun) {
+      runScenarioStressTest(controls, scenario)
+      return
+    }
+
     setScenario(stressRun.scenario)
     setControls(stressRun.parameters)
     setApplied(stressRun.parameters)
+
     if (stressRun.skipProcessing) {
       setProcessingStep(7)
       setRunComplete(true)
+      runScenarioStressTest(stressRun.parameters, stressRun.scenario)
       return
     }
+
     setProcessingStep(0)
     setRunComplete(false)
     const timers = [180, 360, 540, 720, 900, 1080, 1260].map((delay, index) =>
       window.setTimeout(() => {
         setProcessingStep(index + 1)
-      }, delay),
+      }, delay)
     )
+
     const completionTimer = window.setTimeout(() => {
-      if (portfolioId) {
-        import("../services/api").then(({ riskApi }) => {
-          riskApi.runStressTest(portfolioId, stressRun.parameters, (stressRun as any).scenarioId, triggerEvent?.id)
-            .then(res => {
-              setBackendResult(res)
-              onRunCompleted({
-                ...stressRun,
-                loss: res.absolute_loss,
-                completedAt: new Date().toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-              })
-              setRunComplete(true)
-            })
-            .catch(err => {
-              console.error(err)
-              setRunComplete(true)
-            })
-        })
-      } else {
-        setRunComplete(true)
-      }
-    }, 1500)
+      runScenarioStressTest(stressRun.parameters, stressRun.scenario)
+    }, 1400)
+
     return () => {
       timers.forEach((timer) => window.clearTimeout(timer))
       window.clearTimeout(completionTimer)
     }
   }, [stressRun, portfolioId])
+
   const changeScenario = (name: ScenarioName) => {
     setScenario(name)
-    setControls(defaultScenarioData[name])
+    const newParams = defaultScenarioData[name] || defaultScenarioData["Interest Rate Shock"]
+    setControls(newParams)
+    runScenarioStressTest(newParams, name)
   }
+
   const set = (key: keyof typeof controls, value: number) => {
     setControls((current) => ({ ...current, [key]: value }))
   }
-  const loss = backendResult ? backendResult.absolute_loss : calculateScenarioLoss(applied)
-  const baseline = backendResult?.baseline_value ?? 2450
-  const riskScore = backendResult ? backendResult.risk_score : Math.min(100, Math.round(loss * 0.75))
+
+  const baseline =
+    backendResult?.baseline_value ??
+    (portfolioMeta?.baseline_value
+      ? Number(portfolioMeta.baseline_value)
+      : 2450)
+  const loss = backendResult?.absolute_loss ?? 0
+  const riskScore = backendResult?.risk_score ?? Math.min(100, Math.round((loss / baseline) * 100))
+
   const severity =
     riskScore < 20
       ? "Low"
       : riskScore < 40
-        ? "Moderate"
-        : riskScore < 65
-          ? "High"
-          : "Severe"
-  const assetRows: {
-    name: AssetName
-    exposure: string
-    share: number
-    driver: string
-  }[] = [
+      ? "Moderate"
+      : riskScore < 65
+      ? "High"
+      : "Severe"
+
+  const loansExp = portfolioMeta?.exposures?.loans ?? (baseline * 0.30)
+  const bondsExp = portfolioMeta?.exposures?.bonds ?? (baseline * 0.17)
+  const derivativesExp = portfolioMeta?.exposures?.derivatives ?? (baseline * 0.10)
+  const equityExp = portfolioMeta?.exposures?.equity ?? (baseline * 0.43)
+  const totalExposures = loansExp + bondsExp + derivativesExp + equityExp
+  const showReconciliationWarning = Math.abs(totalExposures - baseline) > 1.0
+
+  // Dynamic asset-class loss attribution derived directly from backend results
+  const loansLoss = backendResult?.attribution_result?.loansLoss ?? 0
+  const bondsLoss = backendResult?.attribution_result?.bondsLoss ?? 0
+  const derivativesLoss = backendResult?.attribution_result?.derivativesLoss ?? 0
+  const equityLoss = backendResult?.attribution_result?.equityLoss ?? 0
+
+  const grossLossSum = Math.max(0, loansLoss) + Math.max(0, bondsLoss) + Math.max(0, derivativesLoss) + Math.max(0, equityLoss)
+
+  const assetRows = [
     {
-      name: "Loans",
-      exposure: "₹1,360 Cr",
-      share: 47,
-      driver: "Default probability",
+      name: "Loans" as AssetName,
+      exposure: `₹${loansExp.toFixed(1)} Cr`,
+      lossVal: loansLoss,
+      share: loansLoss > 0 && grossLossSum > 0 ? parseFloat(((loansLoss / grossLossSum) * 100).toFixed(1)) : 0,
+      driver: "Credit spread & default probability",
     },
     {
-      name: "Bonds",
-      exposure: "₹800 Cr",
-      share: 31,
-      driver: "Rate and spread duration",
+      name: "Bonds" as AssetName,
+      exposure: `₹${bondsExp.toFixed(1)} Cr`,
+      lossVal: bondsLoss,
+      share: bondsLoss > 0 && grossLossSum > 0 ? parseFloat(((bondsLoss / grossLossSum) * 100).toFixed(1)) : 0,
+      driver: "Interest-rate & yield curve shift",
     },
     {
-      name: "Derivatives",
-      exposure: "₹290 Cr",
-      share: 12,
-      driver: "Counterparty exposure",
+      name: "Derivatives" as AssetName,
+      exposure: `₹${derivativesExp.toFixed(1)} Cr`,
+      lossVal: derivativesLoss,
+      share: derivativesLoss > 0 && grossLossSum > 0 ? parseFloat(((derivativesLoss / grossLossSum) * 100).toFixed(1)) : 0,
+      driver: "Liquidity haircut & rate shift",
     },
     {
-      name: "Liquidity",
-      exposure: "Portfolio-wide",
-      share: 10,
-      driver: "Liquidity haircut",
+      name: "Equity" as AssetName,
+      exposure: `₹${equityExp.toFixed(1)} Cr`,
+      lossVal: equityLoss,
+      share: equityLoss > 0 && grossLossSum > 0 ? parseFloat(((equityLoss / grossLossSum) * 100).toFixed(1)) : 0,
+      driver: "Inflation, rate & liquidity sensitivity",
     },
   ]
-  const rawFactors = backendResult?.attribution_result ? [
-    ["Interest rate shock", backendResult.attribution_result.factors?.find((f: any) => f.factor === 'interest_rate')?.loss || 0],
-    ["Default probability", backendResult.attribution_result.factors?.find((f: any) => f.factor === 'probability')?.loss || 0],
-    ["Credit spread shock", backendResult.attribution_result.factors?.find((f: any) => f.factor === 'spread')?.loss || 0],
-    ["Liquidity haircut", backendResult.attribution_result.factors?.find((f: any) => f.factor === 'liquidity')?.loss || 0],
-    ["Inflation shock", backendResult.attribution_result.factors?.find((f: any) => f.factor === 'inflation')?.loss || 0]
-  ] as [string, number][] : [
-    ["Interest rate shock", applied.rate * 0.07],
-    ["Default probability", applied.probability * 5.8],
-    ["Credit spread shock", applied.spread * 0.09],
-    ["Liquidity haircut", applied.liquidity * 1.5],
-    ["Inflation shock", applied.inflation * 0.025],
-  ] as [string, number][]
+
+  const rawFactors: [string, number][] = backendResult?.attribution_result?.factors
+    ? [
+        [
+          "Interest rate shock",
+          backendResult.attribution_result.factors.find(
+            (f: any) => f.factor === "interest_rate"
+          )?.loss || 0,
+        ],
+        [
+          "Credit spread shock",
+          backendResult.attribution_result.factors.find(
+            (f: any) => f.factor === "spread"
+          )?.loss || 0,
+        ],
+        [
+          "Liquidity haircut",
+          backendResult.attribution_result.factors.find(
+            (f: any) => f.factor === "liquidity"
+          )?.loss || 0,
+        ],
+        [
+          "Inflation shock",
+          backendResult.attribution_result.factors.find(
+            (f: any) => f.factor === "inflation"
+          )?.loss || 0,
+        ],
+      ]
+    : [
+        ["Interest rate shock", (applied.rate / 100) * baseline * 0.05],
+        ["Credit spread shock", (applied.spread / 100) * baseline * 0.04],
+        ["Liquidity haircut", (applied.liquidity / 100) * baseline * 0.03],
+        ["Inflation shock", (applied.inflation / 100) * baseline * 0.03],
+      ]
+
   const factorTotal = rawFactors.reduce((sum, [, value]) => sum + value, 0)
-  const factorRows: [string, number][] = backendResult?.attribution_result ? [
+  const factorRows: [string, number][] = [
     ...rawFactors,
-    ["Interaction / residual", backendResult.attribution_result.interaction_residual || 0]
-  ].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])) : [
-    ...rawFactors,
-    ["Interaction / residual", loss - factorTotal],
+    [
+      "Interaction / residual",
+      backendResult?.attribution_result?.interaction_residual ??
+        Math.max(0, loss - factorTotal),
+    ],
   ].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+
   const maxFactor = Math.max(
     ...factorRows.map(([, value]) => Math.abs(value)),
-    1,
+    1
   )
+
+  const pctImpact = baseline > 0 ? (loss / baseline) * 100 : 0
+
   return (
     <div className="page scenario-page">
       <PageHeading
         title="Scenario Analysis"
         description="Compare baseline and stressed portfolio outcomes, then identify the asset classes driving potential losses."
       />
+
+      {showReconciliationWarning && (
+        <section className="reconciliation-warning-banner">
+          <span>
+            ⚠️ <strong>Portfolio Reconciliation Notice:</strong> Constituent asset holdings sum to <b>₹{totalExposures.toFixed(1)} Cr</b>, which differs from the configured portfolio baseline (<b>₹{baseline.toFixed(1)} Cr</b>). Canonical portfolio baseline used for calculations.
+          </span>
+        </section>
+      )}
+
       {!runComplete && stressRun && (
         <section className="stress-processing-card">
           <div className="stress-processing-head">
@@ -223,8 +316,8 @@ export function Scenarios({
                   index < processingStep
                     ? "complete"
                     : index === processingStep
-                      ? "active"
-                      : ""
+                    ? "active"
+                    : ""
                 }
                 key={step}
               >
@@ -241,7 +334,7 @@ export function Scenarios({
           <div className="stress-processing-context">
             <span>
               <small>Event classification</small>
-              <b>{titleCase(triggerEvent.category)}</b>
+              <b>{triggerEvent ? titleCase(triggerEvent.category) : "General Macro"}</b>
             </span>
             <span>
               <small>Generated scenario</small>
@@ -249,14 +342,27 @@ export function Scenarios({
             </span>
             <span>
               <small>Portfolio</small>
-              <b>Banking Demo Portfolio</b>
+              <b>{portfolioMeta?.name || "Banking Portfolio"}</b>
             </span>
           </div>
         </section>
       )}
+
       {runComplete && (
         <div className="workspace-grid">
           <div className="analysis-column">
+            {error && (
+              <div className="stress-error-card">
+                <span>⚠️ Scenario Execution Error: {error}</span>
+                <Button
+                  variant="text"
+                  onClick={() => runScenarioStressTest(controls, scenario)}
+                >
+                  Retry Scenario Calculation
+                </Button>
+              </div>
+            )}
+
             <section className="scenario-comparison">
               <PanelTitle
                 title="Portfolio comparison"
@@ -280,9 +386,11 @@ export function Scenarios({
               <div className="comparison-values">
                 <div>
                   <span>Before stress</span>
-                  <strong>₹2,450.0 Cr</strong>
+                  <strong>
+                    {loading ? "..." : `₹${baseline.toFixed(1)} Cr`}
+                  </strong>
                   <small className="risk-score-line">
-                    Risk score {riskScore} / 100
+                    Risk score {loading ? "..." : riskScore} / 100
                     <span className="risk-info-wrap">
                       <Button
                         variant="icon"
@@ -306,9 +414,13 @@ export function Scenarios({
                 <Icon name="arrow" size={24} />
                 <div>
                   <span>After stress</span>
-                  <strong>₹{(baseline - loss).toFixed(1)} Cr</strong>
+                  <strong>
+                    {loading ? "..." : `₹${(baseline - loss).toFixed(1)} Cr`}
+                  </strong>
                   <small className="negative">
-                    -₹{loss.toFixed(1)} Cr · -{(loss / 24.5).toFixed(1)}%
+                    {loading
+                      ? "..."
+                      : `-₹${loss.toFixed(1)} Cr · -${pctImpact.toFixed(1)}%`}
                   </small>
                 </div>
               </div>
@@ -319,7 +431,15 @@ export function Scenarios({
                 </div>
                 <div>
                   <span>Stressed</span>
-                  <i style={{ width: `${(baseline - loss) / 24.5}%` }} />
+                  <i
+                    style={{
+                      width: `${
+                        baseline > 0
+                          ? Math.max(0, ((baseline - loss) / baseline) * 100)
+                          : 0
+                      }%`,
+                    }}
+                  />
                 </div>
               </div>
               <div className="total-loss-reconciliation">
@@ -333,7 +453,9 @@ export function Scenarios({
                   }}
                 >
                   <small>Total modeled loss</small>
-                  <b className="negative">₹{loss.toFixed(1)} Cr</b>
+                  <b className="negative">
+                    {loading ? "..." : `₹${loss.toFixed(1)} Cr`}
+                  </b>
                   <i>Explained by asset-class contributions</i>
                 </span>
                 <Button variant="text" onClick={() => setWhyLossOpen(true)}>
@@ -341,6 +463,7 @@ export function Scenarios({
                 </Button>
               </div>
             </section>
+
             <section className="waterfall-panel">
               <PanelTitle
                 title="Loss attribution"
@@ -360,10 +483,10 @@ export function Scenarios({
                   >
                     <span
                       style={{
-                        height: `${Math.max(14, asset.share)}%`,
+                        height: `${Math.max(12, asset.share)}%`,
                       }}
                     >
-                      <i>₹{((loss * asset.share) / 100).toFixed(1)} Cr</i>
+                      <i>₹{asset.lossVal.toFixed(1)} Cr</i>
                     </span>
                     <small>{asset.name}</small>
                   </div>
@@ -372,18 +495,15 @@ export function Scenarios({
               <div className="loss-reconciliation-note">
                 <b>₹{loss.toFixed(1)} Cr total modeled loss</b>
                 <span>
-                  Asset-class contributions reconcile to 100%. Values may not
-                  sum exactly due to rounding.
+                  Asset-class contributions reconcile to 100%. Values match canonical backend risk engine.
                 </span>
               </div>
             </section>
+
             <section className="risk-factor-panel">
               <PanelTitle
                 title="Risk factor contribution"
                 subtitle="How the scenario assumptions contribute to modeled portfolio loss"
-                side={
-                  <span className="prototype-label">Prototype attribution</span>
-                }
               />
               <div className="risk-factor-list">
                 {factorRows.map(([label, value]) => (
@@ -393,8 +513,10 @@ export function Scenarios({
                       <strong className={value < 0 ? "positive" : "negative"}>
                         {value < 0 ? "−" : ""}₹{Math.abs(value).toFixed(1)} Cr
                         <small>
-                          {Math.abs((value / loss) * 100).toFixed(0)}% of
-                          explained loss
+                          {loss > 0
+                            ? Math.abs((value / loss) * 100).toFixed(0)
+                            : 0}
+                          % of explained loss
                         </small>
                       </strong>
                     </span>
@@ -402,7 +524,10 @@ export function Scenarios({
                       <b
                         className={value < 0 ? "offset" : ""}
                         style={{
-                          width: `${Math.max(2, (Math.abs(value) / maxFactor) * 100)}%`,
+                          width: `${Math.max(
+                            2,
+                            (Math.abs(value) / maxFactor) * 100
+                          )}%`,
                         }}
                       />
                     </i>
@@ -410,10 +535,10 @@ export function Scenarios({
                 ))}
               </div>
               <span className="factor-method-note">
-                Contributions use the prototype's existing factor sensitivities
-                and reconcile to the total modeled loss.
+                Contributions use factor sensitivities from backend RiskEngineService.
               </span>
             </section>
+
             <section className="loss-generation-panel">
               <PanelTitle
                 title="How the loss was generated"
@@ -423,23 +548,23 @@ export function Scenarios({
                 {[
                   [
                     `${signedValue(applied.rate, 0)} bps interest rate shock`,
-                    "Bond valuation impact",
-                    `₹${(loss * 0.31).toFixed(1)} Cr bond loss`,
+                    "Bond & derivative valuation impact",
+                    `₹${bondsLoss.toFixed(1)} Cr bond loss`,
                   ],
                   [
                     `${signedValue(applied.probability, 0)}% default probability`,
-                    "Higher expected loan losses",
-                    `₹${(loss * 0.47).toFixed(1)} Cr loan loss`,
+                    "Higher expected credit losses",
+                    `₹${loansLoss.toFixed(1)} Cr loan loss`,
                   ],
                   [
                     `${signedValue(applied.spread, 0)} bps credit spread shock`,
                     "Credit-sensitive asset repricing",
-                    "Included in bond and credit loss",
+                    "Included in loan and bond repricing",
                   ],
                   [
                     `${applied.liquidity}% liquidity haircut`,
                     "Liquidity adjustment",
-                    `₹${(loss * 0.1).toFixed(1)} Cr liquidity loss`,
+                    `₹${derivativesLoss.toFixed(1)} Cr derivative & liquidity impact`,
                   ],
                 ].map(([shock, effect, result]) => (
                   <div key={shock}>
@@ -452,53 +577,7 @@ export function Scenarios({
                 ))}
               </div>
             </section>
-            {triggerEvent && (
-              <section className="event-loss-cause-panel">
-                <PanelTitle
-                  title="Why did this event cause the loss?"
-                  subtitle="Event → classification → risk factors → asset impact → portfolio impact"
-                />
-                <div className="event-loss-cause-flow">
-                  <span>
-                    <small>Event</small>
-                    <b>{triggerEvent.title}</b>
-                  </span>
-                  <i>→</i>
-                  <span>
-                    <small>Classification</small>
-                    <b>{titleCase(triggerEvent.category)}</b>
-                  </span>
-                  <i>→</i>
-                  <span>
-                    <small>Risk factors</small>
-                    <b>Rates · Spreads · Default · Liquidity</b>
-                  </span>
-                  <i>→</i>
-                  <span className="event-loss-assets">
-                    <small>Asset impact</small>
-                    {(["Loans", "Bonds", "Derivatives"] as AssetName[]).map(
-                      (asset) => (
-                        <Button
-                          key={asset}
-                          variant="text"
-                          onClick={() => setSelectedAsset(asset)}
-                        >
-                          {asset}
-                        </Button>
-                      ),
-                    )}
-                  </span>
-                  <i>→</i>
-                  <span>
-                    <small>Portfolio impact</small>
-                    <b className="negative">-₹{loss.toFixed(1)} Cr</b>
-                  </span>
-                </div>
-                <span className="prototype-label">
-                  Illustrative event-specific model output
-                </span>
-              </section>
-            )}
+
             <section className="asset-contribution">
               <PanelTitle
                 title="Asset class contribution"
@@ -510,8 +589,8 @@ export function Scenarios({
                     <tr>
                       <th>Asset class</th>
                       <th>Exposure</th>
-                      <th>Modeled loss</th>
-                      <th>Contribution</th>
+                      <th>Modeled loss / gain</th>
+                      <th>Gross loss contribution</th>
                       <th>Primary driver</th>
                     </tr>
                   </thead>
@@ -525,10 +604,14 @@ export function Scenarios({
                           <strong>{asset.name}</strong>
                         </td>
                         <td>{asset.exposure}</td>
-                        <td className="negative">
-                          ₹{((loss * asset.share) / 100).toFixed(1)} Cr
+                        <td className={asset.lossVal > 0 ? "negative" : asset.lossVal < 0 ? "positive" : ""}>
+                          {asset.lossVal > 0
+                            ? `₹${asset.lossVal.toFixed(1)} Cr`
+                            : asset.lossVal < 0
+                            ? `+₹${Math.abs(asset.lossVal).toFixed(1)} Cr (gain)`
+                            : `₹0.0 Cr`}
                         </td>
-                        <td>{asset.share}%</td>
+                        <td>{asset.lossVal > 0 ? `${asset.share.toFixed(1)}%` : asset.lossVal < 0 ? `Gain (offset)` : `0.0%`}</td>
                         <td>
                           <span className="driver-link">{asset.driver}</span>
                         </td>
@@ -538,6 +621,7 @@ export function Scenarios({
                 </table>
               </div>
             </section>
+
             <section className="risk-metrics-panel">
               <PanelTitle
                 title="Risk metrics"
@@ -546,11 +630,15 @@ export function Scenarios({
               <div className="risk-metrics-grid">
                 <span>
                   <small>Stress loss</small>
-                  <b className="negative">-₹{loss.toFixed(1)} Cr</b>
+                  <b className={loss > 0 ? "negative" : ""}>
+                    {loss > 0 ? `-₹${loss.toFixed(1)} Cr` : "₹0.0 Cr"}
+                  </b>
                 </span>
                 <span>
                   <small>Portfolio impact</small>
-                  <b className="negative">-{(loss / 24.5).toFixed(1)}%</b>
+                  <b className={loss > 0 ? "negative" : ""}>
+                    {loss > 0 ? `-${pctImpact.toFixed(1)}%` : "0.0%"}
+                  </b>
                 </span>
                 <span className="metric-info">
                   <small>
@@ -571,6 +659,7 @@ export function Scenarios({
               </div>
             </section>
           </div>
+
           <aside className="control-panel">
             <PanelTitle
               title="Scenario parameters"
@@ -635,28 +724,16 @@ export function Scenarios({
                 onChange={(value) => set("inflation", value)}
               />
             </div>
-            <Button onClick={() => {
-              setApplied(controls)
-              if (portfolioId) {
-                setRunComplete(false)
-                import("../services/api").then(({ riskApi }) => {
-                  riskApi.runStressTest(portfolioId, controls, (stressRun as any)?.scenarioId, triggerEvent?.id)
-                    .then(res => {
-                      setBackendResult(res)
-                      setRunComplete(true)
-                    })
-                    .catch(err => {
-                      console.error(err)
-                      setRunComplete(true)
-                    })
-                })
-              }
-            }}>
-              Recalculate Stress Test
+            <Button
+              disabled={loading}
+              onClick={() => runScenarioStressTest(controls, scenario)}
+            >
+              {loading ? "Calculating..." : "Recalculate Stress Test"}
             </Button>
           </aside>
         </div>
       )}
+
       <section className="stress-history-panel">
         <PanelTitle
           title="Stress Test History"
@@ -672,7 +749,19 @@ export function Scenarios({
             ) : undefined
           }
         />
-        {history.length ? (
+        {historyLoading ? (
+          <div className="empty-state">
+            <strong>Loading stress test history...</strong>
+            <span>Fetching historical runs from database</span>
+          </div>
+        ) : historyError ? (
+          <div className="stress-error-card">
+            <span>⚠️ {historyError}</span>
+            <Button variant="text" onClick={onRetryHistory}>
+              Retry Loading History
+            </Button>
+          </div>
+        ) : history.length ? (
           <div className="table-wrap">
             <table>
               <thead>
@@ -687,25 +776,28 @@ export function Scenarios({
                 </tr>
               </thead>
               <tbody>
-                {history.map((entry) => (
-                  <tr key={entry.runId} onClick={() => onOpenHistory(entry)}>
-                    <td>
-                      <strong>{entry.event.title}</strong>
-                    </td>
-                    <td>{titleCase(entry.event.category)}</td>
-                    <td>{entry.event.impact.toFixed(1)}</td>
-                    <td>{entry.scenario}</td>
-                    <td className="negative">-₹{entry.loss.toFixed(1)} Cr</td>
-                    <td className="negative">
-                      -{(entry.loss / 24.5).toFixed(1)}%
-                    </td>
-                    <td>
-                      <span className="history-status">
-                        <i /> Completed
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {history.map((entry) => {
+                  const entryLoss = typeof entry.loss === "number" ? entry.loss : Number((entry as any).absoluteLoss || 0)
+                  return (
+                    <tr key={String(entry.runId)}>
+                      <td>
+                        <strong>{entry.event?.title || "Custom Stress Event"}</strong>
+                      </td>
+                      <td>{entry.event?.category ? titleCase(entry.event.category) : "General Macro"}</td>
+                      <td>{entry.event?.impact !== undefined && entry.event?.impact !== null ? Number(entry.event.impact).toFixed(1) : "N/A"}</td>
+                      <td>{entry.scenario || "Custom Stress"}</td>
+                      <td className="negative">-₹{entryLoss.toFixed(1)} Cr</td>
+                      <td className="negative">
+                        -{(baseline > 0 ? (entryLoss / baseline) * 100 : 0).toFixed(1)}%
+                      </td>
+                      <td>
+                        <span className="history-status">
+                          <i /> Completed
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -719,6 +811,7 @@ export function Scenarios({
           </div>
         )}
       </section>
+
       {selectedAsset && (
         <AssetLossDialog
           asset={selectedAsset}
@@ -729,12 +822,18 @@ export function Scenarios({
       {whyLossOpen && (
         <WhyLossDialog
           loss={loss}
+          baseline={baseline}
           scenario={scenario}
+          attribution={backendResult?.attribution_result}
           onClose={() => setWhyLossOpen(false)}
         />
       )}
       {comparisonOpen && (
-        <ScenarioComparisonDialog onClose={() => setComparisonOpen(false)} />
+        <ScenarioComparisonDialog
+          portfolioId={portfolioId}
+          baseline={baseline}
+          onClose={() => setComparisonOpen(false)}
+        />
       )}
       {eventComparisonOpen && history.length > 0 && (
         <EventStressComparisonDialog

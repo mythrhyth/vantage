@@ -18,10 +18,6 @@ import {
 } from "../../utils"
 import { Icon } from "../common/Icon"
 import { Button } from "../common/Button"
-import { PanelTitle } from "../common/PanelTitle"
-import { Slider } from "../common/Slider"
-import { Summary } from "../common/Summary"
-import { PageHeading } from "../common/PageHeading"
 
 export function EventExplainabilityDialog({
   event,
@@ -45,16 +41,27 @@ export function EventExplainabilityDialog({
     }
   }, [onClose])
 
-  const sentimentLabel = event.sentiment >= 0 ? "Positive" : "Negative"
+  if (!event) return null
+
+  const numSentiment = typeof event.sentiment === "number" ? event.sentiment : parseFloat(event.sentiment) || 0
+  const numImpact = typeof event.impact === "number" ? event.impact : parseFloat(event.impact) || 0
+  const categoryStr = event.category || "General"
+  const entityStr = event.entity || "Portfolio Entity"
+  const sourceStr = event.source || "Market Data"
+  const titleStr = event.title || "Risk Event"
+  const dateStr = event.date || "Today"
+  const timeStr = event.time || "Just now"
+
+  const sentimentLabel = numSentiment >= 0 ? "Positive" : "Negative"
   const impactLabel =
-    event.impact >= 8 ? "High" : event.impact >= 7 ? "Elevated" : "Moderate"
-  const stressTriggered = event.impact >= 7
-  const mappedScenario = mappedScenarioForEvent(event.category)
+    numImpact >= 8 ? "High" : numImpact >= 7 ? "Elevated" : "Moderate"
+  const stressTriggered = numImpact >= 7
+  const mappedScenario = mappedScenarioForEvent(categoryStr)
   
   const uniqueAssets = useMemo(() => {
-    const list = Array.isArray(event.affectedAssets) ? event.affectedAssets : [];
+    const list = Array.isArray(event.affectedAssets) ? event.affectedAssets : (Array.isArray(event.affected_assets) ? event.affected_assets : []);
     return Array.from(new Set(list.map((a: any) => String(a).trim()).filter(Boolean)));
-  }, [event.affectedAssets]);
+  }, [event.affectedAssets, event.affected_assets]);
 
   return (
     <div
@@ -73,10 +80,10 @@ export function EventExplainabilityDialog({
           <div>
             <span className="dialog-eyebrow">Event explainability</span>
             <div className="dialog-title" id="explainability-title">
-              {event.title}
+              {titleStr}
             </div>
             <span className="dialog-meta">
-              {event.source} · {event.date} at {event.time}
+              {sourceStr} · {dateStr} at {timeStr}
             </span>
           </div>
           <Button
@@ -95,23 +102,23 @@ export function EventExplainabilityDialog({
             <div className="snapshot-grid">
               <span>
                 <small>Classification</small>
-                <b>{titleCase(event.category)}</b>
+                <b>{titleCase(categoryStr)}</b>
               </span>
               <span>
                 <small>Entity</small>
-                <b>{titleCase(event.entity)}</b>
+                <b>{titleCase(entityStr)}</b>
               </span>
               <span>
                 <small>Sentiment</small>
-                <b className={event.sentiment >= 0 ? "positive" : "negative"}>
-                  {event.sentiment > 0 ? "+" : ""}
-                  {event.sentiment.toFixed(2)} / {sentimentLabel}
+                <b className={numSentiment >= 0 ? "positive" : "negative"}>
+                  {numSentiment > 0 ? "+" : ""}
+                  {numSentiment.toFixed(2)} / {sentimentLabel}
                 </b>
               </span>
               <span>
                 <small>Impact</small>
                 <b>
-                  {event.impact.toFixed(1)} / 10 / {impactLabel}
+                  {numImpact.toFixed(1)} / 10 / {impactLabel}
                 </b>
               </span>
             </div>
@@ -122,11 +129,13 @@ export function EventExplainabilityDialog({
               <div className="dialog-section-title">Source visibility & Provenance</div>
               <span>
                 <small>Primary source</small>
-                <b>{event.source}</b>
+                <b>{sourceStr}</b>
               </span>
               <span>
                 <small>Reporting sources count</small>
-                <b className="positive">{event.source_count || (event.additional_sources?.length ? event.additional_sources.length + 1 : 1)} source{(event.source_count || 1) > 1 ? 's' : ''} reporting this event</b>
+                <b className="positive">
+                  {event.source_count || (event.additional_sources?.length ? event.additional_sources.length + 1 : 1)} source{(event.source_count || 1) > 1 ? 's' : ''} reporting this event
+                </b>
               </span>
               {Array.isArray(event.additional_sources) && event.additional_sources.length > 0 && (
                 <span>
@@ -136,7 +145,7 @@ export function EventExplainabilityDialog({
               )}
               <span>
                 <small>Timestamp</small>
-                <b>{event.date} at {event.time}</b>
+                <b>{dateStr} at {timeStr}</b>
               </span>
             </section>
             <section className="dialog-section trigger-decision-card">
@@ -144,7 +153,7 @@ export function EventExplainabilityDialog({
               <div className="trigger-decision-metrics">
                 <span>
                   <small>Impact score</small>
-                  <b>{event.impact.toFixed(1)}</b>
+                  <b>{numImpact.toFixed(1)}</b>
                 </span>
                 <span>
                   <small>Trigger threshold</small>
@@ -158,11 +167,11 @@ export function EventExplainabilityDialog({
                 </span>
               </div>
               <div className="trigger-scale">
-                <i style={{ width: `${event.impact * 10}%` }} />
+                <i style={{ width: `${Math.min(100, Math.max(0, numImpact * 10))}%` }} />
                 <b style={{ left: "70%" }} />
               </div>
               <div className="trigger-scale-labels">
-                <span>{event.impact.toFixed(1)} / 10</span>
+                <span>{numImpact.toFixed(1)} / 10</span>
                 <span>7.0 threshold</span>
               </div>
               <p>
@@ -171,7 +180,7 @@ export function EventExplainabilityDialog({
                   {stressTriggered ? "triggered" : "not triggered"}?
                 </strong>
                 {stressTriggered
-                  ? `Impact score exceeds the configured threshold of 7.0. The event is classified as a high-impact ${event.category.toLowerCase()} event.`
+                  ? `Impact score exceeds the configured threshold of 7.0. The event is classified as a high-impact ${categoryStr.toLowerCase()} event.`
                   : `Impact score remains below the configured threshold of 7.0, so no automatic stress scenario was generated.`}
               </p>
             </section>
@@ -184,12 +193,12 @@ export function EventExplainabilityDialog({
             </span>
             <div className="event-mapping-flow">
               {[
-                ["Detected event", event.title],
-                ["Event classification", titleCase(event.category)],
-                ["Impact score", `${event.impact.toFixed(1)} / 10`],
+                ["Detected event", titleStr],
+                ["Event classification", titleCase(categoryStr)],
+                ["Impact score", `${numImpact.toFixed(1)} / 10`],
                 [
                   "Trigger rule",
-                  `${event.impact.toFixed(1)} ${
+                  `${numImpact.toFixed(1)} ${
                     stressTriggered ? "≥" : "<"
                   } 7.0`,
                 ],
@@ -243,15 +252,15 @@ export function EventExplainabilityDialog({
               <div className="dialog-section-title">Why this sentiment?</div>
               <div className="score-line">
                 <span>Sentiment score</span>
-                <b className={event.sentiment >= 0 ? "positive" : "negative"}>
-                  {event.sentiment > 0 ? "+" : ""}
-                  {typeof event.sentiment === 'number' ? event.sentiment.toFixed(2) : event.sentiment}
+                <b className={numSentiment >= 0 ? "positive" : "negative"}>
+                  {numSentiment > 0 ? "+" : ""}
+                  {numSentiment.toFixed(2)}
                 </b>
               </div>
               <div className="sentiment-scale">
                 <i
                   className="sentiment-marker"
-                  style={{ left: `${((Number(event.sentiment) + 1) / 2) * 100}%` }}
+                  style={{ left: `${((numSentiment + 1) / 2) * 100}%` }}
                 />
               </div>
               <div className="sentiment-scale-labels">
@@ -265,7 +274,7 @@ export function EventExplainabilityDialog({
                   return (
                     <span key={driverText}>
                       <b>{driverText}</b>
-                      <small className={event.sentiment >= 0 ? "positive" : "negative"}>
+                      <small className={numSentiment >= 0 ? "positive" : "negative"}>
                         {sentimentLabel}
                       </small>
                     </span>
@@ -286,7 +295,7 @@ export function EventExplainabilityDialog({
               <div className="dialog-section-title">Why this impact?</div>
               <div className="score-line">
                 <span>Impact score</span>
-                <b>{typeof event.impact === 'number' ? event.impact.toFixed(1) : event.impact} / 10</b>
+                <b>{numImpact.toFixed(1)} / 10</b>
               </div>
               <div className="factor-list">
                 {(Array.isArray(event.impactFactors) ? event.impactFactors : []).map((item: any) => {
@@ -316,7 +325,7 @@ export function EventExplainabilityDialog({
               <div className="dialog-section-title">Affected entities</div>
               <span className="entity-label">Primary affected entity</span>
               <strong className="primary-entity">
-                {titleCase(event.entity)}
+                {titleCase(entityStr)}
               </strong>
               <span className="entity-label secondary-label">
                 Secondary affected areas
@@ -361,13 +370,13 @@ export function EventExplainabilityDialog({
               <div className="dialog-section-title">Evidence</div>
               <div className="evidence-source">
                 <span>Source</span>
-                <b>{event.source}</b>
+                <b>{sourceStr}</b>
               </div>
               <div className="source-excerpt">
                 <span>
                   Evidence used for classification and risk assessment
                 </span>
-                <p>“{event.excerpt}”</p>
+                <p>“{event.excerpt || "Market news report"}”</p>
               </div>
               {(event as any).url ? (
                 <Button
@@ -389,7 +398,7 @@ export function EventExplainabilityDialog({
             </section>
           </div>
 
-                    <section className="dialog-section portfolio-section">
+          <section className="dialog-section portfolio-section">
             <div className="dialog-section-title">Portfolio relevance</div>
             {event.relevanceType ? (
               <div className="portfolio-content">
@@ -397,10 +406,10 @@ export function EventExplainabilityDialog({
                   <span>Relevance Type</span>
                   <strong>{event.relevanceType}</strong>
                 </div>
-                {event.relevanceScore !== null && (
+                {event.relevanceScore !== null && event.relevanceScore !== undefined && (
                   <div>
                     <span>Relevance Score</span>
-                    <strong>{event.relevanceScore.toFixed(2)}</strong>
+                    <strong>{Number(event.relevanceScore).toFixed(2)}</strong>
                   </div>
                 )}
                 <div>

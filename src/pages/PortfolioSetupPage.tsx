@@ -52,10 +52,10 @@ export function PortfolioSetupPage({
   const [totalValue, setTotalValue] = useState<number>(2450)
   const [indexUniverse, setIndexUniverse] = useState("NIFTY 50")
 
-  // Non-equity exposures
-  const [loansExposure, setLoansExposure] = useState<number>(1360)
-  const [bondsExposure, setBondsExposure] = useState<number>(800)
-  const [derivativesExposure, setDerivativesExposure] = useState<number>(290)
+  // Non-equity exposures (30%, 17%, 10% of 2450 Cr baseline)
+  const [loansExposure, setLoansExposure] = useState<number>(735)
+  const [bondsExposure, setBondsExposure] = useState<number>(416.5)
+  const [derivativesExposure, setDerivativesExposure] = useState<number>(245)
 
   // Equity holdings
   const [holdings, setHoldings] = useState<EquityHolding[]>([])
@@ -67,10 +67,21 @@ export function PortfolioSetupPage({
   const [newWeight, setNewWeight] = useState<number>(5.0)
 
   const loadPortfolioData = async () => {
-    if (!portfolioId) return
     setLoading(true)
     try {
-      const data = await riskApi.getPortfolio(portfolioId)
+      let targetId = portfolioId
+      if (!targetId) {
+        const portfolios = await riskApi.getPortfolios()
+        if (portfolios && portfolios.length > 0) {
+          targetId = portfolios[0].id
+        }
+      }
+      if (!targetId) {
+        setLoading(false)
+        return
+      }
+
+      const data = await riskApi.getPortfolio(targetId)
       if (data) {
         setPortfolioName(data.name || "Main Banking Portfolio")
         setTotalValue(data.baselineValue ?? data.baseline_value ?? 2450)
@@ -89,11 +100,10 @@ export function PortfolioSetupPage({
         const rawList = data.holdings || data.assets
         if (Array.isArray(rawList)) {
           const equityAssets = rawList
-            .filter((a: any) =>
-              a.assetType === "Stock" || a.assetType === "EQUITY" ||
-              a.asset_type === "Stock" || a.asset_type === "EQUITY" ||
-              (!a.assetType && !a.asset_type)
-            )
+            .filter((a: any) => {
+              const type = (a.assetType || a.asset_type || "").toUpperCase()
+              return type === "STOCK" || type === "EQUITY" || type === "EQUITIES" || !type
+            })
             .map((a: any) => ({
               id: a.id,
               ticker: a.ticker || "",

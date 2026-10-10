@@ -207,12 +207,25 @@ button, .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(4px, 0.8vw, 8px);
-  border-radius: 4px;
+  gap: clamp(6px, 0.8vw, 10px);
+  border-radius: 6px;
   cursor: pointer;
-  font-size: clamp(11px, 0.75vw + 8px, 14px);
+  font-size: clamp(11px, 0.75vw + 8px, 13px);
+  font-weight: 500;
   text-align: center;
-  transition: background .15s, color .15s, border-color .15s;
+  transition: background .15s ease-in-out, color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out, transform .1s ease-in-out;
+  outline: none;
+  box-sizing: border-box;
+}
+.button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.button:disabled,
+.button.is-loading {
+  opacity: 0.65;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 .button span {
   display: inline-block;
@@ -220,11 +233,91 @@ button, .button {
   word-break: break-word;
   overflow-wrap: anywhere;
 }
-.button-primary { padding: clamp(6px, 1vw, 10px) clamp(10px, 1.5vw, 16px); min-height: clamp(34px, 2.5vw + 20px, 42px); background: var(--accent); color: #fff; width: auto; max-width: 100%; margin: 0; }
+.button-primary {
+  padding: 9px 18px;
+  min-height: 40px;
+  background: var(--accent);
+  color: #ffffff;
+  border: 1px solid transparent;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.button-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
+}
+.button-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.button-outline,
+.button-secondary {
+  background: var(--panel-subtle, rgba(0, 0, 0, 0.02));
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 9px 16px;
+  min-height: 40px;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+}
+.button-outline:hover:not(:disabled),
+.button-secondary:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.button-outline:active:not(:disabled),
+.button-secondary:active:not(:disabled) {
+  transform: translateY(1px);
+}
 .button-text { background: transparent; color: var(--secondary); padding: clamp(6px, 1vw, 10px) clamp(8px, 1.2vw, 14px); min-height: clamp(34px, 2.5vw + 20px, 42px); width: auto; max-width: 100%; margin: 0; }
 .button-text:hover { color: var(--accent); background: var(--accent-soft); }
 .button-icon { width: clamp(28px, 3vw + 12px, 38px); height: clamp(28px, 3vw + 12px, 38px); min-height: clamp(28px, 3vw + 12px, 38px); flex-shrink: 0; background: transparent; color: var(--secondary); }
 .button-icon span { display: none; }
+
+.button-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: button-spinner-rot 0.65s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes button-spinner-rot {
+  to { transform: rotate(360deg); }
+}
+
+/* Stress Test Form Action Container */
+.stress-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  background: var(--panel);
+  border-radius: 0 0 6px 6px;
+}
+.stress-actions .button {
+  min-height: 40px;
+  height: 40px;
+}
+.stress-actions .button-primary {
+  flex: 1 1 0%;
+  justify-content: center;
+}
+.stress-actions .button-outline,
+.stress-actions .button-secondary,
+.stress-actions .button-text {
+  flex: 0 0 auto;
+  justify-content: center;
+  padding: 8px 16px;
+}
+
 
 .intelligence-table { min-height: 360px; }
 .intelligence-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -258,7 +351,7 @@ button, .button {
 .current-bar { top: 1px; background: var(--bar-soft); }
 .proposed-bar { bottom: 0; background: var(--accent); }
 .horizontal-track .tooltip { bottom: 12px; }
-.line-chart-panel { height: clamp(230px, 30vh, 330px); width: 100%; box-sizing: border-box; }
+.line-chart-panel { min-height: 280px; height: auto; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding-bottom: 8px; }
 .line-chart { height: clamp(150px, 22vh, 230px); margin: 0 clamp(12px, 2vw, 26px); position: relative; width: calc(100% - clamp(24px, 4vw, 52px)); }
 .line-grid { position: absolute; inset: 5px 0 20px; display: flex; flex-direction: column; justify-content: space-between; }
 .line-grid i { border-top: 1px solid var(--grid); }
@@ -267,6 +360,34 @@ button, .button {
 .line-primary { stroke: var(--accent); }
 .line-secondary { stroke: var(--bar-soft); }
 .month-axis { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; color: var(--tertiary); font-size: clamp(9px, 0.65vw + 6px, 12px); }
+
+/* Trend Allocation Chart Specific Responsive Styles */
+.trend-metrics-strip { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.trend-metric-badge { display: flex; align-items: center; gap: 8px; padding: 4px 10px; background: color-mix(in srgb, var(--panel-subtle) 80%, transparent); border: 1px solid var(--border); border-radius: 5px; font-size: 12px; }
+.trend-metric-header { display: flex; align-items: center; gap: 6px; font-weight: 500; color: var(--secondary); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.legend-dot.tech { background: var(--accent); }
+.legend-dot.fin { background: #38bdf8; }
+.trend-metric-values { display: flex; align-items: baseline; gap: 5px; }
+.trend-metric-current { font-weight: 600; color: var(--text); font-size: 13px; }
+.trend-metric-change { font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; }
+.trend-metric-change.positive { color: #10b981; }
+.trend-metric-change.negative { color: #ef4444; }
+.trend-metric-period { font-size: 10px; color: var(--secondary); margin-left: 2px; opacity: 0.8; }
+.trend-chart-wrapper { position: relative; width: 100%; flex: 1; padding: 8px 12px 6px; box-sizing: border-box; overflow: visible; }
+.trend-chart-svg { width: 100%; height: auto; min-height: 180px; max-height: 230px; overflow: visible; display: block; }
+.trend-chart-skeleton, .trend-chart-error { min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--secondary); font-size: 12px; padding: 20px; }
+.trend-tooltip { position: absolute; z-index: 100; background: var(--panel); border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); border-radius: 6px; padding: 8px 12px; min-width: 150px; pointer-events: none; font-size: 11px; }
+.trend-tooltip-title { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 6px; font-weight: 600; color: var(--text); }
+.tooltip-badge { font-size: 9px; background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); padding: 1px 5px; border-radius: 3px; }
+.trend-tooltip-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; }
+.trend-tooltip-row .label-wrap { display: flex; align-items: center; gap: 6px; color: var(--secondary); }
+.trend-tooltip-row .val-wrap { display: flex; align-items: baseline; gap: 4px; }
+.trend-tooltip-row .val { font-weight: 600; color: var(--text); }
+.trend-tooltip-row .mom { font-size: 10px; }
+.trend-tooltip-row .mom.positive { color: #10b981; }
+.trend-tooltip-row .mom.negative { color: #ef4444; }
+
 
 .stress-controls .panel-title-row { min-height: 63px; }
 .control-stack.compact .slider-control { padding: 10px 0 7px; }
@@ -581,7 +702,7 @@ tbody tr:nth-child(even) { background: color-mix(in srgb, var(--panel-subtle) 55
 .horizontal-row > b, .horizontal-row > strong { font-size: 13px; }
 .horizontal-track { height: 14px; }
 .horizontal-track > span { height: 5px; }
-.line-chart-panel { height: 330px; }
+.line-chart-panel { min-height: 280px; height: auto; }
 .line-chart { height: 230px; margin: 0 26px; }
 .month-axis { font-size: 12px; }
 
@@ -3275,6 +3396,20 @@ h1, h2, h3, h4, h5, h6,
     padding: 8px 10px;
   }
 }
+
+@media (max-width: 640px) {
+  .stress-actions {
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .stress-actions .button {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+}
+
 
 
 

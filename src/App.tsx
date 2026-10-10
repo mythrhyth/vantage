@@ -35,6 +35,7 @@ import { AssetLossDialog } from "./components/stress-testing/AssetLossDialog"
 import { WhyLossDialog } from "./components/stress-testing/WhyLossDialog"
 import { EventStressComparisonDialog } from "./components/stress-testing/EventStressComparisonDialog"
 import { ScenarioComparisonDialog } from "./components/scenario-analysis/ScenarioComparisonDialog"
+import { ErrorBoundary } from "./components/common/ErrorBoundary"
 import { Landing } from "./pages/Landing"
 import { Overview } from "./pages/Overview"
 import { RiskIntelligence } from "./pages/RiskIntelligence"
@@ -57,6 +58,42 @@ export default function App() {
   const [stressHistory, setStressHistory] = useState<StressTestHistoryEntry[]>(
     [],
   )
+  const [historyLoading, setHistoryLoading] = useState<boolean>(true)
+  const [historyError, setHistoryError] = useState<string | null>(null)
+
+  const loadStressHistory = () => {
+    setHistoryLoading(true)
+    setHistoryError(null)
+    import("./services/api")
+      .then(({ riskApi }) => riskApi.getStressHistory())
+      .then((items) => {
+        if (Array.isArray(items)) {
+          const mappedItems: StressTestHistoryEntry[] = items.map((r: any) => ({
+            runId: r.runId || r.id,
+            event: r.event || null,
+            scenario: r.scenario || "Custom Stress",
+            parameters: r.parameters || {},
+            loss: typeof r.loss === "number" ? r.loss : Number(r.absoluteLoss || 0),
+            completedAt:
+              r.completedAt ||
+              (r.executedAt
+                ? new Date(r.executedAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "Recently"),
+          }))
+          setStressHistory(mappedItems)
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load stress history:", err)
+        setHistoryError(err?.message || "Failed to load stress test history.")
+      })
+      .finally(() => {
+        setHistoryLoading(false)
+      })
+  }
 
   useEffect(() => {
     import("./services/api").then(({ riskApi }) => {
@@ -64,7 +101,9 @@ export default function App() {
         if (data.length > 0) setPortfolioId(data[0].id)
       }).catch(err => console.error("Failed to fetch portfolios", err))
     })
+    loadStressHistory()
   }, [])
+
 
   const navigateManually = (target: Page) => {
     if (target === "Scenarios" || target === "Scenario Analysis") setStressRun(null)
@@ -87,7 +126,7 @@ export default function App() {
       <aside className="sidebar">
         <button
           className="brand-home"
-          onClick={() => setPage("Home")}
+          onClick={() => navigateManually("Home")}
           title="VANTAGE home"
         >
           <VantageLogo />
@@ -116,7 +155,7 @@ export default function App() {
       <div className="main-shell">
         <header className="topbar">
           <div>
-            <VantageLogo compact />
+            <VantageLogo compact onClick={() => navigateManually("Home")} />
             <i />
             <span>{page}</span>
           </div>
@@ -193,7 +232,33 @@ export default function App() {
           </div>
         </header>
         <main>
-          {page === "Home" && <Landing navigate={navigateManually} />}
+          <ErrorBoundary key={page}>
+          {page === "Home" && (
+            <Landing
+              portfolioId={portfolioId}
+              navigate={navigateManually}
+              onRunStressTest={async (event) => {
+                try {
+                  const { riskApi } = await import("./services/api")
+                  const scenarios = await riskApi.getScenarios()
+                  const mappedName = mappedScenarioForEvent(event.category)
+                  const sc = scenarios.find((s: any) => s.name === mappedName) || scenarios[0]
+                  if (!sc) return
+                  const params = await riskApi.generateParameters(event.id, sc.id)
+                  setStressRun({
+                    event,
+                    scenario: sc.name,
+                    scenarioId: sc.id,
+                    parameters: params,
+                    runId: Date.now()
+                  } as any)
+                  setPage("Scenario Analysis")
+                } catch (e) {
+                  console.error(e)
+                }
+              }}
+            />
+          )}
           {page === "Overview" && <Overview portfolioId={portfolioId} />}
           {page === "Portfolio Setup" && <PortfolioSetupPage portfolioId={portfolioId} />}
           {page === "Risk Intelligence" && (
@@ -239,9 +304,12 @@ export default function App() {
               portfolioId={portfolioId}
               stressRun={stressRun}
               history={stressHistory}
+              historyLoading={historyLoading}
+              historyError={historyError}
+              onRetryHistory={loadStressHistory}
               onRunCompleted={(entry) => {
                 setStressHistory((current) =>
-                  current.some((item) => item.runId === entry.runId)
+                  current.some((item) => String(item.runId) === String(entry.runId))
                     ? current
                     : [entry, ...current],
                 )
@@ -266,6 +334,7 @@ export default function App() {
           {page === "Workspace Settings" && (
             <WorkspaceSettingsPage dark={dark} setDark={setDark} portfolioId={portfolioId} />
           )}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

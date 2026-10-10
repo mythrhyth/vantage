@@ -1,104 +1,218 @@
-import React, { useState, useEffect, useMemo } from "react"
-import {
-  Page,
-  IconName,
-  ScenarioName,
-  ScenarioControls,
-  StressTestRun,
-  StressTestHistoryEntry,
-  AssetName,
-} from "../types"
-
-import {
-  titleCase,
-  mappedScenarioForEvent,
-  signedValue,
-  generateEventStressParameters,
-  calculateScenarioLoss,
-} from "../utils"
-import { Icon } from "../components/common/Icon"
-import { VantageLogo } from "../components/common/VantageLogo"
+import React, { useState, useEffect, useCallback } from "react"
+import { mappedScenarioForEvent } from "../utils"
 import { Button } from "../components/common/Button"
 import { Slider } from "../components/common/Slider"
 import { Summary } from "../components/common/Summary"
 import { PanelTitle } from "../components/common/PanelTitle"
 import { PageHeading } from "../components/common/PageHeading"
-import { SettingsPanel } from "../components/common/SettingsPanel"
 import { RiskHistogram } from "../components/risk-intelligence/RiskHistogram"
-import { EventTable } from "../components/risk-intelligence/EventTable"
-import { EventExplainabilityDialog } from "../components/risk-intelligence/EventExplainabilityDialog"
-import { MiniDistribution } from "../components/risk-intelligence/MiniDistribution"
-import { AllocationChart } from "../components/allocation/AllocationChart"
-import { AllocationHistory } from "../components/allocation/AllocationHistory"
-import { AllocationExplanationDialog } from "../components/allocation/AllocationExplanationDialog"
-import { OverallAllocationDialog } from "../components/allocation/OverallAllocationDialog"
-import { AssetLossDialog } from "../components/stress-testing/AssetLossDialog"
-import { WhyLossDialog } from "../components/stress-testing/WhyLossDialog"
-import { EventStressComparisonDialog } from "../components/stress-testing/EventStressComparisonDialog"
-import { ScenarioComparisonDialog } from "../components/scenario-analysis/ScenarioComparisonDialog"
+
+export interface PortfolioStressTestingProps {
+  portfolioId: string | null
+  triggerEvent: any | null
+  openScenario: () => void
+}
 
 export function PortfolioStressTesting({
   portfolioId,
   triggerEvent,
   openScenario,
-}: {
-  portfolioId: string | null
-  triggerEvent: any | null
-  openScenario: () => void
-}) {
-  const defaultValues = { sp: 100, emerging: 100, technology: 100, oil: 100, gold: 100, dollar: 100, rates: 100, inflation: 100 };
+}: PortfolioStressTestingProps) {
+  const defaultValues = {
+    sp: 100,
+    emerging: 100,
+    technology: 100,
+    oil: 100,
+    gold: 100,
+    dollar: 100,
+    rates: 100,
+    inflation: 100,
+  }
+
   const [values, setValues] = useState(defaultValues)
   const stress = Object.values(values).reduce(
     (sum, value) => sum + Math.abs(value - 100),
     0,
   )
-  const [backendResult, setBackendResult] = useState<any>(null)
-  const [portfolioMeta, setPortfolioMeta] = useState<any>(null)
 
+  const [backendResult, setBackendResult] = useState<any | null>(null)
+  const [portfolioMeta, setPortfolioMeta] = useState<any | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [loadingPortfolio, setLoadingPortfolio] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+  const [portfolioError, setPortfolioError] = useState<string | null>(null)
+  const [lastExecutedAt, setLastExecutedAt] = useState<string | null>(null)
+
+  // Load selected portfolio metadata when portfolioId changes
   useEffect(() => {
-    if (portfolioId) {
-      import("../services/api").then(({ riskApi }) => {
-        riskApi.getPortfolio(portfolioId).then(p => {
+    let isMounted = true
+    setLoadingPortfolio(true)
+    setPortfolioError(null)
+
+    import("../services/api")
+      .then(async ({ riskApi }) => {
+        let targetId = portfolioId
+        if (!targetId) {
+          const ports = await riskApi.getPortfolios().catch(() => [])
+          if (ports && ports.length > 0) targetId = ports[0].id
+        }
+
+        if (!targetId) {
+          if (isMounted) {
+            setPortfolioError("No active portfolio available")
+            setLoadingPortfolio(false)
+          }
+          return
+        }
+
+        const p = await riskApi.getPortfolio(targetId).catch((err) => {
+          if (isMounted) {
+            setPortfolioError(err?.message || "Failed to load portfolio")
+          }
+          return null
+        })
+
+        if (isMounted) {
           if (p) setPortfolioMeta(p)
-        }).catch(console.error)
+          setLoadingPortfolio(false)
+        }
       })
+      .catch((err) => {
+        if (isMounted) {
+          setPortfolioError(err?.message || "Failed to initialize API")
+          setLoadingPortfolio(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
     }
   }, [portfolioId])
 
-  const directional =
-    (100 - values.sp) * 0.2 +
-    (100 - values.emerging) * 0.12 +
-    (100 - values.technology) * 0.16 +
-    Math.abs(values.rates - 100) * 0.18 +
-    Math.abs(values.inflation - 100) * 0.12 +
-    Math.abs(values.oil - 100) * 0.08 -
-    (values.gold - 100) * 0.025 -
-    (values.dollar - 100) * 0.02
-  const fallbackLoss = Math.max(0, 18.2 + directional)
-  
-  const loss = backendResult?.absolute_loss ?? fallbackLoss
-  const baseline = backendResult?.baseline_value ?? (portfolioMeta?.baseline_value ? Number(portfolioMeta.baseline_value) : 2450)
-  const stressed = backendResult?.stressed_value ?? (baseline - fallbackLoss)
-  
-  const loansExp = portfolioMeta?.exposures?.loans ?? 1360
-  const bondsExp = portfolioMeta?.exposures?.bonds ?? 800
-  const derivativesExp = portfolioMeta?.exposures?.derivatives ?? 290
-  const equityExp = portfolioMeta?.exposures?.equity ?? 0
+  // Execute stress test run
+  const runTest = useCallback(
+    async (paramValues = values) => {
+      if (loading) return // Prevent duplicate submission while running
+
+      setLoading(true)
+      setError(null)
+
+      try {
+        const { riskApi } = await import("../services/api")
+        let targetId = portfolioId || portfolioMeta?.id
+
+        if (!targetId) {
+          const ports = await riskApi.getPortfolios().catch(() => [])
+          if (ports && ports.length > 0) targetId = ports[0].id
+        }
+
+        if (!targetId) {
+          throw new Error("Cannot run stress test: No portfolio selected")
+        }
+
+        const res = await riskApi.runStressTest(
+          targetId,
+          paramValues,
+          undefined,
+          triggerEvent?.id,
+        )
+
+        if (!res || res.error) {
+          throw new Error(res?.error?.message || "Invalid stress test response")
+        }
+
+        setBackendResult(res)
+        setLastExecutedAt(
+          new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          }),
+        )
+      } catch (err: any) {
+        console.error("[PortfolioStressTesting] API Error:", err)
+        setError(err?.message || "Failed to execute stress test on backend.")
+      } finally {
+        setLoading(false)
+      }
+    },
+    [portfolioId, portfolioMeta?.id, triggerEvent?.id, loading, values],
+  )
+
+  // Portfolio baseline & exposures derived from portfolioMeta or backendResult
+  const baseline =
+    backendResult?.baseline_value ??
+    (portfolioMeta?.baseline_value
+      ? Number(portfolioMeta.baseline_value)
+      : portfolioMeta?.baselineValue
+      ? Number(portfolioMeta.baselineValue)
+      : 0)
+
+  const loansExp =
+    portfolioMeta?.loansExposure ??
+    portfolioMeta?.exposures?.loans ??
+    0
+  const bondsExp =
+    portfolioMeta?.bondsExposure ??
+    portfolioMeta?.exposures?.bonds ??
+    0
+  const derivativesExp =
+    portfolioMeta?.derivativesExposure ??
+    portfolioMeta?.exposures?.derivatives ??
+    0
+  const equityExp =
+    portfolioMeta?.equityExposure ??
+    portfolioMeta?.exposures?.equity ??
+    0
 
   const totalExposures = loansExp + bondsExp + derivativesExp + equityExp
+
   const loansPct = totalExposures > 0 ? (loansExp / totalExposures) * 100 : 0
   const bondsPct = totalExposures > 0 ? (bondsExp / totalExposures) * 100 : 0
-  const derivativesPct = totalExposures > 0 ? (derivativesExp / totalExposures) * 100 : 0
+  const derivativesPct =
+    totalExposures > 0 ? (derivativesExp / totalExposures) * 100 : 0
   const equityPct = totalExposures > 0 ? (equityExp / totalExposures) * 100 : 0
+
+  const hasExposures = totalExposures > 0
+  const showReconciliationWarning =
+    hasExposures && Math.abs(totalExposures - baseline) > 1.0
+
+  // Result metrics
+  const hasRun = backendResult !== null
+  const loss = backendResult?.absolute_loss ?? 0
+  const stressed = backendResult?.stressed_value ?? baseline
+
+  const loansLoss = backendResult?.attribution_result?.loansLoss ?? 0
+  const bondsLoss = backendResult?.attribution_result?.bondsLoss ?? 0
+  const derivativesLoss = backendResult?.attribution_result?.derivativesLoss ?? 0
+  const equityLoss = backendResult?.attribution_result?.equityLoss ?? 0
 
   const update = (key: keyof typeof values, value: number) =>
     setValues((current) => ({ ...current, [key]: value }))
+
   return (
     <div className="page">
       <PageHeading
         title="Portfolio Stress Testing"
         description="Estimate potential banking portfolio losses under changes in market, rate, commodity, and inflation variables."
       />
+
+      {portfolioError && (
+        <section className="stress-error-card" style={{ marginBottom: "16px" }}>
+          <span>⚠️ Portfolio Data Error: {portfolioError}</span>
+        </section>
+      )}
+
+      {showReconciliationWarning && (
+        <section className="reconciliation-warning-banner">
+          <span>
+            ⚠️ <strong>Portfolio Reconciliation Notice:</strong> Constituent
+            asset holdings sum to <b>₹{totalExposures.toFixed(1)} Cr</b>, which
+            differs from the configured portfolio baseline (<b>₹{baseline.toFixed(1)} Cr</b>). Canonical portfolio baseline used for stress calculations.
+          </span>
+        </section>
+      )}
+
       {triggerEvent && (
         <section className="stress-trigger-bridge">
           <span>
@@ -115,80 +229,170 @@ export function PortfolioStressTesting({
           </Button>
         </section>
       )}
+
       <Summary
         items={[
           {
             label: "Portfolio exposure",
-            value: `₹${baseline.toFixed(1)} Cr`,
+            value: baseline > 0 ? `₹${baseline.toFixed(1)} Cr` : "...",
             detail: portfolioMeta?.name || "Configured Portfolio",
           },
-          { label: "Loans", value: `₹${loansExp.toFixed(1)} Cr`, detail: `${loansPct.toFixed(1)}% of exposure` },
-          { label: "Bonds", value: `₹${bondsExp.toFixed(1)} Cr`, detail: `${bondsPct.toFixed(1)}% of exposure` },
+          {
+            label: "Loans",
+            value: hasExposures ? `₹${loansExp.toFixed(1)} Cr` : "...",
+            detail: hasExposures ? `${loansPct.toFixed(1)}% of exposure` : "Constituent data unavailable",
+          },
+          {
+            label: "Bonds",
+            value: hasExposures ? `₹${bondsExp.toFixed(1)} Cr` : "...",
+            detail: hasExposures ? `${bondsPct.toFixed(1)}% of exposure` : "Constituent data unavailable",
+          },
           {
             label: "Derivatives",
-            value: `₹${derivativesExp.toFixed(1)} Cr`,
-            detail: `${derivativesPct.toFixed(1)}% of exposure`,
+            value: hasExposures ? `₹${derivativesExp.toFixed(1)} Cr` : "...",
+            detail: hasExposures ? `${derivativesPct.toFixed(1)}% of exposure` : "Constituent data unavailable",
           },
         ]}
       />
+
       <div className="workspace-grid stress-layout">
         <div className="analysis-column">
           <RiskHistogram
-            shift={stress / 10}
-            title="Portfolio Value at Risk"
-            subtitle="Distribution of potential banking portfolio losses over a 12-month planning horizon."
+            portfolio={portfolioMeta}
+            isLoading={loadingPortfolio}
+            isError={!!portfolioError}
+            title="Credit Exposure Distribution by Default Risk"
+            subtitle="Portfolio exposure categorized by modeled default risk probability buckets"
           />
-          <div className="result-strip">
+
+          {error && (
+            <div className="stress-error-card" style={{ margin: "16px 0" }}>
+              <span>⚠️ Stress Calculation Error: {error}</span>
+              <Button variant="text" onClick={() => runTest(values)} disabled={loading}>
+                Retry Calculation
+              </Button>
+            </div>
+          )}
+
+          <div className="result-strip" style={{ position: "relative" }}>
             <span>
               <small>Baseline portfolio value</small>
-              <strong>₹{baseline.toFixed(1)} Cr</strong>
+              <strong>
+                {loading ? "..." : baseline > 0 ? `₹${baseline.toFixed(1)} Cr` : "--"}
+              </strong>
             </span>
             <span>
               <small>Stressed portfolio value</small>
-              <strong>₹{stressed.toFixed(1)} Cr</strong>
+              <strong>
+                {loading ? "..." : hasRun ? `₹${stressed.toFixed(1)} Cr` : "--"}
+              </strong>
             </span>
             <span>
               <small>Absolute change</small>
-              <strong className="negative">-₹{loss.toFixed(1)} Cr</strong>
+              <strong className={hasRun && loss > 0 ? "negative" : ""}>
+                {loading
+                  ? "..."
+                  : !hasRun
+                  ? "--"
+                  : loss > 0
+                  ? `-₹${loss.toFixed(1)} Cr`
+                  : loss < 0
+                  ? `+₹${Math.abs(loss).toFixed(1)} Cr`
+                  : `₹0.0 Cr`}
+              </strong>
             </span>
             <span>
               <small>Percentage change</small>
-              <strong className="negative">-{((loss / baseline) * 100).toFixed(2)}%</strong>
+              <strong className={hasRun && loss > 0 ? "negative" : ""}>
+                {loading
+                  ? "..."
+                  : !hasRun
+                  ? "--"
+                  : loss > 0
+                  ? `-${((loss / (baseline || 1)) * 100).toFixed(2)}%`
+                  : `0.00%`}
+              </strong>
             </span>
           </div>
-          <section className="exposure-analysis">
+
+          {lastExecutedAt && !loading && hasRun && (
+            <div className="stress-status-banner" style={{ fontSize: "11px", color: "var(--secondary)", marginTop: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981" }} />
+              <span>
+                Stress test executed successfully at {lastExecutedAt}
+                {backendResult?.parameters_used?.parameter_source && (
+                  <span style={{ marginLeft: "8px", padding: "2px 6px", borderRadius: "4px", background: "rgba(255, 255, 255, 0.1)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    Source: {backendResult.parameters_used.parameter_source.replace('_', ' ')}
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
+
+          <section className="exposure-analysis" style={{ marginTop: "16px" }}>
             <PanelTitle
               title="Banking exposure analysis"
-              subtitle="Estimated contribution to stressed loss"
+              subtitle="Estimated contribution to stressed loss / gain"
             />
-            <div className="stacked-exposure">
-              {loansPct > 0 && (
-                <div style={{ width: `${loansPct.toFixed(1)}%` }}>
-                  <span>Loans</span>
-                  <b>₹{(loss * (loansPct / 100)).toFixed(1)} Cr</b>
-                </div>
-              )}
-              {bondsPct > 0 && (
-                <div style={{ width: `${bondsPct.toFixed(1)}%` }}>
-                  <span>Bonds</span>
-                  <b>₹{(loss * (bondsPct / 100)).toFixed(1)} Cr</b>
-                </div>
-              )}
-              {derivativesPct > 0 && (
-                <div style={{ width: `${derivativesPct.toFixed(1)}%` }}>
-                  <span>Derivatives</span>
-                  <b>₹{(loss * (derivativesPct / 100)).toFixed(1)} Cr</b>
-                </div>
-              )}
-              {equityPct > 0 && (
-                <div style={{ width: `${equityPct.toFixed(1)}%` }}>
-                  <span>Equity</span>
-                  <b>₹{(loss * (equityPct / 100)).toFixed(1)} Cr</b>
-                </div>
-              )}
-            </div>
+            {!hasRun ? (
+              <div className="empty-state" style={{ padding: "24px", textAlign: "center", color: "var(--secondary)" }}>
+                <span>Run a stress test using the control panel to view asset-class loss contribution.</span>
+              </div>
+            ) : (
+              <div className="stacked-exposure">
+                {loansPct > 0 && (
+                  <div style={{ width: `${loansPct.toFixed(1)}%` }}>
+                    <span>Loans</span>
+                    <b>
+                      {loansLoss > 0
+                        ? `₹${loansLoss.toFixed(1)} Cr`
+                        : loansLoss < 0
+                        ? `+₹${Math.abs(loansLoss).toFixed(1)} Cr`
+                        : `₹0.0 Cr`}
+                    </b>
+                  </div>
+                )}
+                {bondsPct > 0 && (
+                  <div style={{ width: `${bondsPct.toFixed(1)}%` }}>
+                    <span>Bonds</span>
+                    <b>
+                      {bondsLoss > 0
+                        ? `₹${bondsLoss.toFixed(1)} Cr`
+                        : bondsLoss < 0
+                        ? `+₹${Math.abs(bondsLoss).toFixed(1)} Cr`
+                        : `₹0.0 Cr`}
+                    </b>
+                  </div>
+                )}
+                {derivativesPct > 0 && (
+                  <div style={{ width: `${derivativesPct.toFixed(1)}%` }}>
+                    <span>Derivatives</span>
+                    <b>
+                      {derivativesLoss > 0
+                        ? `₹${derivativesLoss.toFixed(1)} Cr`
+                        : derivativesLoss < 0
+                        ? `+₹${Math.abs(derivativesLoss).toFixed(1)} Cr`
+                        : `₹0.0 Cr`}
+                    </b>
+                  </div>
+                )}
+                {equityPct > 0 && (
+                  <div style={{ width: `${equityPct.toFixed(1)}%` }}>
+                    <span>Equity</span>
+                    <b>
+                      {equityLoss > 0
+                        ? `₹${equityLoss.toFixed(1)} Cr`
+                        : equityLoss < 0
+                        ? `+₹${Math.abs(equityLoss).toFixed(1)} Cr`
+                        : `₹0.0 Cr`}
+                    </b>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         </div>
+
         <aside className="control-panel stress-controls">
           <PanelTitle
             title="Adjust stress parameters"
@@ -262,31 +466,29 @@ export function PortfolioStressTesting({
               onChange={(value) => update("inflation", value)}
             />
           </div>
-          <Button
-            onClick={() => {
-              if (portfolioId) {
-                import("../services/api").then(({ riskApi }) => {
-                  riskApi.runStressTest(portfolioId, values, undefined, triggerEvent?.id)
-                    .then(res => setBackendResult(res))
-                    .catch(console.error)
-                })
-              }
-            }}
-          >
-            Run Stress Test
-          </Button>
-          <Button
-            variant="text"
-            icon="reset"
-            onClick={() => {
-              setValues(defaultValues)
-              setBackendResult(null)
-            }}
-          >
-            Reset controls
-          </Button>
+          <div className="stress-actions">
+            <Button
+              variant="primary"
+              loading={loading}
+              disabled={loading || loadingPortfolio}
+              onClick={() => runTest(values)}
+            >
+              {loading ? "Running stress test…" : "Run Stress Test"}
+            </Button>
+            <Button
+              variant="outline"
+              icon="reset"
+              disabled={loading}
+              onClick={() => {
+                setValues(defaultValues)
+              }}
+            >
+              Reset controls
+            </Button>
+          </div>
         </aside>
       </div>
     </div>
   )
 }
+

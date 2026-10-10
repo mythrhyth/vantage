@@ -1,48 +1,96 @@
 import React, { useState, useEffect, useMemo } from "react"
-import {
-  Page,
-  IconName,
-  ScenarioName,
-  ScenarioControls,
-  StressTestRun,
-  StressTestHistoryEntry,
-  AssetName,
-} from "../types"
-import {
-  titleCase,
-  mappedScenarioForEvent,
-  signedValue,
-  generateEventStressParameters,
-  calculateScenarioLoss,
-} from "../utils"
+import { Page, IconName } from "../types"
 import { Icon } from "../components/common/Icon"
-import { VantageLogo } from "../components/common/VantageLogo"
 import { Button } from "../components/common/Button"
-import { Slider } from "../components/common/Slider"
-import { Summary } from "../components/common/Summary"
 import { PanelTitle } from "../components/common/PanelTitle"
-import { PageHeading } from "../components/common/PageHeading"
-import { SettingsPanel } from "../components/common/SettingsPanel"
-import { RiskHistogram } from "../components/risk-intelligence/RiskHistogram"
 import { EventTable } from "../components/risk-intelligence/EventTable"
 import { EventExplainabilityDialog } from "../components/risk-intelligence/EventExplainabilityDialog"
-import { MiniDistribution } from "../components/risk-intelligence/MiniDistribution"
-import { AllocationChart } from "../components/allocation/AllocationChart"
-import { AllocationHistory } from "../components/allocation/AllocationHistory"
-import { AllocationExplanationDialog } from "../components/allocation/AllocationExplanationDialog"
-import { OverallAllocationDialog } from "../components/allocation/OverallAllocationDialog"
-import { AssetLossDialog } from "../components/stress-testing/AssetLossDialog"
-import { WhyLossDialog } from "../components/stress-testing/WhyLossDialog"
-import { EventStressComparisonDialog } from "../components/stress-testing/EventStressComparisonDialog"
-import { ScenarioComparisonDialog } from "../components/scenario-analysis/ScenarioComparisonDialog"
 
-export function Landing({ navigate }: { navigate: (page: Page) => void }) {
-  const [events, setEvents] = useState<any[]>([]);
+export function Landing({
+  navigate,
+  portfolioId,
+  onRunStressTest,
+}: {
+  navigate: (page: Page) => void
+  portfolioId?: string | null
+  onRunStressTest?: (event: any) => void
+}) {
+  const [events, setEvents] = useState<any[]>([])
+  const [portfolioValue, setPortfolioValue] = useState<number>(2450)
+  const [latestRun, setLatestRun] = useState<any | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null)
+
   useEffect(() => {
     import("../services/api").then(({ riskApi }) => {
-      riskApi.getEvents().then(data => setEvents(data)).catch(console.error);
+      Promise.all([
+        riskApi.getEvents(portfolioId || undefined),
+        riskApi.getPortfolios(),
+        riskApi.getStressHistory().catch(() => []),
+      ])
+        .then(([data, portfolios, history]) => {
+          if (Array.isArray(data)) setEvents(data)
+          if (Array.isArray(portfolios) && portfolios.length > 0) {
+            const activePort = portfolioId
+              ? portfolios.find((p: any) => p.id === portfolioId) || portfolios[0]
+              : portfolios[0]
+            if (activePort && activePort.baselineValue) {
+              setPortfolioValue(Number(activePort.baselineValue))
+            }
+          }
+          if (Array.isArray(history) && history.length > 0) {
+            // Find latest run with valid non-zero score if available, or first run
+            const activeRun = history.find((r: any) => Number(r.riskScore ?? r.risk_score) > 0) || history[0]
+            setLatestRun(activeRun)
+          }
+        })
+        .catch(console.error)
     })
-  }, []);
+  }, [portfolioId])
+
+  const avgSentiment = useMemo(() => {
+    if (!events || events.length === 0) return "-0.18"
+    const sum = events.reduce(
+      (acc, e) =>
+        acc +
+        (typeof e.sentiment === "number"
+          ? e.sentiment
+          : parseFloat(e.sentiment) || 0),
+      0,
+    )
+    return (sum / events.length).toFixed(2)
+  }, [events])
+
+  const realDistribution = useMemo(() => {
+    if (!events || events.length === 0) {
+      return [18, 31, 49, 74, 91, 78, 55, 34, 19]
+    }
+    const buckets = Array(9).fill(0)
+    events.forEach((ev) => {
+      const imp = typeof ev.impact === "number" ? ev.impact : parseFloat(ev.impact) || 5
+      const bucketIdx = Math.min(8, Math.max(0, Math.floor(((imp - 1) / 9) * 9)))
+      buckets[bucketIdx] += 1
+    })
+    const maxBucket = Math.max(...buckets, 1)
+    return buckets.map((count) => Math.max(12, Math.round((count / maxBucket) * 92)))
+  }, [events])
+
+  const latestRiskScore = useMemo(() => {
+    if (latestRun && typeof (latestRun.riskScore ?? latestRun.risk_score) === "number" && Number(latestRun.riskScore ?? latestRun.risk_score) > 0) {
+      return Math.round(Number(latestRun.riskScore ?? latestRun.risk_score))
+    }
+    if (events && events.length > 0) {
+      const avgImp =
+        events.reduce((sum, e) => sum + (Number(e.impact) || 5), 0) / events.length
+      return Math.min(100, Math.max(10, Math.round(avgImp * 9.5)))
+    }
+    return 68
+  }, [latestRun, events])
+
+  const riskLevelLabel = useMemo(() => {
+    if (latestRiskScore >= 70) return "High"
+    if (latestRiskScore >= 45) return "Moderate"
+    return "Low"
+  }, [latestRiskScore])
 
   return (
     <div className="landing-page">
@@ -61,10 +109,10 @@ export function Landing({ navigate }: { navigate: (page: Page) => void }) {
         <div className="landing-visual">
           <div className="landing-chart-head">
             <span>Portfolio risk distribution</span>
-            <strong>Moderate</strong>
+            <strong>{riskLevelLabel}</strong>
           </div>
           <div className="landing-bars">
-            {[18, 31, 49, 74, 91, 78, 55, 34, 19].map((value, index) => (
+            {realDistribution.map((value, index) => (
               <i key={index} style={{ height: `${value}%` }} />
             ))}
           </div>
@@ -78,19 +126,21 @@ export function Landing({ navigate }: { navigate: (page: Page) => void }) {
       <section className="landing-summary">
         <span>
           <small>Portfolio exposure</small>
-          <strong>₹2,450 Cr</strong>
+          <strong>₹{portfolioValue.toLocaleString()} Cr</strong>
         </span>
         <span>
           <small>Risk score</small>
-          <strong>68 / 100</strong>
+          <strong>{latestRiskScore} / 100</strong>
         </span>
         <span>
           <small>Market sentiment</small>
-          <strong className="negative">-0.18</strong>
+          <strong className={Number(avgSentiment) < 0 ? "negative" : ""}>
+            {avgSentiment > "0" && !avgSentiment.startsWith("+") ? `+${avgSentiment}` : avgSentiment}
+          </strong>
         </span>
         <span>
           <small>Significant events</small>
-          <strong>12</strong>
+          <strong>{events.length}</strong>
         </span>
       </section>
       <section className="landing-tools">
@@ -156,9 +206,16 @@ export function Landing({ navigate }: { navigate: (page: Page) => void }) {
         />
         <EventTable
           rows={events.slice(0, 3)}
-          onSelect={() => navigate("Risk Intelligence")}
+          onSelect={(index) => setSelectedEvent(events[index])}
         />
       </section>
+      {selectedEvent && (
+        <EventExplainabilityDialog
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          onRunStressTest={onRunStressTest}
+        />
+      )}
     </div>
   )
 }

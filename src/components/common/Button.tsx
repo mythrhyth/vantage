@@ -1,26 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react"
-import {
-  Page,
-  IconName,
-  ScenarioName,
-  ScenarioControls,
-  StressTestRun,
-  StressTestHistoryEntry,
-  AssetName,
-} from "../../types"
-import {
-  titleCase,
-  mappedScenarioForEvent,
-  signedValue,
-  generateEventStressParameters,
-  calculateScenarioLoss,
-} from "../../utils"
+import React from "react"
+import { IconName } from "../../types"
 import { Icon } from "../common/Icon"
-import { Button } from "../common/Button"
-import { PanelTitle } from "../common/PanelTitle"
-import { Slider } from "../common/Slider"
-import { Summary } from "../common/Summary"
-import { PageHeading } from "../common/PageHeading"
 
 export function Button({
   children,
@@ -30,27 +10,33 @@ export function Button({
   ariaLabel,
   className = "",
   ariaPressed,
-  disabled
+  disabled,
+  loading = false,
 }: {
   children: React.ReactNode
-  variant?: "primary" | "text" | "icon"
+  variant?: "primary" | "secondary" | "outline" | "text" | "icon"
   onClick?: () => void
   icon?: IconName
   ariaLabel?: string
   className?: string
   ariaPressed?: boolean
   disabled?: boolean
+  loading?: boolean
 }) {
   return (
     <button
       type="button"
-      className={`button button-${variant} ${className}`}
+      className={`button button-${variant} ${loading ? "is-loading" : ""} ${className}`}
       onClick={onClick}
       aria-label={ariaLabel}
       aria-pressed={ariaPressed}
-      disabled={disabled}
+      disabled={disabled || loading}
     >
-      {icon && <Icon name={icon} size={16} />}
+      {loading ? (
+        <span className="button-spinner" aria-hidden="true" />
+      ) : (
+        icon && <Icon name={icon} size={16} />
+      )}
       <span>{children}</span>
     </button>
   )

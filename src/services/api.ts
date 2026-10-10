@@ -98,10 +98,10 @@ export const riskApi = {
 
   getScenario: (id: string) => fetchApi<any>(`/scenarios/${id}`),
 
-  simulateAllocation: (portfolioId: string, sensitivity: number, maxWeight: number, maxChange: number) => 
+  simulateAllocation: (portfolioId: string, sensitivity: number, maxWeight: number, maxChange: number, sectorLimit?: number) => 
     fetchApi<{ proposed_weights: any[] }>(`/allocations/simulate`, {
       method: 'POST',
-      body: JSON.stringify({ portfolio_id: portfolioId, sensitivity, maxWeight, maxChange })
+      body: JSON.stringify({ portfolio_id: portfolioId, sensitivity, maxWeight, maxChange, sectorLimit })
     }),
 
   generateParameters: (eventId: string, scenarioId: string) =>

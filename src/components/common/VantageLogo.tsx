@@ -22,9 +22,32 @@ import { Slider } from "../common/Slider"
 import { Summary } from "../common/Summary"
 import { PageHeading } from "../common/PageHeading"
 
-export function VantageLogo({ compact = false }: { compact?: boolean }) {
+export function VantageLogo({
+  compact = false,
+  onClick,
+}: {
+  compact?: boolean
+  onClick?: () => void
+}) {
   return (
-    <span className={`vantage-logo ${compact ? "compact" : ""}`}>
+    <span
+      className={`vantage-logo ${compact ? "compact" : ""} ${onClick ? "clickable" : ""}`}
+      onClick={onClick}
+      style={onClick ? { cursor: "pointer" } : undefined}
+      title={onClick ? "VANTAGE home" : undefined}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
+    >
       <svg
         className="vantage-symbol"
         viewBox="0 0 32 32"

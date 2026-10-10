@@ -4,11 +4,13 @@ import { Button } from "../common/Button"
 
 export function WhyLossDialog({
   loss,
+  baseline = 2450,
   scenario,
   attribution,
   onClose,
 }: {
   loss: number
+  baseline?: number
   scenario: ScenarioName
   attribution?: {
     loansLoss?: number
@@ -27,32 +29,54 @@ export function WhyLossDialog({
   }, [onClose])
 
   const calculatedContributors = useMemo(() => {
-    if (attribution && (attribution.loansLoss || attribution.bondsLoss || attribution.derivativesLoss || attribution.equityLoss)) {
-      const lLoss = Math.max(0, attribution.loansLoss || 0)
-      const bLoss = Math.max(0, attribution.bondsLoss || 0)
-      const dLoss = Math.max(0, attribution.derivativesLoss || 0)
-      const eLoss = Math.max(0, attribution.equityLoss || 0)
-      const tot = lLoss + bLoss + dLoss + eLoss || loss || 1
+    const rawLoans = attribution?.loansLoss ?? 0
+    const rawBonds = attribution?.bondsLoss ?? 0
+    const rawDeriv = attribution?.derivativesLoss ?? 0
+    const rawEquity = attribution?.equityLoss ?? 0
 
-      const items: { name: AssetName; absLoss: number; share: number; driver: string }[] = [
-        { name: "Loans", absLoss: lLoss, share: Math.round((lLoss / tot) * 100), driver: "Credit-spread & rate sensitivity" },
-        { name: "Bonds", absLoss: bLoss, share: Math.round((bLoss / tot) * 100), driver: "Interest-rate & yield curve shift" },
-        { name: "Derivatives", absLoss: dLoss, share: Math.round((dLoss / tot) * 100), driver: "Liquidity haircut & rate shift" },
-        { name: "Equity" as AssetName, absLoss: eLoss, share: Math.round((eLoss / tot) * 100), driver: "Inflation, rate & liquidity haircut" },
-      ]
+    const grossLoss = Math.max(0, rawLoans) + Math.max(0, rawBonds) + Math.max(0, rawDeriv) + Math.max(0, rawEquity)
 
-      return items.sort((a, b) => b.share - a.share)
-    }
-
-    return [
-      { name: "Loans" as AssetName, absLoss: loss * 0.47, share: 47, driver: "Default probability adjustment" },
-      { name: "Bonds" as AssetName, absLoss: loss * 0.31, share: 31, driver: "Interest-rate and credit-spread sensitivity" },
-      { name: "Derivatives" as AssetName, absLoss: loss * 0.12, share: 12, driver: "Counterparty exposure" },
-      { name: "Liquidity" as AssetName, absLoss: loss * 0.10, share: 10, driver: "Liquidity haircut" },
+    const rawItems = [
+      { name: "Loans" as AssetName, rawVal: rawLoans, driver: "Credit-spread & rate sensitivity" },
+      { name: "Bonds" as AssetName, rawVal: rawBonds, driver: "Interest-rate & yield curve shift" },
+      { name: "Derivatives" as AssetName, rawVal: rawDeriv, driver: "Liquidity haircut & rate shift" },
+      { name: "Equity" as AssetName, rawVal: rawEquity, driver: "Inflation, rate & liquidity sensitivity" },
     ]
+
+    const items = rawItems.map((item) => {
+      const isLoss = item.rawVal > 0
+      const isGain = item.rawVal < 0
+      const absVal = Math.abs(item.rawVal)
+      const share = isLoss && grossLoss > 0 ? Math.round((item.rawVal / grossLoss) * 100) : 0
+      return {
+        ...item,
+        isLoss,
+        isGain,
+        absVal,
+        share,
+      }
+    })
+
+    // Sort by gross loss share descending, keeping gaining assets visible
+    return {
+      grossLoss,
+      items: items.sort((a, b) => b.share - a.share || b.rawVal - a.rawVal),
+    }
   }, [attribution, loss])
 
-  const primaryDriver = calculatedContributors[0]
+  const { grossLoss, items: contributors } = calculatedContributors
+
+  const primaryDriver = contributors.find((c) => c.isLoss) || contributors[0] || {
+    name: "Loans" as AssetName,
+    share: 0,
+    rawVal: 0,
+    absVal: 0,
+    isLoss: false,
+    isGain: false,
+    driver: "Credit sensitivity",
+  }
+
+  const isNetGain = loss === 0 && contributors.some((c) => c.isGain)
 
   return (
     <div
@@ -69,7 +93,11 @@ export function WhyLossDialog({
           <div>
             <span className="dialog-eyebrow">Executive loss explanation</span>
             <div className="dialog-title" id="why-loss-title">
-              Why did the portfolio lose ₹{loss.toFixed(1)} Cr?
+              {loss > 0
+                ? `Why did the portfolio lose ₹${loss.toFixed(1)} Cr?`
+                : isNetGain
+                ? `Portfolio Stress Analysis — Net Capital Gain / Zero Loss`
+                : `Why did the portfolio report ₹0.0 Cr stress loss?`}
             </div>
             <span className="dialog-meta">
               Modeled 12-month scenario impact
@@ -87,16 +115,26 @@ export function WhyLossDialog({
         <div className="explainability-body">
           <section className="dialog-section why-loss-causal-card">
             <div className="dialog-section-title">
-              Primary driver · {primaryDriver.name} sensitivity ({primaryDriver.share}%)
+              {primaryDriver.isLoss
+                ? `Primary loss driver · ${primaryDriver.name} sensitivity (${primaryDriver.share}% of gross loss)`
+                : `Primary asset exposure · ${primaryDriver.name}`}
             </div>
             <div className="why-loss-causal-chain">
               {[
                 scenario,
                 `${primaryDriver.name} market stress`,
                 `Primary driver: ${primaryDriver.driver}`,
-                `Expected ${primaryDriver.name.toLowerCase()} losses increase`,
-                `${primaryDriver.name} contribute ₹${primaryDriver.absLoss.toFixed(1)} Cr`,
-                `${primaryDriver.share}% of total modeled loss`,
+                primaryDriver.isLoss
+                  ? `Expected ${primaryDriver.name.toLowerCase()} losses: ₹${primaryDriver.rawVal.toFixed(1)} Cr`
+                  : primaryDriver.isGain
+                  ? `Expected ${primaryDriver.name.toLowerCase()} capital gain: +₹${primaryDriver.absVal.toFixed(1)} Cr`
+                  : `No significant ${primaryDriver.name.toLowerCase()} change`,
+                primaryDriver.isLoss
+                  ? `${primaryDriver.share}% of gross asset class losses (₹${grossLoss.toFixed(1)} Cr gross)`
+                  : `Asset capital gain offsets portfolio stress losses`,
+                loss > 0
+                  ? `Net portfolio stress loss: ₹${loss.toFixed(1)} Cr`
+                  : `Net portfolio stress loss: ₹0.0 Cr`,
               ].map((step, index) => (
                 <div key={step}>
                   <span>{step}</span>
@@ -105,19 +143,30 @@ export function WhyLossDialog({
               ))}
             </div>
           </section>
+
           <div className="loss-explanation-list">
-            {calculatedContributors.map((c, index) => (
+            {contributors.map((c, index) => (
               <div key={c.name}>
                 <i>{index + 1}</i>
                 <span>
                   <b>
                     {c.name}{" "}
-                    {index === 0
-                      ? "were the largest contributor"
-                      : "contributed"}
+                    {c.isLoss
+                      ? index === 0
+                        ? "was the largest loss contributor"
+                        : "contributed to stress loss"
+                      : c.isGain
+                      ? "generated a capital gain (loss offset)"
+                      : "had no stress impact"}
                   </b>
                   <small>
-                    ₹{c.absLoss.toFixed(1)} Cr / {c.share}%
+                    {c.isLoss ? (
+                      `₹${c.rawVal.toFixed(1)} Cr loss / ${c.share}% gross loss`
+                    ) : c.isGain ? (
+                      <span className="positive">+₹{c.absVal.toFixed(1)} Cr gain (offset)</span>
+                    ) : (
+                      `₹0.0 Cr`
+                    )}
                   </small>
                 </span>
                 <span>
@@ -127,22 +176,38 @@ export function WhyLossDialog({
               </div>
             ))}
           </div>
+
           <div className="primary-overall-driver">
-            <small>Primary overall driver</small>
-            <b>{primaryDriver.name} ({primaryDriver.driver})</b>
+            <small>Primary overall factor</small>
+            <b>
+              {primaryDriver.name} ({primaryDriver.driver})
+            </b>
           </div>
+
           <div className="why-loss-totals">
             <span>
-              <small>Total modeled loss</small>
-              <b className="negative">₹{loss.toFixed(1)} Cr</b>
+              <small>Net portfolio stress loss</small>
+              <b className={loss > 0 ? "negative" : ""}>
+                {loss > 0 ? `₹${loss.toFixed(1)} Cr` : "₹0.0 Cr"}
+              </b>
+            </span>
+            <span>
+              <small>Gross asset losses</small>
+              <b className={grossLoss > 0 ? "negative" : ""}>
+                ₹{grossLoss.toFixed(1)} Cr
+              </b>
             </span>
             <span>
               <small>Portfolio impact</small>
-              <b className="negative">-{(loss / 24.5).toFixed(1)}%</b>
+              <b className={loss > 0 ? "negative" : ""}>
+                {loss > 0
+                  ? `-${(baseline > 0 ? (loss / baseline) * 100 : 0).toFixed(1)}%`
+                  : "0.0%"}
+              </b>
             </span>
           </div>
           <span className="prototype-label">
-            Dynamic asset class attribution derived from backend RiskEngineService.
+            Dynamic asset class attribution derived directly from backend RiskEngineService.
           </span>
         </div>
         <div className="explainability-footer">
