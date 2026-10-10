@@ -209,9 +209,25 @@ export function AllocationHistory({
     if (historyRuns && historyRuns.length > 0) {
       // Sort chronologically ascending
       const sorted = [...historyRuns].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+      const dateKeys = sorted.map((run) => {
+        const date = new Date(run.timestamp)
+        return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+      })
+      const dateCounts = new Map<string, number>()
+      dateKeys.forEach((key) => dateCounts.set(key, (dateCounts.get(key) || 0) + 1))
+      const includesMultipleYears = new Set(sorted.map((run) => new Date(run.timestamp).getFullYear())).size > 1
+
       return sorted.map((run, i) => {
         const dateObj = new Date(run.timestamp)
         const timeStr = `${dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" })} ${dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}`
+        const shortDate = dateObj.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          ...(includesMultipleYears ? { year: "2-digit" as const } : {}),
+        })
+        const axisLabel = (dateCounts.get(dateKeys[i]) || 0) > 1
+          ? `${shortDate} · ${dateObj.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+          : shortDate
 
         let techSum = 0
         let finSum = 0
@@ -246,6 +262,7 @@ export function AllocationHistory({
         return {
           id: run.id,
           month: timeStr,
+          axisLabel,
           tech: techVal,
           fin: finVal,
           techMom: i > 0 ? parseFloat((techVal - prevTech).toFixed(2)) : 0,
@@ -265,6 +282,7 @@ export function AllocationHistory({
       {
         id: 'current',
         month: 'Current Baseline',
+        axisLabel: 'Current',
         tech: techWeight,
         fin: finWeight,
         techMom: 0,
@@ -303,6 +321,24 @@ export function AllocationHistory({
   const plotBottom = 180
   const plotWidth = plotRight - plotLeft
   const plotHeight = plotBottom - plotTop
+  const longestAxisLabel = Math.max(...historyData.map((point) => point.axisLabel.length))
+  const axisLabelWidth = Math.max(54, longestAxisLabel * 7 + 12)
+  const chartDisplayWidth = Math.max(1, containerWidth - 24)
+  const maxAxisLabels = Math.min(
+    8,
+    Math.max(2, Math.floor((chartDisplayWidth * (plotWidth / svgWidth)) / axisLabelWidth)),
+  )
+  const axisFontSize = Math.min(40, Math.round((12 * svgWidth) / chartDisplayWidth))
+  const axisLabelIndices = useMemo(() => {
+    if (historyData.length <= maxAxisLabels) {
+      return new Set(historyData.map((_, index) => index))
+    }
+
+    const indices = Array.from({ length: maxAxisLabels }, (_, index) =>
+      Math.round(index * (historyData.length - 1) / (maxAxisLabels - 1)),
+    )
+    return new Set(indices)
+  }, [historyData, maxAxisLabels])
 
   const getX = (i: number) => {
     if (historyData.length === 1) return (plotLeft + plotRight) / 2
@@ -514,17 +550,18 @@ export function AllocationHistory({
           {historyData.map((d, i) => {
             const x = getX(i)
             const isActive = i === activeIndex
+            if (!axisLabelIndices.has(i)) return null
             return (
               <text
                 key={`month-tick-${i}`}
                 x={x}
-                y={plotBottom + 20}
+                y={plotBottom + 24}
                 textAnchor={isSinglePoint ? "middle" : i === 0 ? "start" : i === historyData.length - 1 ? "end" : "middle"}
                 fill={isActive ? "var(--text)" : "var(--secondary)"}
-                fontSize="11"
+                fontSize={axisFontSize}
                 fontWeight={isActive ? "600" : "400"}
               >
-                {d.month}
+                {d.axisLabel}
               </text>
             )
           })}
@@ -591,4 +628,3 @@ export function AllocationHistory({
     </section>
   )
 }
-
