@@ -80,7 +80,7 @@ export function Overview({ portfolioId }: { portfolioId?: string | null }) {
     }
 
     riskApi
-      .runStressTest(portfolio.id, parameters)
+      .runStressTest(portfolio.id, parameters, undefined, undefined, false)
       .then((res) => {
         if (!cancelled && res && !res.error) {
           setStressResult(res)

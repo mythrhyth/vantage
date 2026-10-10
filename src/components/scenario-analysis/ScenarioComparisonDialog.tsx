@@ -81,7 +81,7 @@ export function ScenarioComparisonDialog({
           if (!config) return
 
           try {
-            const res = await riskApi.runStressTest(targetId!, config.params)
+            const res = await riskApi.runStressTest(targetId!, config.params, undefined, undefined, false, 'preset')
             const rawLoss = Number(res.absolute_loss) || 0
             const portBaseline = Number(res.baseline_value) || baseline || 1000
             const loss = isNaN(rawLoss) ? 0 : Math.max(0, rawLoss)

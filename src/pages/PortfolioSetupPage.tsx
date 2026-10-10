@@ -5,6 +5,7 @@ import { Button } from "../components/common/Button"
 import { Icon } from "../components/common/Icon"
 import { Summary } from "../components/common/Summary"
 import { riskApi } from "../services/api"
+import { isEquityAsset } from "../utils/assetHelpers"
 
 interface EquityHolding {
   id?: string
@@ -100,10 +101,7 @@ export function PortfolioSetupPage({
         const rawList = data.holdings || data.assets
         if (Array.isArray(rawList)) {
           const equityAssets = rawList
-            .filter((a: any) => {
-              const type = (a.assetType || a.asset_type || "").toUpperCase()
-              return type === "STOCK" || type === "EQUITY" || type === "EQUITIES" || !type
-            })
+            .filter((a: any) => isEquityAsset(a.assetType || a.asset_type))
             .map((a: any) => ({
               id: a.id,
               ticker: a.ticker || "",

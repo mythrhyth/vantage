@@ -36,7 +36,7 @@ export function getResponsiveTickIndices(containerWidth: number, totalMonths: nu
 /**
  * Helper to compute aggregate weights for Technology and Financials.
  */
-export function computeAggregateWeights(assets: Asset[] = [], proposed: number[] = []) {
+export function computeAggregateWeights(assets: Asset[] = [], proposed: number[] | Record<string, any> = []) {
   if (!assets || assets.length === 0) {
     return { techWeight: 19.82, finWeight: 6.21 }
   }
@@ -46,10 +46,19 @@ export function computeAggregateWeights(assets: Asset[] = [], proposed: number[]
 
   assets.forEach((a, idx) => {
     const s = (a.sector || "").toLowerCase()
-    const weight =
-      proposed && proposed[idx] !== undefined && proposed[idx] !== null
-        ? Number(proposed[idx]) || 0
-        : Number(a.current) || 0
+    let weight = Number(a.current) || 0
+
+    if (proposed) {
+      if (Array.isArray(proposed) && proposed[idx] !== undefined && proposed[idx] !== null) {
+        weight = Number(proposed[idx]) || 0
+      } else if (!Array.isArray(proposed) && a.ticker) {
+        const tick = a.ticker.toUpperCase()
+        const pInfo = (proposed as Record<string, any>)[tick] || (proposed as Record<string, any>)[a.ticker]
+        if (pInfo && typeof pInfo.proposedWeight === "number") {
+          weight = pInfo.proposedWeight
+        }
+      }
+    }
 
     if (s.includes("tech")) {
       techSum += weight

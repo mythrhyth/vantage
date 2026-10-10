@@ -51,10 +51,36 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
   const [portfolioMeta, setPortfolioMeta] = useState<any>(null)
   const [assets, setAssets] = useState<any[]>([])
   const [proposed, setProposed] = useState<number[]>([])
+  const [proposedMap, setProposedMap] = useState<Record<string, { proposedWeight: number; change: number; status: string; reason: string }>>({})
+  const [allocationTrace, setAllocationTrace] = useState<any>(null)
 
   const [applying, setApplying] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
+
+  const processAllocationResponse = (simResult: any) => {
+    if (!simResult) return;
+    const list = simResult.proposed_weights || simResult.proposedWeights || [];
+    const map: Record<string, any> = {};
+    const arr: number[] = [];
+
+    list.forEach((item: any, idx: number) => {
+      const key = (item.ticker || `ASSET_${idx}`).toUpperCase();
+      const w = Number(item.proposedWeight ?? item.proposed_weight ?? item.proposedPct) || 0;
+      const change = Number(item.weightChange ?? item.weight_change) ?? (w - (item.currentWeight || 0));
+      map[key] = {
+        proposedWeight: w,
+        change,
+        status: item.status || 'Optimized',
+        reason: item.reason || 'Within optimization constraints'
+      };
+      arr.push(w);
+    });
+
+    setProposedMap(map);
+    setProposed(arr);
+    if (simResult.trace) setAllocationTrace(simResult.trace);
+  };
 
   const handleRecalculate = async () => {
     if (recalculating) return;
@@ -70,13 +96,11 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
       }
       if (targetId) {
         const sim = await riskApi.simulateAllocation(targetId, sensitivity, maxWeight, maxChange, sectorLimit);
-        const list = sim?.proposed_weights || sim?.proposedWeights;
-        if (list) {
-          setProposed(list.map((w: any) => Number(w.proposedWeight ?? w.proposed_weight ?? w.proposedPct) || 0));
-        }
+        processAllocationResponse(sim);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Recalculation error:", err);
+      setApplyError(err?.message || "Failed to recalculate allocation.");
     } finally {
       setRecalculating(false);
     }
@@ -97,12 +121,16 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
       }
       if (!targetId) throw new Error("No active portfolio selected");
 
-      const newHoldings = assets.map((a, i) => ({
-        ticker: a.ticker,
-        company: a.company,
-        sector: a.sector,
-        currentWeight: proposed[i] !== undefined ? proposed[i] : a.current
-      }));
+      const newHoldings = assets.map((a) => {
+        const tickKey = (a.ticker || "").toUpperCase();
+        const pInfo = proposedMap[tickKey] || proposedMap[a.ticker];
+        return {
+          ticker: a.ticker,
+          company: a.company,
+          sector: a.sector,
+          currentWeight: pInfo ? pInfo.proposedWeight : a.current
+        };
+      });
 
       await riskApi.updateHoldings(targetId, newHoldings);
 
@@ -112,13 +140,19 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
         return type === "STOCK" || type === "EQUITY" || type === "EQUITIES" || Boolean(a.ticker);
       });
       const mappedAssets = stocksOnly.map((a: any) => ({
+        id: a.id,
         company: a.company || a.ticker,
-        ticker: a.ticker || "UNKNOWN",
+        ticker: (a.ticker || "UNKNOWN").toUpperCase(),
         current: Number(a.currentWeight ?? a.current_weight) || 0,
         sentiment: Number(a.sentiment) || 0,
         sector: a.sector || "Unknown"
       }));
       setAssets(mappedAssets);
+
+      // Refresh simulation after holdings apply
+      const sim = await riskApi.simulateAllocation(targetId, sensitivity, maxWeight, maxChange, sectorLimit);
+      processAllocationResponse(sim);
+
       setApplySuccess(true);
     } catch (err: any) {
       console.error("Failed to apply allocation:", err);
@@ -147,20 +181,18 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
           return type === "STOCK" || type === "EQUITY" || type === "EQUITIES" || Boolean(a.ticker);
         });
         const mappedAssets = stocksOnly.map((a: any) => ({
+          id: a.id,
           company: a.company || a.ticker,
-          ticker: a.ticker || "UNKNOWN",
+          ticker: (a.ticker || "UNKNOWN").toUpperCase(),
           current: Number(a.currentWeight ?? a.current_weight) || 0,
           sentiment: Number(a.sentiment) || 0,
           sector: a.sector || "Unknown"
         }));
         setAssets(mappedAssets);
 
-        // Automatically derive proposed weights from AI/NLP layer
+        // Automatically derive proposed weights from backend optimizer
         riskApi.simulateAllocation(targetId, sensitivity, maxWeight, maxChange, sectorLimit).then(sim => {
-          if (sim && (sim.proposed_weights || sim.proposedWeights)) {
-            const list = sim.proposed_weights || sim.proposedWeights;
-            setProposed(list.map((w: any) => Number(w.proposedWeight ?? w.proposed_weight ?? w.proposedPct) || 0));
-          }
+          processAllocationResponse(sim);
         }).catch(console.error);
       }).catch(console.error);
     });
@@ -179,21 +211,21 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
           { label: "Index universe", value: portfolioMeta?.index_universe || "NIFTY 50", detail: "Allocation benchmark" },
           {
             label: "Total equity weight",
-            value: `${totalEquityWeight.toFixed(1)}%`,
+            value: `${totalEquityWeight.toFixed(2)}%`,
             tone: "positive",
             detail: `${assets.length} active holdings`,
           },
           {
             label: "Proposed turnover",
-            value: `${(sensitivity * 0.041).toFixed(1)}%`,
+            value: `${(sensitivity * 0.041).toFixed(2)}%`,
             detail: `Estimated cost ${((sensitivity * 0.041 * cost) / 100).toFixed(2)}%`,
           },
         ]}
       />
       <div className="workspace-grid">
         <div className="analysis-column">
-          <AllocationChart assets={assets} proposed={calculated} sensitivity={sensitivity} />
-          <AllocationHistory sensitivity={sensitivity} assets={assets} proposed={proposed} />
+          <AllocationChart assets={assets} proposedMap={proposedMap} proposed={calculated} sensitivity={sensitivity} />
+          <AllocationHistory sensitivity={sensitivity} assets={assets} proposed={proposedMap} />
           <section className="data-section">
             <PanelTitle
               title="Allocation detail"
@@ -213,7 +245,11 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
                 </thead>
                 <tbody>
                   {assets.map((stock, index) => {
-                    const change = (proposed[index] ?? stock.current) - stock.current
+                    const tickKey = (stock.ticker || "").toUpperCase()
+                    const propInfo = proposedMap[tickKey] || proposedMap[stock.ticker]
+                    const targetW = propInfo ? propInfo.proposedWeight : (proposed[index] ?? stock.current)
+                    const change = targetW - stock.current
+
                     return (
                       <tr
                         key={stock.ticker}
@@ -226,16 +262,16 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
                         <td>{stock.current.toFixed(1)}%</td>
                         <td
                           className={
-                            stock.sentiment > 0 ? "positive" : "negative"
+                            stock.sentiment > 0 ? "positive" : stock.sentiment < 0 ? "negative" : ""
                           }
                         >
                           {stock.sentiment > 0 ? "+" : ""}
                           {stock.sentiment}
                         </td>
                         <td>
-                          <b>{(proposed[index] ?? stock.current).toFixed(1)}%</b>
+                          <b>{targetW.toFixed(1)}%</b>
                         </td>
-                        <td className={change > 0 ? "positive" : "negative"}>
+                        <td className={change > 0 ? "positive" : change < 0 ? "negative" : ""}>
                           {change > 0 ? "+" : ""}
                           {change.toFixed(1)}%
                         </td>
@@ -357,7 +393,7 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
       {selectedStock !== null && assets[selectedStock] && (
         <AllocationExplanationDialog assets={assets}
           stock={assets[selectedStock]}
-          proposed={proposed[selectedStock] ?? assets[selectedStock].current}
+          proposed={(proposedMap[(assets[selectedStock].ticker || "").toUpperCase()] || proposedMap[assets[selectedStock].ticker])?.proposedWeight ?? assets[selectedStock].current}
           allProposed={proposed}
           sensitivity={sensitivity}
           maxWeight={maxWeight}

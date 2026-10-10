@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from "react"
 import { ScenarioName, AssetName } from "../../types"
 import { Button } from "../common/Button"
+import { LossGenerationExplainability } from "../scenario-analysis/LossGenerationExplainability"
 
 export function WhyLossDialog({
   loss,
@@ -115,6 +116,15 @@ export function WhyLossDialog({
           </Button>
         </div>
         <div className="explainability-body">
+          <LossGenerationExplainability
+            backendResult={{
+              baseline_value: baseline,
+              absolute_loss: loss,
+              stressed_value: baseline - loss,
+              attribution_result: attribution
+            }}
+            scenarioName={scenario}
+          />
           <section className="dialog-section why-loss-causal-card">
             <div className="dialog-section-title">
               {primaryDriver.isLoss

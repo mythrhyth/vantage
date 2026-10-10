@@ -1,3 +1,12 @@
+import type { 
+  RiskEvent, 
+  Portfolio, 
+  AssetHolding, 
+  ProposedWeight, 
+  StressTestParameters, 
+  StressTestRun 
+} from '../types';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -28,47 +37,47 @@ export const riskApi = {
     if (filters?.freshness) params.append('freshness', filters.freshness);
     if (filters?.sentiment !== undefined) params.append('sentiment', filters.sentiment.toString());
     if (filters?.impact !== undefined) params.append('impact', filters.impact.toString());
-    return fetchApi<any[]>(`/events?${params.toString()}`);
+    return fetchApi<RiskEvent[]>(`/events?${params.toString()}`);
   },
 
-  getEvent: (id: string) => fetchApi<any>(`/events/${id}`),
+  getEvent: (id: string) => fetchApi<RiskEvent>(`/events/${id}`),
 
-  runIngestion: (window?: string) => fetchApi<{ success: boolean; message: string; stats?: any }>(`/ingest`, { 
+  runIngestion: (window?: string) => fetchApi<{ success: boolean; message: string; stats?: Record<string, unknown> }>(`/ingest`, { 
     method: 'POST',
     body: JSON.stringify({ window })
   }),
 
-  getSources: () => fetchApi<any[]>(`/ingestion/sources`),
+  getSources: () => fetchApi<Array<{ id: string; name: string; enabled: boolean; type?: string }>>(`/ingestion/sources`),
 
   toggleSource: (id: string, enabled: boolean) =>
-    fetchApi<any>(`/ingestion/sources/${id}`, {
+    fetchApi<{ id: string; enabled: boolean }>(`/ingestion/sources/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ enabled })
     }),
 
-  updateSource: (id: string, data: any) =>
-    fetchApi<any>(`/ingestion/sources/${id}`, {
+  updateSource: (id: string, data: Record<string, unknown>) =>
+    fetchApi<Record<string, unknown>>(`/ingestion/sources/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data)
     }),
 
-  getSettings: () => fetchApi<any>(`/ingestion/settings`),
+  getSettings: () => fetchApi<Record<string, unknown>>(`/ingestion/settings`),
 
-  updateSettings: (data: any) =>
-    fetchApi<any>(`/ingestion/settings`, {
+  updateSettings: (data: Record<string, unknown>) =>
+    fetchApi<Record<string, unknown>>(`/ingestion/settings`, {
       method: 'PATCH',
       body: JSON.stringify(data)
     }),
 
   analyzeEvent: (payload: { text: string; source: string; timestamp?: string }) =>
-    fetchApi<any>(`/events/analyze`, {
+    fetchApi<RiskEvent>(`/events/analyze`, {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
 
-  getPortfolios: () => fetchApi<any[]>(`/portfolios`),
+  getPortfolios: () => fetchApi<Portfolio[]>(`/portfolios`),
 
-  getPortfolio: (id: string) => fetchApi<any>(`/portfolios/${id}`),
+  getPortfolio: (id: string) => fetchApi<Portfolio>(`/portfolios/${id}`),
 
   updatePortfolio: (id: string, data: {
     name?: string;
@@ -77,7 +86,7 @@ export const riskApi = {
     loansExposure?: number;
     bondsExposure?: number;
     derivativesExposure?: number;
-  }) => fetchApi<any>(`/portfolios/${id}`, {
+  }) => fetchApi<Portfolio>(`/portfolios/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data)
   }),
@@ -87,36 +96,37 @@ export const riskApi = {
     company: string;
     currentWeight: number;
     sector?: string;
-  }>) => fetchApi<any>(`/portfolios/${id}/holdings`, {
+  }>) => fetchApi<{ success: boolean; holdings: AssetHolding[] }>(`/portfolios/${id}/holdings`, {
     method: 'PUT',
     body: JSON.stringify({ holdings })
   }),
 
-  getPortfolioAssets: (portfolioId: string) => fetchApi<any[]>(`/portfolio/${portfolioId}/assets`),
+  getPortfolioAssets: (portfolioId: string) => fetchApi<AssetHolding[]>(`/portfolio/${portfolioId}/assets`),
 
-  getScenarios: () => fetchApi<any[]>(`/scenarios`),
+  getScenarios: () => fetchApi<Array<{ id: string; name: string; description?: string; parameters: StressTestParameters }>>(`/scenarios`),
 
-  getScenario: (id: string) => fetchApi<any>(`/scenarios/${id}`),
+  getScenario: (id: string) => fetchApi<{ id: string; name: string; parameters: StressTestParameters }>(`/scenarios/${id}`),
 
   simulateAllocation: (portfolioId: string, sensitivity: number, maxWeight: number, maxChange: number, sectorLimit?: number) => 
-    fetchApi<{ proposed_weights: any[] }>(`/allocations/simulate`, {
+    fetchApi<{ proposed_weights: ProposedWeight[] }>(`/allocations/simulate`, {
       method: 'POST',
       body: JSON.stringify({ portfolio_id: portfolioId, sensitivity, maxWeight, maxChange, sectorLimit })
     }),
 
   generateParameters: (eventId: string, scenarioId: string) =>
-    fetchApi<any>(`/stress-tests/generate-parameters`, {
+    fetchApi<{ parameters: StressTestParameters }>(`/stress-tests/generate-parameters`, {
       method: 'POST',
       body: JSON.stringify({ event_id: eventId, scenario_id: scenarioId })
     }),
 
-  runStressTest: (portfolioId: string, parameters: any, scenarioId?: string, eventId?: string) =>
-    fetchApi<any>(`/stress-tests/run`, {
+  runStressTest: (portfolioId: string, parameters: StressTestParameters, scenarioId?: string, eventId?: string, persist: boolean = true, runType?: string) =>
+    fetchApi<StressTestRun>(`/stress-tests/run`, {
       method: 'POST',
-      body: JSON.stringify({ portfolio_id: portfolioId, parameters, scenario_id: scenarioId, event_id: eventId })
+      body: JSON.stringify({ portfolio_id: portfolioId, parameters, scenario_id: scenarioId, event_id: eventId, persist, run_type: runType })
     }),
 
-  getStressHistory: () => fetchApi<any[]>(`/stress-tests/history`),
+  getStressHistory: () => fetchApi<StressTestRun[]>(`/stress-tests/history`),
 
-  getStressRun: (id: string) => fetchApi<any>(`/stress-tests/${id}`)
+  getStressRun: (id: string) => fetchApi<StressTestRun>(`/stress-tests/${id}`)
 };
+

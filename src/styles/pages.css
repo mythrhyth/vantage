@@ -366,10 +366,61 @@
 
 .stress-history-panel { margin-top: 24px; }
 .stress-history-panel .panel-title-row .button-text { width: auto; min-height: 34px; margin: 0; padding: 0 11px; border: 1px solid var(--border-strong); }
-.stress-history-panel table { min-width: 980px; }
-.stress-history-panel td:first-child { white-space: normal; min-width: 260px; }
-.history-status { display: inline-flex; align-items: center; gap: 6px; color: var(--positive); font-weight: 500; }
+.stress-history-panel table { width: 100%; border-collapse: collapse; }
+.stress-history-panel td:first-child { white-space: normal; }
+.history-status { display: inline-flex; align-items: center; gap: 6px; color: var(--positive); font-weight: 500; font-size: 12px; }
 .history-status i { width: 6px; height: 6px; background: var(--positive); border-radius: 50%; }
+
+.history-source-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  font-weight: 600;
+  text-transform: capitalize;
+  display: inline-block;
+}
+
+.history-run-title {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.history-run-sub-mobile {
+  display: none;
+  font-size: 11px;
+  color: var(--secondary);
+}
+
+.history-details-btn.button-outline {
+  min-height: 28px;
+  padding: 2px 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .stress-history-table .col-portfolio,
+  .stress-history-table .col-status {
+    display: none;
+  }
+  .history-run-sub-mobile {
+    display: block;
+    margin-top: 2px;
+  }
+}
+
+@media (max-width: 540px) {
+  .stress-history-table .col-time {
+    display: none;
+  }
+  .stress-history-table th:nth-child(6),
+  .stress-history-table td:nth-child(6) {
+    display: none;
+  }
+}
 
 .event-history-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-bottom: 14px; }
 .event-history-choice-grid .button-text { width: 100%; min-height: 42px; margin: 0; padding: 6px 9px; border: 1px solid var(--border); font-size: 10px; line-height: 1.35; text-align: left; }

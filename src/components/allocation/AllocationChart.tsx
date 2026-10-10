@@ -23,22 +23,26 @@ import { Summary } from "../common/Summary"
 import { PageHeading } from "../common/PageHeading"
 
 export function AllocationChart({
-  proposed,
+  proposedMap = {},
   assets,
+  proposed,
   sensitivity,
 }: {
   assets?: any[]
+  proposedMap?: Record<string, any>
   proposed: boolean
   sensitivity: number
 }) {
   const values = useMemo(() => {
     if (!assets) return []
-    const raw = assets.map(
-      (stock) => stock.current + ((stock.sentiment * sensitivity) / 100) * 1.25,
-    )
-    const total = raw.reduce((sum, value) => sum + value, 0)
-    return raw.map((value) => (value / total) * 100)
-  }, [sensitivity, assets])
+    return assets.map((stock) => {
+      const pInfo = proposedMap[stock.ticker] || proposedMap[stock.ticker?.toUpperCase()] || proposedMap[stock.id]
+      if (pInfo && typeof pInfo.proposedWeight === "number") {
+        return pInfo.proposedWeight
+      }
+      return stock.current
+    })
+  }, [assets, proposedMap])
 
   const maxWeightVal = useMemo(() => {
     if (!assets || assets.length === 0) return 100

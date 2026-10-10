@@ -115,6 +115,8 @@ export function PortfolioStressTesting({
           paramValues,
           undefined,
           triggerEvent?.id,
+          true,
+          triggerEvent ? 'event_driven' : 'manual'
         )
 
         if (!res || res.error) {

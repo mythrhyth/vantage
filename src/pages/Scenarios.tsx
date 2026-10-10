@@ -21,6 +21,8 @@ import { AssetLossDialog } from "../components/stress-testing/AssetLossDialog"
 import { WhyLossDialog } from "../components/stress-testing/WhyLossDialog"
 import { EventStressComparisonDialog } from "../components/stress-testing/EventStressComparisonDialog"
 import { ScenarioComparisonDialog } from "../components/scenario-analysis/ScenarioComparisonDialog"
+import { RunDetailsDialog } from "../components/stress-testing/RunDetailsDialog"
+import { LossGenerationExplainability } from "../components/scenario-analysis/LossGenerationExplainability"
 
 const defaultScenarioData: Record<string, ScenarioControls> = {
   "Interest Rate Shock": { rate: 250, spread: 120, probability: 2, liquidity: 8, inflation: 150 },
@@ -70,8 +72,14 @@ export function Scenarios({
   const [comparisonOpen, setComparisonOpen] = useState(false)
   const [eventComparisonOpen, setEventComparisonOpen] = useState(false)
   const [riskInfoOpen, setRiskInfoOpen] = useState(false)
+  const [selectedRunDetails, setSelectedRunDetails] = useState<StressTestHistoryEntry | null>(null)
 
-  const runScenarioStressTest = async (paramControls = controls, scenarioName = scenario) => {
+  const runScenarioStressTest = async (
+    paramControls = controls,
+    scenarioName = scenario,
+    shouldPersist: boolean = true,
+    customRunType?: string
+  ) => {
     setLoading(true)
     setError(null)
     try {
@@ -93,16 +101,21 @@ export function Scenarios({
         targetId,
         paramControls,
         (stressRun as any)?.scenarioId,
-        triggerEvent?.id
+        triggerEvent?.id,
+        shouldPersist,
+        customRunType || (triggerEvent ? 'event_driven' : 'manual')
       )
 
       setBackendResult(res)
       setApplied(paramControls)
 
-      if (stressRun && onRunCompleted) {
+      if (shouldPersist && stressRun && onRunCompleted && res && res.runId) {
         onRunCompleted({
           ...stressRun,
+          runId: res.runId,
+          id: res.id,
           scenario: scenarioName,
+          displayTitle: res.displayTitle || scenarioName,
           parameters: paramControls,
           loss: res.absolute_loss,
           completedAt: new Date().toLocaleTimeString([], {
@@ -122,7 +135,8 @@ export function Scenarios({
 
   useEffect(() => {
     if (!stressRun) {
-      runScenarioStressTest(controls, scenario)
+      // Non-persisted preview calculation on page load - does NOT save to DB
+      runScenarioStressTest(controls, scenario, false, 'default')
       return
     }
 
@@ -133,7 +147,7 @@ export function Scenarios({
     if (stressRun.skipProcessing) {
       setProcessingStep(7)
       setRunComplete(true)
-      runScenarioStressTest(stressRun.parameters, stressRun.scenario)
+      runScenarioStressTest(stressRun.parameters, stressRun.scenario, true, 'event_driven')
       return
     }
 
@@ -146,7 +160,7 @@ export function Scenarios({
     )
 
     const completionTimer = window.setTimeout(() => {
-      runScenarioStressTest(stressRun.parameters, stressRun.scenario)
+      runScenarioStressTest(stressRun.parameters, stressRun.scenario, true, 'event_driven')
     }, 1400)
 
     return () => {
@@ -522,44 +536,13 @@ export function Scenarios({
               </span>
             </section>
 
-            <section className="loss-generation-panel">
-              <PanelTitle
-                title="How the loss was generated"
-                subtitle="Scenario shock → risk factor → asset-class impact"
-              />
-              <div className="loss-generation-grid">
-                {[
-                  [
-                    `${signedValue(applied.rate, 0)} bps interest rate shock`,
-                    "Bond & derivative valuation impact",
-                    `₹${bondsLoss.toFixed(1)} Cr bond loss`,
-                  ],
-                  [
-                    `${signedValue(applied.probability, 0)}% default probability`,
-                    "Higher expected credit losses",
-                    `₹${loansLoss.toFixed(1)} Cr loan loss`,
-                  ],
-                  [
-                    `${signedValue(applied.spread, 0)} bps credit spread shock`,
-                    "Credit-sensitive asset repricing",
-                    "Included in loan and bond repricing",
-                  ],
-                  [
-                    `${applied.liquidity}% liquidity haircut`,
-                    "Liquidity adjustment",
-                    `₹${derivativesLoss.toFixed(1)} Cr derivative & liquidity impact`,
-                  ],
-                ].map(([shock, effect, result]) => (
-                  <div key={shock}>
-                    <span>{shock}</span>
-                    <i>↓</i>
-                    <span>{effect}</span>
-                    <i>↓</i>
-                    <strong>{result}</strong>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <LossGenerationExplainability
+              backendResult={backendResult}
+              scenarioName={scenario}
+              runType={stressRun ? (stressRun as any).run_type || "event_driven" : "manual"}
+              controls={applied}
+              portfolioMeta={portfolioMeta}
+            />
 
             <section className="asset-contribution">
               <PanelTitle
@@ -709,9 +692,9 @@ export function Scenarios({
             </div>
             <Button
               disabled={loading}
-              onClick={() => runScenarioStressTest(controls, scenario)}
+              onClick={() => runScenarioStressTest(controls, scenario, true, 'manual')}
             >
-              {loading ? "Calculating..." : "Recalculate Stress Test"}
+              {loading ? "Calculating..." : "Run Manual Stress Test"}
             </Button>
           </aside>
         </div>
@@ -720,7 +703,7 @@ export function Scenarios({
       <section className="stress-history-panel">
         <PanelTitle
           title="Stress Test History"
-          subtitle="Completed event-specific portfolio stress tests"
+          subtitle="Audit log of persisted manual, preset, and event-driven stress test executions"
           side={
             history.length ? (
               <Button
@@ -746,48 +729,60 @@ export function Scenarios({
           </div>
         ) : history.length ? (
           <div className="table-wrap">
-            <table>
+            <table className="stress-history-table">
               <thead>
                 <tr>
-                  <th>Event</th>
-                  <th>Classification</th>
-                  <th>Impact</th>
-                  <th>Scenario</th>
-                  <th>Portfolio loss</th>
-                  <th>Loss %</th>
-                  <th>Status</th>
+                  <th>Run Identity</th>
+                  <th className="col-portfolio">Portfolio</th>
+                  <th className="col-time">Executed At</th>
+                  <th>Source</th>
+                  <th className="text-right">Portfolio loss</th>
+                  <th className="text-right">Loss %</th>
+                  <th className="text-center col-status">Status</th>
+                  <th className="text-center">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {history.map((entry) => {
                   const entryLoss = typeof entry.loss === "number" ? entry.loss : Number((entry as any).absoluteLoss || 0)
-                  const displayTitle = entry.event?.title
-                    ? entry.event.title
-                    : entry.scenario && entry.scenario !== "Custom Stress"
-                    ? entry.scenario
-                    : (entry as any).parameterSource === "manual" || entry.parameters?.parameter_source === "manual"
-                    ? "Manual Stress Test"
-                    : "Custom Stress Test"
+                  const label = entry.displayTitle || entry.scenario || "Legacy Run · Origin Unknown"
                   const entryBaseline = entry.baselineValue || baseline || 1000
                   const lossPct = entryBaseline > 0 ? (entryLoss / entryBaseline) * 100 : 0
+                  const pName = entry.portfolio_name || "Primary Portfolio"
+                  const sourceLabel = entry.parameterSource || entry.run_type || "unknown"
+
                   return (
-                    <tr key={String(entry.runId)}>
+                    <tr key={String(entry.runId || entry.id)}>
                       <td>
-                        <strong>{displayTitle}</strong>
+                        <div className="history-run-title">{label}</div>
+                        <span className="history-run-sub-mobile">{pName} · {entry.completedAt || "Recently"}</span>
                       </td>
-                      <td>{entry.event?.category ? titleCase(entry.event.category) : "General Macro"}</td>
-                      <td>{entry.event?.impact !== undefined && entry.event?.impact !== null ? Number(entry.event.impact).toFixed(1) : "N/A"}</td>
-                      <td>{entry.scenario || "Custom Stress"}</td>
-                      <td className={entryLoss > 0 ? "negative" : ""}>
-                        {entryLoss > 0 ? `-₹${entryLoss.toFixed(1)} Cr` : `₹0.0 Cr`}
+                      <td className="col-portfolio">{pName}</td>
+                      <td className="col-time">{entry.completedAt || "Recently"}</td>
+                      <td>
+                        <span className="history-source-badge">
+                          {sourceLabel}
+                        </span>
                       </td>
-                      <td className={entryLoss > 0 ? "negative" : ""}>
+                      <td className={`text-right ${entryLoss > 0 ? "negative" : ""}`}>
+                        <strong>{entryLoss > 0 ? `-₹${entryLoss.toFixed(1)} Cr` : `₹0.0 Cr`}</strong>
+                      </td>
+                      <td className={`text-right ${entryLoss > 0 ? "negative" : ""}`}>
                         {entryLoss > 0 ? `-${lossPct.toFixed(1)}%` : `0.0%`}
                       </td>
-                      <td>
+                      <td className="text-center col-status">
                         <span className="history-status">
                           <i /> Completed
                         </span>
+                      </td>
+                      <td className="text-center">
+                        <Button
+                          variant="outline"
+                          className="history-details-btn"
+                          onClick={() => setSelectedRunDetails(entry)}
+                        >
+                          Details
+                        </Button>
                       </td>
                     </tr>
                   )
@@ -797,14 +792,20 @@ export function Scenarios({
           </div>
         ) : (
           <div className="empty-state">
-            <strong>No completed event stress tests</strong>
+            <strong>No completed stress tests found</strong>
             <span>
-              Run a stress test from any Risk Intelligence event to create
-              history.
+              Run a manual calculation, preset scenario, or event stress test to create persistent history.
             </span>
           </div>
         )}
       </section>
+
+      {selectedRunDetails && (
+        <RunDetailsDialog
+          run={selectedRunDetails}
+          onClose={() => setSelectedRunDetails(null)}
+        />
+      )}
 
       {selectedAsset && (
         <AssetLossDialog
