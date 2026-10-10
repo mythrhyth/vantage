@@ -175,6 +175,21 @@ export class NlpService {
     // Validate NLP Output
     this.validateAnalysis(analysis);
 
+    // Check for existing RiskEvent with identical title to prevent duplicate creation
+    const existingEvent = await prisma.riskEvent.findFirst({
+      where: {
+        title: {
+          equals: metadata.title.trim(),
+          mode: 'insensitive'
+        }
+      },
+      orderBy: { created_at: 'desc' }
+    });
+
+    if (existingEvent) {
+      return existingEvent;
+    }
+
     // Transform and persist
     const event = await prisma.riskEvent.create({
       data: {

@@ -37,9 +37,9 @@ export class EventService {
   async listEvents(filters: { category?: string, sentiment?: number, impact?: number, horizon?: string, portfolioId?: string, source?: string, freshness?: string }) {
     const where: any = {};
     if (filters.category && filters.category !== 'All categories' && filters.category !== 'All') {
-      where.category = filters.category;
+      where.category = { equals: filters.category, mode: 'insensitive' };
     }
-    if (filters.horizon && filters.horizon !== 'All horizons') {
+    if (filters.horizon && filters.horizon !== 'All horizons' && filters.horizon !== 'All') {
       const normalizedHorizon = filters.horizon.replace(/–/g, '-');
       where.horizon = {
         contains: normalizedHorizon,
@@ -58,7 +58,7 @@ export class EventService {
     if (filters.source && filters.source !== 'All') {
       where.OR = [
         { source: { contains: filters.source, mode: 'insensitive' } },
-        { primary_source: { contains: filters.source, mode: 'insensitive' } }
+        { ingested_articles: { some: { source: { contains: filters.source, mode: 'insensitive' } } } }
       ];
     }
     if (filters.freshness && filters.freshness !== 'All' && filters.freshness !== 'all') {
@@ -90,30 +90,51 @@ export class EventService {
     // If a portfolioId is provided, filter events that are relevant to this portfolio
     if (filters.portfolioId) {
       const assets = await prisma.asset.findMany({ where: { portfolio_id: filters.portfolioId } });
-      const tickers = assets.map(a => a.ticker).filter(Boolean);
+      const tickers = assets.map(a => a.ticker?.toUpperCase()).filter(Boolean);
       const companyNames = assets.map(a => a.company?.toLowerCase()).filter(Boolean);
       
       events = events.filter(e => {
         if (e.relevance_type === 'PORTFOLIO_WIDE') return true;
         
-        const eventAssets = Array.isArray(e.affected_assets) ? e.affected_assets : [];
-        if (eventAssets.length === 0 && e.relevance_type !== 'PORTFOLIO_WIDE') return false;
+        const eventAssets = Array.isArray(e.affected_assets) ? e.affected_assets.map(a => String(a).toUpperCase()) : [];
+        const eventEntity = (e.entity || '').toLowerCase();
+        
+        if (eventAssets.length === 0 && !eventEntity && e.relevance_type !== 'PORTFOLIO_WIDE') return false;
         
         // Match by ticker
-        const hasTickerMatch = eventAssets.some(ticker => tickers.includes(String(ticker)));
+        const hasTickerMatch = eventAssets.some(ticker => tickers.includes(ticker));
         if (hasTickerMatch) return true;
         
-        const hasCompanyMatch = eventAssets.some(a => companyNames.some(c => c && c.includes(String(a).toLowerCase())));
+        // Match by company name in affected_assets or entity
+        const hasCompanyMatch = eventAssets.some(a => companyNames.some(c => c && c.includes(a.toLowerCase())));
         if (hasCompanyMatch) return true;
+
+        const hasEntityMatch = companyNames.some(c => c && (eventEntity.includes(c) || c.includes(eventEntity)));
+        if (hasEntityMatch) return true;
         
         return false;
       });
     }
 
+    // Deduplicate events by title (case-insensitive) to prevent duplicate UI event rows
+    const seenTitles = new Set<string>();
+    const deduplicated: typeof events = [];
+    for (const e of events) {
+      const normalizedTitle = (e.title || '').trim().toLowerCase();
+      if (!seenTitles.has(normalizedTitle)) {
+        seenTitles.add(normalizedTitle);
+        deduplicated.push(e);
+      }
+    }
+    events = deduplicated;
+
     return events.map(mapEvent);
   }
 
   async getEventById(id: string) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!id || typeof id !== 'string' || !uuidRegex.test(id)) return null;
+
     const e = await prisma.riskEvent.findUnique({ 
       where: { id },
       include: { ingested_articles: true }

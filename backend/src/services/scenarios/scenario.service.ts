@@ -42,7 +42,7 @@ export class ScenarioService {
     };
   }
 
-  async generateEventStressParameters(eventId: string, scenarioId?: string) {
+  async generateEventStressParameters(eventId: string, scenarioId?: string, portfolioId?: string) {
     const event = await eventService.getEventById(eventId);
     let scenario = null;
     if (scenarioId) {
@@ -63,22 +63,28 @@ export class ScenarioService {
           inflation: scenario.inflation
         };
       }
-      throw new Error('Event or Scenario not found');
+      throw new Error(`Risk event not found: ${eventId}`);
     }
 
-    const portfolios = await portfolioService.getPortfolios();
-    const mainPortfolio = portfolios[0];
+    let targetPortfolio = null;
+    if (portfolioId) {
+      targetPortfolio = await portfolioService.getPortfolioById(portfolioId);
+    }
+    if (!targetPortfolio) {
+      const portfolios = await portfolioService.getPortfolios();
+      targetPortfolio = portfolios[0];
+    }
 
     const affected = Array.isArray(event.affectedAssets) ? event.affectedAssets : [];
     const relType = event.relevanceType || (affected.length > 0 ? 'DIRECT' : 'PORTFOLIO_WIDE');
 
-    const rawAssets = (mainPortfolio?.assets && mainPortfolio.assets.length > 0)
-      ? mainPortfolio.assets
-      : (mainPortfolio?.holdings || []);
+    const rawAssets = (targetPortfolio?.assets && targetPortfolio.assets.length > 0)
+      ? targetPortfolio.assets
+      : (targetPortfolio?.holdings || []);
 
-    const portInput = mainPortfolio ? {
-      portfolioId: mainPortfolio.id,
-      baselineValue: mainPortfolio.baselineValue || Number(mainPortfolio.baseline_value) || 1000.0,
+    const portInput = targetPortfolio ? {
+      portfolioId: targetPortfolio.id,
+      baselineValue: targetPortfolio.baselineValue || Number(targetPortfolio.baseline_value) || 1000.0,
       holdings: rawAssets.map((a: any) => ({
         assetId: a.id,
         ticker: a.ticker || undefined,

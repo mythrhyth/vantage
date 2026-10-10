@@ -15,13 +15,21 @@ export class PortfolioService {
           index_universe: 'NIFTY50',
           assets: {
             create: [
-              { ticker: 'AAPL', company: 'Apple Inc.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.15, exposure_value: 367.5, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'MSFT', company: 'Microsoft Corp.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.12, exposure_value: 294.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'GOOGL', company: 'Alphabet Inc.', asset_type: 'EQUITY', sector: 'Communication Services', current_weight: 0.08, exposure_value: 196.0, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: 'JPM', company: 'JPMorgan Chase & Co.', asset_type: 'EQUITY', sector: 'Financial Services', current_weight: 0.05, exposure_value: 122.5, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: null, company: 'Corporate Loans Portfolio', asset_type: 'LOANS', sector: 'Banking & Credit', current_weight: 0.35, exposure_value: 857.5, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: null, company: 'Sovereign & Corporate Bonds', asset_type: 'BONDS', sector: 'Fixed Income', current_weight: 0.15, exposure_value: 367.5, sentiment: 0.0, base_sentiment: 0.0 },
-              { ticker: null, company: 'Interest Rate Derivatives', asset_type: 'DERIVATIVES', sector: 'Hedging', current_weight: 0.10, exposure_value: 245.0, sentiment: 0.0, base_sentiment: 0.0 }
+              { ticker: 'AAPL', company: 'Apple Inc.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.06, exposure_value: 0.06 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: 'MSFT', company: 'Microsoft Corp.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.055, exposure_value: 0.055 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: 'GOOGL', company: 'Alphabet Inc.', asset_type: 'EQUITY', sector: 'Communication Services', current_weight: 0.045, exposure_value: 0.045 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: 'AMZN', company: 'Amazon.com Inc.', asset_type: 'EQUITY', sector: 'Consumer Staples', current_weight: 0.04, exposure_value: 0.04 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: 'NVDA', company: 'NVIDIA Corp.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.04, exposure_value: 0.04 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: 'JPM', company: 'JPMorgan Chase & Co.', asset_type: 'EQUITY', sector: 'Financial Services', current_weight: 0.035, exposure_value: 0.035 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: 'META', company: 'Meta Platforms Inc.', asset_type: 'EQUITY', sector: 'Communication Services', current_weight: 0.03, exposure_value: 0.03 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: 'TSLA', company: 'Tesla Inc.', asset_type: 'EQUITY', sector: 'Automotive', current_weight: 0.025, exposure_value: 0.025 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: 'RELIANCE', company: 'Reliance Industries Ltd', asset_type: 'EQUITY', sector: 'Energy', current_weight: 0.03, exposure_value: 0.03 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: 'TCS', company: 'Tata Consultancy Services', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.025, exposure_value: 0.025 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: 'HDFCBANK', company: 'HDFC Bank Ltd', asset_type: 'EQUITY', sector: 'Financial Services', current_weight: 0.025, exposure_value: 0.025 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: 'INFYS', company: 'Infosys Ltd', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.02, exposure_value: 0.02 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: null, company: 'Corporate Loans Portfolio', asset_type: 'LOANS', sector: 'Banking & Credit', current_weight: 0.30, exposure_value: 0.30 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: null, company: 'Sovereign & Corporate Bonds', asset_type: 'BONDS', sector: 'Fixed Income', current_weight: 0.17, exposure_value: 0.17 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+              { ticker: null, company: 'Interest Rate Derivatives', asset_type: 'DERIVATIVES', sector: 'Hedging', current_weight: 0.10, exposure_value: 0.10 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 }
             ]
           }
         },
@@ -33,6 +41,10 @@ export class PortfolioService {
     return portfolios.map(p => this.mapPortfolio(p));
   }
 
+  async listPortfolios() {
+    return this.getPortfolios();
+  }
+
   async getPortfolioById(id: string) {
     const portfolio = await prisma.portfolio.findUnique({
       where: { id },
@@ -41,6 +53,10 @@ export class PortfolioService {
 
     if (!portfolio) return null;
     return this.mapPortfolio(portfolio);
+  }
+
+  async getPortfolio(id: string) {
+    return this.getPortfolioById(id);
   }
 
   async updatePortfolio(id: string, data: {
@@ -97,30 +113,54 @@ export class PortfolioService {
 
     if (!portfolio) throw new Error('Portfolio not found');
 
+    // Validation
+    const tickers = holdings.map(h => h.ticker.trim().toUpperCase());
+    const uniqueTickers = new Set(tickers);
+    if (uniqueTickers.size !== tickers.length) {
+      throw new Error('Duplicate stock ticker detected in equity holdings');
+    }
+
+    for (const h of holdings) {
+      if (h.currentWeight < 0) {
+        throw new Error(`Holding weight for ${h.ticker} cannot be negative`);
+      }
+    }
+
+    const totalWeight = holdings.reduce((sum, h) => sum + (Number(h.currentWeight) || 0), 0);
+    const maxWeightAllowed = totalWeight > 1.0 ? 100.0 : 1.0;
+    if (totalWeight > maxWeightAllowed) {
+      throw new Error(`Total equity holdings weight (${totalWeight.toFixed(1)}%) cannot exceed 100%`);
+    }
+
     const baseline = Number(portfolio.baseline_value);
 
     // Remove existing equity assets
     await prisma.asset.deleteMany({
       where: {
         portfolio_id: id,
-        asset_type: 'EQUITY'
+        asset_type: {
+          in: ['EQUITY', 'Stock', 'STOCK', 'equities', 'EQUITIES', 'stock', 'stocks', 'STOCKS']
+        }
       }
     });
 
-    // Create new equity assets with current weight data only
+    // Create new equity assets with decimal current weight
     if (holdings.length > 0) {
       await prisma.asset.createMany({
-        data: holdings.map(h => ({
-          portfolio_id: id,
-          ticker: h.ticker.toUpperCase(),
-          company: h.company,
-          asset_type: 'EQUITY',
-          sector: h.sector || 'General',
-          current_weight: h.currentWeight,
-          exposure_value: h.currentWeight * baseline,
-          sentiment: 0.0,
-          base_sentiment: 0.0
-        }))
+        data: holdings.map(h => {
+          const weightDecimal = h.currentWeight > 1.0 ? h.currentWeight / 100 : h.currentWeight;
+          return {
+            portfolio_id: id,
+            ticker: h.ticker.toUpperCase(),
+            company: h.company,
+            asset_type: 'EQUITY',
+            sector: h.sector || 'General',
+            current_weight: weightDecimal,
+            exposure_value: weightDecimal * baseline,
+            sentiment: 0.0,
+            base_sentiment: 0.0
+          };
+        })
       });
     }
 
@@ -173,12 +213,20 @@ export class PortfolioService {
         const baseline = Number(portfolio.baseline_value) || 2450.0;
         await prisma.asset.createMany({
           data: [
-            { portfolio_id: portfolioId, ticker: 'AAPL', company: 'Apple Inc.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.15, exposure_value: 0.15 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'MSFT', company: 'Microsoft Corp.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.12, exposure_value: 0.12 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'GOOGL', company: 'Alphabet Inc.', asset_type: 'EQUITY', sector: 'Communication Services', current_weight: 0.08, exposure_value: 0.08 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: 'JPM', company: 'JPMorgan Chase & Co.', asset_type: 'EQUITY', sector: 'Financial Services', current_weight: 0.05, exposure_value: 0.05 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: null, company: 'Corporate Loans Portfolio', asset_type: 'LOANS', sector: 'Banking & Credit', current_weight: 0.35, exposure_value: 0.35 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
-            { portfolio_id: portfolioId, ticker: null, company: 'Sovereign & Corporate Bonds', asset_type: 'BONDS', sector: 'Fixed Income', current_weight: 0.15, exposure_value: 0.15 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'AAPL', company: 'Apple Inc.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.06, exposure_value: 0.06 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'MSFT', company: 'Microsoft Corp.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.055, exposure_value: 0.055 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'GOOGL', company: 'Alphabet Inc.', asset_type: 'EQUITY', sector: 'Communication Services', current_weight: 0.045, exposure_value: 0.045 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'AMZN', company: 'Amazon.com Inc.', asset_type: 'EQUITY', sector: 'Consumer Staples', current_weight: 0.04, exposure_value: 0.04 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'NVDA', company: 'NVIDIA Corp.', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.04, exposure_value: 0.04 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'JPM', company: 'JPMorgan Chase & Co.', asset_type: 'EQUITY', sector: 'Financial Services', current_weight: 0.035, exposure_value: 0.035 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'META', company: 'Meta Platforms Inc.', asset_type: 'EQUITY', sector: 'Communication Services', current_weight: 0.03, exposure_value: 0.03 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'TSLA', company: 'Tesla Inc.', asset_type: 'EQUITY', sector: 'Automotive', current_weight: 0.025, exposure_value: 0.025 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'RELIANCE', company: 'Reliance Industries Ltd', asset_type: 'EQUITY', sector: 'Energy', current_weight: 0.03, exposure_value: 0.03 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'TCS', company: 'Tata Consultancy Services', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.025, exposure_value: 0.025 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'HDFCBANK', company: 'HDFC Bank Ltd', asset_type: 'EQUITY', sector: 'Financial Services', current_weight: 0.025, exposure_value: 0.025 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: 'INFYS', company: 'Infosys Ltd', asset_type: 'EQUITY', sector: 'Technology', current_weight: 0.02, exposure_value: 0.02 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: null, company: 'Corporate Loans Portfolio', asset_type: 'LOANS', sector: 'Banking & Credit', current_weight: 0.30, exposure_value: 0.30 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
+            { portfolio_id: portfolioId, ticker: null, company: 'Sovereign & Corporate Bonds', asset_type: 'BONDS', sector: 'Fixed Income', current_weight: 0.17, exposure_value: 0.17 * baseline, sentiment: 0.0, base_sentiment: 0.0 },
             { portfolio_id: portfolioId, ticker: null, company: 'Interest Rate Derivatives', asset_type: 'DERIVATIVES', sector: 'Hedging', current_weight: 0.10, exposure_value: 0.10 * baseline, sentiment: 0.0, base_sentiment: 0.0 }
           ]
         });
@@ -244,7 +292,7 @@ export class PortfolioService {
       if (target === 'LOANS') return t === 'LOANS' || t === 'LOAN';
       if (target === 'BONDS') return t === 'BONDS' || t === 'BOND';
       if (target === 'DERIVATIVES') return t === 'DERIVATIVES' || t === 'DERIVATIVE';
-      if (target === 'EQUITY') return t === 'EQUITY' || t === 'EQUITIES';
+      if (target === 'EQUITY') return t === 'EQUITY' || t === 'EQUITIES' || t === 'STOCK' || t === 'STOCKS';
       return t === target;
     };
 
@@ -278,6 +326,15 @@ export class PortfolioService {
     const bondsExp = bondsAsset?.exposure_value ? Number(bondsAsset.exposure_value) : (bondsAsset?.current_weight ? Number(bondsAsset.current_weight) * baseline : 0);
     const derivExp = derivativesAsset?.exposure_value ? Number(derivativesAsset.exposure_value) : (derivativesAsset?.current_weight ? Number(derivativesAsset.current_weight) * baseline : 0);
 
+    const equityExp = equityAssets.reduce((sum: number, a: any) => {
+      const weightDecimal = Number(a.current_weight) > 1.0 ? Number(a.current_weight) / 100 : Number(a.current_weight);
+      return sum + (a.exposure_value ? Number(a.exposure_value) : weightDecimal * baseline);
+    }, 0);
+    const totalEquityWeight = equityAssets.reduce((sum: number, a: any) => {
+      const w = Number(a.current_weight);
+      return sum + (w <= 1.0 ? w * 100 : w);
+    }, 0);
+
     return {
       id: p.id,
       name: p.name,
@@ -291,9 +348,11 @@ export class PortfolioService {
       exposures: {
         loans: loansExp,
         bonds: bondsExp,
-        derivatives: derivExp
+        derivatives: derivExp,
+        equity: equityExp,
+        total_equity_weight: parseFloat(totalEquityWeight.toFixed(2))
       },
-      equityExposure: equityAssets.reduce((sum: number, a: any) => sum + (a.exposure_value ? Number(a.exposure_value) : Number(a.current_weight) * baseline), 0),
+      equityExposure: equityExp,
       holdings: mappedHoldings,
       assets: mappedAssets,
       createdAt: p.created_at

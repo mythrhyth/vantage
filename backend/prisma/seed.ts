@@ -26,9 +26,9 @@ async function main() {
 
   await prisma.asset.createMany({
     data: [
-      { portfolio_id: portfolio.id, company: 'Corporate Loans Portfolio', asset_type: 'LOANS', sector: 'Banking & Credit', current_weight: 1360 / 2450, exposure_value: 1360.0, sentiment: 0.0, base_sentiment: 0.0 },
-      { portfolio_id: portfolio.id, company: 'Sovereign & Corporate Bonds', asset_type: 'BONDS', sector: 'Fixed Income', current_weight: 800 / 2450, exposure_value: 800.0, sentiment: 0.0, base_sentiment: 0.0 },
-      { portfolio_id: portfolio.id, company: 'Interest Rate Derivatives', asset_type: 'DERIVATIVES', sector: 'Hedging', current_weight: 290 / 2450, exposure_value: 290.0, sentiment: 0.0, base_sentiment: 0.0 }
+      { portfolio_id: portfolio.id, company: 'Corporate Loans Portfolio', asset_type: 'LOANS', sector: 'Banking & Credit', current_weight: 0.30, exposure_value: 0.30 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+      { portfolio_id: portfolio.id, company: 'Sovereign & Corporate Bonds', asset_type: 'BONDS', sector: 'Fixed Income', current_weight: 0.17, exposure_value: 0.17 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 },
+      { portfolio_id: portfolio.id, company: 'Interest Rate Derivatives', asset_type: 'DERIVATIVES', sector: 'Hedging', current_weight: 0.10, exposure_value: 0.10 * 2450.0, sentiment: 0.0, base_sentiment: 0.0 }
     ]
   })
 

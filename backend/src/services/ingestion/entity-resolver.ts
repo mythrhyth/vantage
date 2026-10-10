@@ -46,6 +46,51 @@ const ALIAS_DICTIONARY: Record<string, { canonical: string; ticker: string; alia
     canonical: 'JPMorgan Chase & Co.',
     ticker: 'JPM',
     aliases: ['jpmorgan', 'jpmorgan chase', 'jpmorgan chase & co', 'jp morgan', 'chase bank']
+  },
+  AMZN: {
+    canonical: 'Amazon.com Inc.',
+    ticker: 'AMZN',
+    aliases: ['amazon', 'amazon.com', 'amazon inc', 'aws']
+  },
+  NVDA: {
+    canonical: 'NVIDIA Corp.',
+    ticker: 'NVDA',
+    aliases: ['nvidia', 'nvidia corp', 'nvidia corporation', 'ai chipmaker']
+  },
+  META: {
+    canonical: 'Meta Platforms Inc.',
+    ticker: 'META',
+    aliases: ['meta', 'facebook', 'meta platforms', 'instagram parent']
+  },
+  TSLA: {
+    canonical: 'Tesla Inc.',
+    ticker: 'TSLA',
+    aliases: ['tesla', 'tesla inc', 'tesla motors', 'elon musk tesla']
+  },
+  RELIANCE: {
+    canonical: 'Reliance Industries Ltd',
+    ticker: 'RELIANCE',
+    aliases: ['reliance', 'reliance industries', 'ril', 'jio', 'ambani']
+  },
+  TCS: {
+    canonical: 'Tata Consultancy Services',
+    ticker: 'TCS',
+    aliases: ['tcs', 'tata consultancy', 'tata consultancy services', 'tata tech']
+  },
+  HDFCBANK: {
+    canonical: 'HDFC Bank Ltd',
+    ticker: 'HDFCBANK',
+    aliases: ['hdfc', 'hdfc bank', 'hdfc bank ltd']
+  },
+  INFYS: {
+    canonical: 'Infosys Ltd',
+    ticker: 'INFYS',
+    aliases: ['infosys', 'infosys ltd', 'infy']
+  },
+  ICICIBANK: {
+    canonical: 'ICICI Bank Ltd',
+    ticker: 'ICICIBANK',
+    aliases: ['icici', 'icici bank', 'icici bank ltd']
   }
 };
 
