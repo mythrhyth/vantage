@@ -3,7 +3,15 @@ import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
 import path from "node:path"
 
-import siteConfiguration from "./.figma/make/site.json"
+import fs from "node:fs"
+
+let siteConfiguration: FigmaSiteConfiguration = {}
+const siteConfigPath = path.resolve(import.meta.dirname, "./.figma/make/site.json")
+if (fs.existsSync(siteConfigPath)) {
+  try {
+    siteConfiguration = JSON.parse(fs.readFileSync(siteConfigPath, "utf-8"))
+  } catch {}
+}
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -28,7 +36,7 @@ export default defineConfig(({ mode }) => {
     ],
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
+        "@": path.resolve(import.meta.dirname, "./src"),
       },
     },
     server: {
