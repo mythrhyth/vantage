@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo } from "react"
+import React, { useMemo } from "react"
 import { ScenarioName, AssetName } from "../../types"
 import { Button } from "../common/Button"
+import { ModalDialog } from "../common/ModalDialog"
 import { LossGenerationExplainability } from "../scenario-analysis/LossGenerationExplainability"
 
 export function WhyLossDialog({
@@ -23,14 +24,6 @@ export function WhyLossDialog({
   }
   onClose: () => void
 }) {
-  useEffect(() => {
-    const closeOnEscape = (input: KeyboardEvent) => {
-      if (input.key === "Escape") onClose()
-    }
-    document.addEventListener("keydown", closeOnEscape)
-    return () => document.removeEventListener("keydown", closeOnEscape)
-  }, [onClose])
-
   const calculatedContributors = useMemo(() => {
     const rawLoans = attribution?.loansLoss ?? 0
     const rawBonds = attribution?.bondsLoss ?? 0
@@ -82,16 +75,12 @@ export function WhyLossDialog({
   const isNetGain = loss === 0 && contributors.some((c) => c.isGain)
 
   return (
-    <div
-      className="explainability-overlay"
-      onMouseDown={(input) => input.target === input.currentTarget && onClose()}
+    <ModalDialog
+      className="why-loss-dialog"
+      labelledBy="why-loss-title"
+      describedBy="why-loss-description"
+      onClose={onClose}
     >
-      <section
-        className="explainability-dialog why-loss-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="why-loss-title"
-      >
         <div className="explainability-header">
           <div>
             <span className="dialog-eyebrow">Executive loss explanation</span>
@@ -102,7 +91,7 @@ export function WhyLossDialog({
                 ? `Portfolio Stress Analysis — Net Capital Gain / Zero Loss`
                 : `Why did the portfolio report ₹0.0 Cr stress loss?`}
             </div>
-            <span className="dialog-meta">
+            <span className="dialog-meta" id="why-loss-description">
               Modeled 12-month scenario impact
             </span>
           </div>
@@ -227,7 +216,6 @@ export function WhyLossDialog({
             Close
           </Button>
         </div>
-      </section>
-    </div>
+    </ModalDialog>
   )
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react"
+import React from "react"
 import {
   Page,
   IconName,
@@ -17,6 +17,7 @@ import {
 } from "../../utils"
 import { Icon } from "../common/Icon"
 import { Button } from "../common/Button"
+import { ModalDialog } from "../common/ModalDialog"
 import { PanelTitle } from "../common/PanelTitle"
 import { Slider } from "../common/Slider"
 import { Summary } from "../common/Summary"
@@ -41,43 +42,24 @@ export function OverallAllocationDialog({
   trace?: any
   onClose: () => void
 }) {
-  useEffect(() => {
-    const handleKeyDown = (input: KeyboardEvent) => {
-      if (input.key === "Escape") onClose()
-    }
-    document.addEventListener("keydown", handleKeyDown)
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [onClose])
-
   const turnoverPct = trace?.metrics?.totalTurnoverPct !== undefined ? Number(trace.metrics.totalTurnoverPct) : sensitivity * 0.041
   const costVal = trace?.metrics?.estimatedTransactionCostVal !== undefined ? Number(trace.metrics.estimatedTransactionCostVal) : (turnoverPct * 2450.0 * 2 * (cost / 10000))
   const costPct = trace?.metrics?.estimatedTransactionCostPct !== undefined ? Number(trace.metrics.estimatedTransactionCostPct) : (turnoverPct * cost) / 100
 
   return (
-    <div
-      className="explainability-overlay"
-      onMouseDown={(input) => {
-        if (input.target === input.currentTarget) onClose()
-      }}
+    <ModalDialog
+      className="overall-allocation-dialog"
+      labelledBy="overall-allocation-title"
+      describedBy="overall-allocation-description"
+      onClose={onClose}
     >
-      <section
-        className="explainability-dialog overall-allocation-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="overall-allocation-title"
-      >
         <div className="explainability-header">
           <div>
             <span className="dialog-eyebrow">Portfolio explainability & deterministic optimizer trace</span>
             <div className="dialog-title" id="overall-allocation-title">
               Overall Allocation Rationale
             </div>
-            <span className="dialog-meta">
+            <span className="dialog-meta" id="overall-allocation-description">
               Proposed portfolio • Optimizer Status: <strong>{trace?.optimizerStatus || 'CONVERGED'}</strong>
             </span>
           </div>
@@ -167,8 +149,6 @@ export function OverallAllocationDialog({
             Close
           </Button>
         </div>
-      </section>
-    </div>
+    </ModalDialog>
   )
 }
-

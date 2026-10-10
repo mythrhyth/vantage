@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useMemo } from "react"
 import {
   Page,
   IconName,
@@ -18,6 +18,7 @@ import {
 } from "../../utils"
 import { Icon } from "../common/Icon"
 import { Button } from "../common/Button"
+import { ModalDialog } from "../common/ModalDialog"
 
 export function EventExplainabilityDialog({
   event,
@@ -28,19 +29,6 @@ export function EventExplainabilityDialog({
   onClose: () => void
   onRunStressTest?: (event: any) => void
 }) {
-  useEffect(() => {
-    const handleKeyDown = (input: KeyboardEvent) => {
-      if (input.key === "Escape") onClose()
-    }
-    document.addEventListener("keydown", handleKeyDown)
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [onClose])
-
   if (!event) return null
 
   const numSentiment = typeof event.sentiment === "number" ? event.sentiment : parseFloat(event.sentiment) || 0
@@ -64,25 +52,18 @@ export function EventExplainabilityDialog({
   }, [event.affectedAssets, event.affected_assets]);
 
   return (
-    <div
-      className="explainability-overlay"
-      onMouseDown={(input) => {
-        if (input.target === input.currentTarget) onClose()
-      }}
+    <ModalDialog
+      labelledBy="explainability-title"
+      describedBy="explainability-description"
+      onClose={onClose}
     >
-      <section
-        className="explainability-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="explainability-title"
-      >
         <div className="explainability-header">
           <div>
             <span className="dialog-eyebrow">Event explainability</span>
             <div className="dialog-title" id="explainability-title">
               {titleStr}
             </div>
-            <span className="dialog-meta">
+            <span className="dialog-meta" id="explainability-description">
               {sourceStr} · {dateStr} at {timeStr}
             </span>
           </div>
@@ -448,7 +429,6 @@ export function EventExplainabilityDialog({
             </Button>
           )}
         </div>
-      </section>
-    </div>
+    </ModalDialog>
   )
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState } from "react"
 import {
   Page,
   IconName,
@@ -17,6 +17,7 @@ import {
 } from "../../utils"
 import { Icon } from "../common/Icon"
 import { Button } from "../common/Button"
+import { ModalDialog } from "../common/ModalDialog"
 import { PanelTitle } from "../common/PanelTitle"
 import { Slider } from "../common/Slider"
 import { Summary } from "../common/Summary"
@@ -56,23 +57,19 @@ export function EventStressComparisonDialog({
     .sort((a, b) => b.loss - a.loss)
 
   return (
-    <div
-      className="explainability-overlay"
-      onMouseDown={(input) => input.target === input.currentTarget && onClose()}
+    <ModalDialog
+      className="event-stress-compare-dialog"
+      labelledBy="event-stress-compare-title"
+      describedBy="event-stress-compare-description"
+      onClose={onClose}
     >
-      <section
-        className="explainability-dialog event-stress-compare-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="event-stress-compare-title"
-      >
         <div className="explainability-header">
           <div>
             <span className="dialog-eyebrow">Event stress-test comparison</span>
             <div className="dialog-title" id="event-stress-compare-title">
               Compare Stress Tests
             </div>
-            <span className="dialog-meta">
+            <span className="dialog-meta" id="event-stress-compare-description">
               Compare up to four completed event-driven runs
             </span>
           </div>
@@ -151,7 +148,6 @@ export function EventStressComparisonDialog({
             Close
           </Button>
         </div>
-      </section>
-    </div>
+    </ModalDialog>
   )
 }

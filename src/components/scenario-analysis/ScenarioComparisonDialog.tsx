@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { Button } from "../common/Button"
+import { ModalDialog } from "../common/ModalDialog"
 
 interface ScenarioConfig {
   id: string
@@ -33,14 +34,6 @@ export function ScenarioComparisonDialog({
   const [results, setResults] = useState<Record<string, ComparisonRow>>({})
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState("")
-
-  useEffect(() => {
-    const closeOnEscape = (input: KeyboardEvent) => {
-      if (input.key === "Escape") onClose()
-    }
-    document.addEventListener("keydown", closeOnEscape)
-    return () => document.removeEventListener("keydown", closeOnEscape)
-  }, [onClose])
 
   const runComparisons = async () => {
     if (availableScenarios.length === 0 || selectedScenarios.length === 0) return
@@ -146,23 +139,19 @@ export function ScenarioComparisonDialog({
     .sort((a, b) => b.loss - a.loss)
 
   return (
-    <div
-      className="explainability-overlay"
-      onMouseDown={(input) => input.target === input.currentTarget && onClose()}
+    <ModalDialog
+      className="scenario-compare-dialog"
+      labelledBy="scenario-compare-title"
+      describedBy="scenario-compare-description"
+      onClose={onClose}
     >
-      <section
-        className="explainability-dialog scenario-compare-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="scenario-compare-title"
-      >
         <div className="explainability-header">
           <div>
             <span className="dialog-eyebrow">Scenario comparison</span>
             <div className="dialog-title" id="scenario-compare-title">
               Compare scenarios
             </div>
-            <span className="dialog-meta">
+            <span className="dialog-meta" id="scenario-compare-description">
               Select 2 to 4 preset scenarios to compare portfolio loss severity
             </span>
           </div>
@@ -244,7 +233,6 @@ export function ScenarioComparisonDialog({
             Close
           </Button>
         </div>
-      </section>
-    </div>
+    </ModalDialog>
   )
 }

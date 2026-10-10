@@ -1,26 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react"
-import {
-  Page,
-  IconName,
-  ScenarioName,
-  ScenarioControls,
-  StressTestRun,
-  StressTestHistoryEntry,
-  AssetName,
-} from "../../types"
-import {
-  titleCase,
-  mappedScenarioForEvent,
-  signedValue,
-  generateEventStressParameters,
-  calculateScenarioLoss,
-} from "../../utils"
-import { Icon } from "../common/Icon"
+import React, { useState } from "react"
 import { Button } from "../common/Button"
-import { PanelTitle } from "../common/PanelTitle"
-import { Slider } from "../common/Slider"
-import { Summary } from "../common/Summary"
-import { PageHeading } from "../common/PageHeading"
+import { ModalDialog } from "./ModalDialog"
 
 export function SettingsPanel({
   dark,
@@ -34,23 +14,30 @@ export function SettingsPanel({
   const [density, setDensity] = useState("Comfortable")
   const [currency, setCurrency] = useState("INR")
   const [alerts, setAlerts] = useState(true)
+
   return (
-    <>
-      <button
-        className="settings-overlay"
-        onClick={onClose}
-        aria-label="Close settings"
-      />
-      <aside className="settings-drawer">
-        <div className="settings-head">
-          <div>
-            <strong>Settings</strong>
-            <span>Workspace preferences</span>
-          </div>
-          <Button variant="icon" icon="close" onClick={onClose}>
-            Close
-          </Button>
+    <ModalDialog
+      className="settings-drawer"
+      labelledBy="settings-title"
+      describedBy="settings-description"
+      onClose={onClose}
+      variant="drawer"
+    >
+      <div className="settings-head">
+        <div>
+          <strong id="settings-title">Settings</strong>
+          <span id="settings-description">Workspace preferences</span>
         </div>
+        <Button
+          variant="icon"
+          icon="close"
+          ariaLabel="Close settings"
+          onClick={onClose}
+        >
+          Close
+        </Button>
+      </div>
+      <div className="settings-drawer-body">
         <div className="settings-section">
           <span className="settings-section-title">Appearance</span>
           <div className="settings-row">
@@ -117,8 +104,10 @@ export function SettingsPanel({
             </span>
           </div>
         </div>
+      </div>
+      <div className="settings-drawer-footer">
         <Button onClick={onClose}>Save preferences</Button>
-      </aside>
-    </>
+      </div>
+    </ModalDialog>
   )
 }

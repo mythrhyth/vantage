@@ -1,6 +1,6 @@
-import React, { useEffect } from "react"
 import { AssetName } from "../../types"
 import { Button } from "../common/Button"
+import { ModalDialog } from "../common/ModalDialog"
 
 export function AssetLossDialog({
   asset,
@@ -18,14 +18,6 @@ export function AssetLossDialog({
   }
   onClose: () => void
 }) {
-  useEffect(() => {
-    const closeOnEscape = (input: KeyboardEvent) => {
-      if (input.key === "Escape") onClose()
-    }
-    document.addEventListener("keydown", closeOnEscape)
-    return () => document.removeEventListener("keydown", closeOnEscape)
-  }, [onClose])
-
   const dynamicShares = (() => {
     if (attribution && (attribution.loansLoss || attribution.bondsLoss || attribution.derivativesLoss || attribution.equityLoss)) {
       const lLoss = Math.max(0, attribution.loansLoss || 0)
@@ -107,23 +99,19 @@ export function AssetLossDialog({
   }
 
   return (
-    <div
-      className="explainability-overlay"
-      onMouseDown={(input) => input.target === input.currentTarget && onClose()}
+    <ModalDialog
+      className="asset-loss-dialog"
+      labelledBy="asset-loss-title"
+      describedBy="asset-loss-description"
+      onClose={onClose}
     >
-      <section
-        className="explainability-dialog asset-loss-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="asset-loss-title"
-      >
         <div className="explainability-header">
           <div>
             <span className="dialog-eyebrow">Asset-class explainability</span>
             <div className="dialog-title" id="asset-loss-title">
               {asset}
             </div>
-            <span className="dialog-meta">
+            <span className="dialog-meta" id="asset-loss-description">
               Primary driver · {details.driver}
             </span>
           </div>
@@ -176,7 +164,6 @@ export function AssetLossDialog({
             Close
           </Button>
         </div>
-      </section>
-    </div>
+    </ModalDialog>
   )
 }

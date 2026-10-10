@@ -551,7 +551,7 @@
   .intelligence-table, .scenario-comparison, .risk-engine-status, .stress-trigger-bridge { min-height: 0; }
   .intelligence-page .summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 14px; }
   .intelligence-charts { grid-template-columns: minmax(0, 1fr); }
-  .intelligence-table table, .table-wrap table { min-width: 820px; }
+  .intelligence-table table { min-width: 820px; }
   .allocation-decision-flow { max-width: 360px; margin: 0 auto; flex-direction: column; }
   .allocation-flow-step { flex-direction: column; }
   .allocation-flow-step > i { height: 20px; line-height: 20px; transform: rotate(90deg); }
@@ -660,4 +660,94 @@
   .stress-trigger-bridge > i { transform: rotate(90deg); }
   .stress-trigger-bridge .button-text { grid-column: auto; }
   .signed-out-card { width: 100%; padding: 30px 22px; }
+}
+
+/* Keep dense analytical labels readable and consistent in every dialog. */
+.explainability-dialog {
+  font-size: clamp(0.8125rem, 0.78rem + 0.12vw, 0.875rem);
+  line-height: 1.5;
+}
+
+.explainability-dialog .dialog-eyebrow,
+.explainability-dialog .dialog-section-title {
+  font-size: clamp(0.71875rem, 0.69rem + 0.08vw, 0.75rem);
+}
+
+.explainability-dialog :is(.dialog-meta, .dialog-section p, .allocation-primary-reason p, .sensitivity-explanation p) {
+  font-size: clamp(0.8125rem, 0.78rem + 0.12vw, 0.875rem);
+  line-height: 1.55;
+}
+
+.explainability-dialog :is(.prototype-label, .factor-method-note, .flow-caption, .drawer-meta-line, .drawer-assumptions) {
+  font-size: clamp(0.6875rem, 0.66rem + 0.08vw, 0.75rem);
+  line-height: 1.5;
+}
+
+.explainability-dialog small,
+.explainability-dialog :is(.severity-badge, .exposure-sub, .shared-driver-tag, .driver-input) {
+  font-size: clamp(0.6875rem, 0.66rem + 0.08vw, 0.75rem);
+  line-height: 1.4;
+}
+
+.explainability-dialog .comparison-table-section td:first-child small {
+  font-size: clamp(0.6875rem, 0.66rem + 0.08vw, 0.75rem);
+}
+
+.run-details-id {
+  font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem);
+  overflow-wrap: anywhere;
+}
+
+.run-details-impact-heading {
+  font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem);
+}
+
+.run-details-impact-label {
+  color: #64748b;
+  font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem);
+}
+
+.explainability-dialog :is(
+  .allocation-flow-step small,
+  .constraint-grid > div > span,
+  .constraint-grid > div > strong,
+  .constraint-grid > div > p,
+  .decision-factor-table > span,
+  .portfolio-impact-list > span,
+  .asset-causal-chain span,
+  .why-loss-causal-chain span,
+  .event-loss-cause-flow > span
+) {
+  font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem);
+  line-height: 1.45;
+}
+
+.explainability-dialog table {
+  font-size: inherit;
+}
+
+.explainability-dialog th {
+  font-size: clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);
+}
+
+.explainability-dialog td,
+.explainability-dialog td strong,
+.explainability-dialog td b {
+  font-size: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+}
+
+.explainability-dialog :is(.asset-tag, .shared-driver-tag, .history-source-badge) {
+  font-size: clamp(0.6875rem, 0.66rem + 0.08vw, 0.75rem);
+}
+
+@media (max-width: 640px) {
+  .explainability-dialog .dialog-title {
+    font-size: clamp(1.0625rem, 1rem + 0.25vw, 1.125rem);
+    line-height: 1.35;
+  }
+
+  .explainability-dialog .dialog-section,
+  .explainability-dialog .dialog-section p {
+    overflow-wrap: anywhere;
+  }
 }

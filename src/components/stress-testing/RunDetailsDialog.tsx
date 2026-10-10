@@ -1,6 +1,6 @@
-import React, { useEffect } from "react"
 import { StressTestHistoryEntry } from "../../types"
 import { Button } from "../common/Button"
+import { ModalDialog } from "../common/ModalDialog"
 
 export function RunDetailsDialog({
   run,
@@ -9,14 +9,6 @@ export function RunDetailsDialog({
   run: StressTestHistoryEntry
   onClose: () => void
 }) {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
-    }
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [onClose])
-
   const params = run.parameters || {}
   const units = params.units || {
     rate: "bps",
@@ -39,30 +31,28 @@ export function RunDetailsDialog({
   const residual = run.attributionResult?.interaction_residual || 0
 
   return (
-    <div
-      className="explainability-overlay"
-      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    <ModalDialog
+      className="run-details-dialog"
+      labelledBy="run-details-title"
+      describedBy="run-details-description"
+      onClose={onClose}
     >
-      <section
-        className="explainability-dialog run-details-dialog"
-        role="dialog"
-        aria-modal="true"
-        style={{ maxWidth: "680px" }}
-      >
         <div className="explainability-header">
           <div>
             <span className="dialog-eyebrow">Stress Test Execution Audit</span>
-            <div className="dialog-title">{run.displayTitle || run.scenario || "Stress Test Run Details"}</div>
-            <span className="dialog-meta">
-              Run ID: <code style={{ fontSize: "11px" }}>{run.runId || run.id}</code>
+            <div className="dialog-title" id="run-details-title">{run.displayTitle || run.scenario || "Stress Test Run Details"}</div>
+            <span className="dialog-meta" id="run-details-description">
+              Run ID: <code className="run-details-id">{run.runId || run.id}</code>
             </span>
           </div>
-          <Button variant="icon" icon="close" onClick={onClose} aria-label="Close dialog" />
+          <Button variant="icon" icon="close" onClick={onClose} ariaLabel="Close dialog">
+            Close
+          </Button>
         </div>
 
-        <div className="explainability-content" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div className="explainability-content run-details-content" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {/* Metadata Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+          <div className="run-details-metadata" style={{ display: "grid" }}>
             <div className="metric-card">
               <span className="metric-label">Run Type</span>
               <strong style={{ fontSize: "14px", textTransform: "capitalize", color: "#4f46e5" }}>
@@ -81,20 +71,20 @@ export function RunDetailsDialog({
 
           {/* Results Summary */}
           <div style={{ background: "#f8fafc", borderRadius: "8px", padding: "14px", border: "1px solid #e2e8f0" }}>
-            <div style={{ fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "8px" }}>
+            <div className="run-details-impact-heading" style={{ fontWeight: 600, color: "#64748b", marginBottom: "8px" }}>
               FINANCIAL ENGINE IMPACT
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+            <div className="run-details-impact-grid" style={{ display: "grid" }}>
               <div>
-                <span style={{ fontSize: "11px", color: "#64748b" }}>Baseline Value</span>
+                <span className="run-details-impact-label">Baseline Value</span>
                 <div style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>₹{baseline.toFixed(1)} Cr</div>
               </div>
               <div>
-                <span style={{ fontSize: "11px", color: "#64748b" }}>Stressed Value</span>
+                <span className="run-details-impact-label">Stressed Value</span>
                 <div style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>₹{stressed.toFixed(1)} Cr</div>
               </div>
               <div>
-                <span style={{ fontSize: "11px", color: "#64748b" }}>Net Calculated Loss</span>
+                <span className="run-details-impact-label">Net Calculated Loss</span>
                 <div style={{ fontSize: "16px", fontWeight: 700, color: loss > 0 ? "#dc2626" : "#16a34a" }}>
                   -₹{loss.toFixed(1)} Cr ({lossPct.toFixed(1)}%)
                 </div>
@@ -108,7 +98,8 @@ export function RunDetailsDialog({
               Stress Parameters & Units
             </div>
             {paramKeys.length > 0 ? (
-              <table className="scenario-table" style={{ width: "100%", fontSize: "12px" }}>
+              <div className="table-wrap">
+                <table className="scenario-table" style={{ width: "100%" }}>
                 <thead>
                   <tr>
                     <th>Parameter</th>
@@ -126,6 +117,7 @@ export function RunDetailsDialog({
                   ))}
                 </tbody>
               </table>
+              </div>
             ) : (
               <span style={{ fontSize: "12px", color: "#64748b" }}>No custom parameters recorded (Default baseline)</span>
             )}
@@ -137,7 +129,8 @@ export function RunDetailsDialog({
               <div style={{ fontSize: "13px", fontWeight: 600, color: "#334155", marginBottom: "8px" }}>
                 Factor Loss Attribution Breakdown
               </div>
-              <table className="scenario-table" style={{ width: "100%", fontSize: "12px" }}>
+              <div className="table-wrap">
+                <table className="scenario-table" style={{ width: "100%" }}>
                 <thead>
                   <tr>
                     <th>Risk Factor</th>
@@ -161,6 +154,7 @@ export function RunDetailsDialog({
                   )}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>
@@ -170,7 +164,6 @@ export function RunDetailsDialog({
             Close
           </Button>
         </div>
-      </section>
-    </div>
+    </ModalDialog>
   )
 }

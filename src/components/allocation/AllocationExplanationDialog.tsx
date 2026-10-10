@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react"
+import React from "react"
 import {
   Page,
   IconName,
@@ -17,6 +17,7 @@ import {
 } from "../../utils"
 import { Icon } from "../common/Icon"
 import { Button } from "../common/Button"
+import { ModalDialog } from "../common/ModalDialog"
 import { PanelTitle } from "../common/PanelTitle"
 import { Slider } from "../common/Slider"
 import { Summary } from "../common/Summary"
@@ -45,19 +46,6 @@ export function AllocationExplanationDialog({
   cost: number
   onClose: () => void
 }) {
-  useEffect(() => {
-    const handleKeyDown = (input: KeyboardEvent) => {
-      if (input.key === "Escape") onClose()
-    }
-    document.addEventListener("keydown", handleKeyDown)
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [onClose])
-
   const curWeight = Number(stock.currentWeight ?? stock.current) || 0
   const propWeight = Number(proposed) || 0
   const change = propWeight - curWeight
@@ -89,18 +77,12 @@ export function AllocationExplanationDialog({
   const supportingEvents: any[] = stock.supportingEvents || []
 
   return (
-    <div
-      className="explainability-overlay"
-      onMouseDown={(input) => {
-        if (input.target === input.currentTarget) onClose()
-      }}
+    <ModalDialog
+      className="allocation-dialog"
+      labelledBy="allocation-explanation-title"
+      describedBy="allocation-explanation-description"
+      onClose={onClose}
     >
-      <section
-        className="explainability-dialog allocation-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="allocation-explanation-title"
-      >
         <div className="explainability-header">
           <div>
             <span className="dialog-eyebrow">
@@ -109,7 +91,7 @@ export function AllocationExplanationDialog({
             <div className="dialog-title" id="allocation-explanation-title">
               {stock.ticker} — Allocation Explanation
             </div>
-            <span className="dialog-meta">{stock.company || stock.ticker} • Sector: {stock.sector}</span>
+            <span className="dialog-meta" id="allocation-explanation-description">{stock.company || stock.ticker} • Sector: {stock.sector}</span>
           </div>
           <Button
             variant="icon"
@@ -272,8 +254,6 @@ export function AllocationExplanationDialog({
             Close
           </Button>
         </div>
-      </section>
-    </div>
+    </ModalDialog>
   )
 }
-
