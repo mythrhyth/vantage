@@ -55,6 +55,7 @@ export function EventExplainabilityDialog({
     <ModalDialog
       labelledBy="explainability-title"
       describedBy="explainability-description"
+      className="event-explainability-dialog"
       onClose={onClose}
     >
         <div className="explainability-header">

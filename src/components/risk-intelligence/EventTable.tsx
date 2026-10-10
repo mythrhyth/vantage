@@ -34,8 +34,8 @@ export function EventTable({
   showStressAction?: boolean
 }) {
   return (
-    <div className="table-wrap">
-      <table className={showStressAction ? "stress-action-table" : ""}>
+    <div className={`table-wrap event-table-wrap${showStressAction ? " with-stress-action" : ""}`}>
+      <table className={`event-table${showStressAction ? " stress-action-table" : ""}`}>
         <thead>
           <tr>
             <th>Event</th>
@@ -62,7 +62,7 @@ export function EventTable({
                 onClick={() => onSelect(index)}
                 className={selected === index ? "selected-row" : ""}
               >
-                <td title={event.title}>
+                <td data-label="Event" title={event.title}>
                   {event.url ? (
                     <a
                       href={event.url}
@@ -78,19 +78,19 @@ export function EventTable({
                     <strong>{event.title}</strong>
                   )}
                 </td>
-                <td title={event.category}>{event.category}</td>
-                <td title={event.entity}>
+                <td data-label="Classification" title={event.category}>{event.category}</td>
+                <td data-label="Entity" title={event.entity}>
                   <span className="entity-cell-text">{event.entity}</span>
                 </td>
-                <td style={{ textAlign: 'right' }}>
+                <td data-label="Sentiment" style={{ textAlign: 'right' }}>
                   <span className={`sentiment-badge ${sentimentClass}`}>
                     {sentimentStr}
                   </span>
                 </td>
-                <td style={{ textAlign: 'right' }}>
+                <td data-label="Impact" style={{ textAlign: 'right' }}>
                   <b className="impact-badge">{impactStr}</b>
                 </td>
-                <td>
+                <td data-label="Source">
                   {event.url ? (
                     <a
                       href={event.url}
@@ -105,9 +105,9 @@ export function EventTable({
                     event.source
                   )}
                 </td>
-                <td>{event.time || event.date}</td>
+                <td data-label="Time">{event.time || event.date}</td>
                 {showStressAction && (
-                  <td>
+                  <td data-label="Stress action">
                     <span
                       className={
                         numImpact >= 7

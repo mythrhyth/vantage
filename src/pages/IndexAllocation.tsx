@@ -421,16 +421,16 @@ export function IndexAllocation({ portfolioId }: { portfolioId: string | null })
               />
             </div>
             {applySuccess && (
-              <div className="stress-status-banner" style={{ margin: "12px 18px 0", fontSize: "11px", color: "var(--positive)" }}>
+              <div className="stress-status-banner allocation-result-banner">
                 <span>✅ Proposed weights applied & persisted to historical database</span>
               </div>
             )}
             {applyError && (
-              <div className="stress-error-card" style={{ margin: "12px 18px 0", fontSize: "11px" }}>
+              <div className="stress-error-card allocation-result-banner">
                 <span>⚠️ {applyError}</span>
               </div>
             )}
-            <div className="control-actions" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div className="allocation-control-actions">
               <Button
                 icon="reset"
                 disabled={recalculating || applying || loading}

@@ -365,15 +365,17 @@
 .event-loss-cause-panel > .prototype-label { display: block; padding: 0 20px 17px; }
 
 .stress-history-panel { margin-top: 24px; }
-.stress-history-panel .panel-title-row .button-text { width: auto; min-height: 34px; margin: 0; padding: 0 11px; border: 1px solid var(--border-strong); }
+.stress-history-panel .panel-title-row { flex-wrap: wrap; gap: 12px; }
+.stress-history-panel .panel-title-row .button-text { width: auto; min-height: 40px; margin: 0; padding: 7px 12px; border: 1px solid var(--border-strong); }
 .stress-history-panel table { width: 100%; border-collapse: collapse; }
 .stress-history-panel td:first-child { white-space: normal; }
-.history-status { display: inline-flex; align-items: center; gap: 6px; color: var(--positive); font-weight: 500; font-size: 12px; }
-.history-status i { width: 6px; height: 6px; background: var(--positive); border-radius: 50%; }
+.history-status { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px; color: var(--positive); background: color-mix(in srgb, var(--positive) 9%, var(--panel)); border: 1px solid color-mix(in srgb, var(--positive) 28%, var(--border)); border-radius: 999px; font-weight: 600; font-size: 12px; white-space: nowrap; }
+.history-status i { width: 7px; height: 7px; background: var(--positive); border-radius: 50%; flex: 0 0 auto; }
 
 .history-source-badge {
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  padding: 4px 9px;
   border-radius: 12px;
   background: color-mix(in srgb, var(--accent) 12%, var(--panel));
   color: var(--accent);
@@ -386,39 +388,164 @@
 .history-run-title {
   font-weight: 600;
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .history-run-sub-mobile {
   display: none;
-  font-size: 11px;
+  font-size: 13px;
+  line-height: 1.45;
   color: var(--secondary);
 }
 
 .history-details-btn.button-outline {
-  min-height: 28px;
-  padding: 2px 10px;
+  min-height: 40px;
+  padding: 7px 12px;
   font-size: 12px;
 }
 
-@media (max-width: 768px) {
-  .stress-history-table .col-portfolio,
-  .stress-history-table .col-status {
-    display: none;
+@media (max-width: 900px) {
+  .allocation-control-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 0 18px;
   }
-  .history-run-sub-mobile {
-    display: block;
-    margin-top: 2px;
+
+  .allocation-control-actions > .button {
+    width: 100%;
+    min-height: 46px;
+    margin: 0;
+    padding: 9px 12px;
+    text-align: center;
+  }
+
+  .allocation-control-actions > .why-allocation-btn {
+    grid-column: 1 / -1;
+  }
+
+  .manual-stress-run-action {
+    width: calc(100% - 44px);
+    min-height: 46px;
+    margin: 0 22px;
+    padding: 10px 14px;
+  }
+
+  .stress-history-panel .panel-title-row .button-text {
+    max-width: 100%;
   }
 }
 
-@media (max-width: 540px) {
-  .stress-history-table .col-time {
-    display: none;
+@media (max-width: 768px) {
+  .stress-history-table-wrap {
+    overflow-x: visible;
   }
-  .stress-history-table th:nth-child(6),
-  .stress-history-table td:nth-child(6) {
-    display: none;
+
+  .stress-history-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .stress-history-table > thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .stress-history-table > tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .stress-history-table > tbody > tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+    padding: 8px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .stress-history-table > tbody > tr > td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    min-width: 0;
+    padding: 8px 5px;
+    border: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .stress-history-table > tbody > tr > td::before {
+    content: attr(data-label);
+    margin-bottom: 4px;
+    color: var(--secondary);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .stress-history-table > tbody > tr > td:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .stress-history-table > tbody > tr > td:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .stress-history-table .history-run-sub-mobile {
+    display: block;
+    margin-top: 5px;
+  }
+
+  .stress-history-table .history-details-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .allocation-control-actions {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0 14px;
+  }
+
+  .allocation-control-actions > .why-allocation-btn {
+    grid-column: auto;
+  }
+
+  .manual-stress-run-action {
+    width: calc(100% - 36px);
+    margin: 0 18px;
+  }
+
+  .stress-history-panel .panel-title-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .stress-history-panel .panel-title-row .button-text {
+    width: 100%;
+  }
+
+  .stress-history-table > tbody > tr > td {
+    font-size: 13px;
+  }
+
+  .stress-history-table > tbody > tr > td::before {
+    font-size: 11px;
   }
 }
 
@@ -440,6 +567,12 @@
 .allocation-chart .panel-title-row { border-bottom: 1px solid var(--border); }
 .control-panel > .button-primary + .button-text { width: calc(100% - 44px); margin: 8px 22px 0; border: 1px solid var(--border-strong); }
 .control-panel > .button-primary + .button-text:hover { background: var(--accent-soft); border-color: var(--accent); }
+.allocation-control-actions { display: flex; flex-direction: column; gap: 10px; padding: 0 22px; }
+.allocation-control-actions > .button { width: 100%; min-height: 46px; margin: 0; padding: 10px 14px; text-align: center; }
+.allocation-control-actions > .why-allocation-btn { border: 1px solid var(--border-strong); }
+.allocation-control-actions > .why-allocation-btn:hover { border-color: var(--accent); }
+.manual-stress-run-action { width: calc(100% - 44px); min-height: 46px; margin: 0 22px; padding: 10px 14px; }
+.allocation-result-banner { margin: 12px 18px 0; padding: 10px 12px; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 
 .allocation-dialog-summary { flex: 0 0 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--panel); border-bottom: 1px solid var(--border); }
 .allocation-dialog-summary > span { padding: 13px 24px; border-right: 1px solid var(--border); }
@@ -679,18 +812,18 @@
 }
 
 .explainability-dialog :is(.prototype-label, .factor-method-note, .flow-caption, .drawer-meta-line, .drawer-assumptions) {
-  font-size: clamp(0.6875rem, 0.66rem + 0.08vw, 0.75rem);
+  font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem);
   line-height: 1.5;
 }
 
 .explainability-dialog small,
 .explainability-dialog :is(.severity-badge, .exposure-sub, .shared-driver-tag, .driver-input) {
-  font-size: clamp(0.6875rem, 0.66rem + 0.08vw, 0.75rem);
+  font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem);
   line-height: 1.4;
 }
 
 .explainability-dialog .comparison-table-section td:first-child small {
-  font-size: clamp(0.6875rem, 0.66rem + 0.08vw, 0.75rem);
+  font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem);
 }
 
 .run-details-id {
@@ -727,7 +860,7 @@
 }
 
 .explainability-dialog th {
-  font-size: clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);
+  font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem);
 }
 
 .explainability-dialog td,
@@ -737,7 +870,423 @@
 }
 
 .explainability-dialog :is(.asset-tag, .shared-driver-tag, .history-source-badge) {
-  font-size: clamp(0.6875rem, 0.66rem + 0.08vw, 0.75rem);
+  font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem);
+}
+
+.explainability-dialog :is(small, [class*="-label"], [class*="-caption"]) {
+  font-size: max(0.75rem, 1em);
+  line-height: 1.45;
+}
+
+.explainability-dialog.event-explainability-dialog {
+  width: min(100%, 1040px);
+}
+
+.event-explainability-dialog .snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.event-explainability-dialog .event-integration-grid,
+.event-explainability-dialog .dialog-two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.event-explainability-dialog .event-source-detail,
+.event-explainability-dialog .trigger-decision-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.event-explainability-dialog :is(.event-source-detail, .trigger-decision-card) > span {
+  margin-top: 0;
+}
+
+.event-explainability-dialog .event-source-detail > span small,
+.event-explainability-dialog .trigger-decision-card > span small {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--secondary);
+}
+
+.event-explainability-dialog .trigger-decision-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.event-explainability-dialog .trigger-decision-metrics > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  background: var(--panel-subtle);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.event-explainability-dialog .trigger-scale {
+  position: relative;
+  height: 8px;
+  margin-top: 5px;
+  background: var(--border);
+  border-radius: 5px;
+}
+
+.event-explainability-dialog .trigger-scale > i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+}
+
+.event-explainability-dialog .trigger-scale > b {
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: 14px;
+  background: var(--warning);
+}
+
+.event-explainability-dialog .trigger-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.event-explainability-dialog .event-stress-mapping {
+  margin-bottom: 14px;
+}
+
+.event-explainability-dialog .sentiment-scale {
+  position: relative;
+}
+
+.event-explainability-dialog .sentiment-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.event-explainability-dialog .factor-list,
+.event-explainability-dialog .driver-list,
+.event-explainability-dialog .affected-list,
+.event-explainability-dialog .risk-flow {
+  min-width: 0;
+}
+
+.event-explainability-dialog .event-source-detail b,
+.event-explainability-dialog .portfolio-content,
+.event-explainability-dialog .source-excerpt {
+  overflow-wrap: anywhere;
+}
+
+.explainability-dialog :is(
+  .snapshot-grid,
+  .event-integration-grid,
+  .event-mapping-flow,
+  .trigger-decision-metrics,
+  .trigger-scale-labels,
+  .score-line,
+  .sentiment-scale-labels,
+  .driver-list,
+  .factor-list,
+  .affected-list,
+  .risk-flow,
+  .portfolio-content,
+  .evidence-source,
+  .source-excerpt,
+  .evidence-chips,
+  .confidence-row
+) {
+  min-width: 0;
+}
+
+.explainability-dialog :is(
+  .snapshot-grid small,
+  .event-source-detail small,
+  .trigger-decision-card small,
+  .event-mapping-flow small,
+  .generated-scenario-action small,
+  .entity-label,
+  .evidence-source > span,
+  .source-excerpt > span,
+  .portfolio-content > div > span:first-child
+) {
+  font-size: max(0.75rem, 1em);
+  line-height: 1.4;
+}
+
+.explainability-dialog :is(
+  .snapshot-grid b,
+  .event-source-detail b,
+  .trigger-decision-card b,
+  .event-mapping-flow b,
+  .generated-scenario-action b,
+  .primary-entity,
+  .affected-list b,
+  .portfolio-content strong,
+  .evidence-source b,
+  .driver-list b,
+  .factor-row > span,
+  .factor-row > strong
+) {
+  font-size: clamp(0.875rem, 0.82rem + 0.16vw, 1rem);
+  line-height: 1.5;
+}
+
+.explainability-dialog :is(
+  .event-source-detail,
+  .trigger-decision-card,
+  .event-mapping-flow > div > span,
+  .generated-scenario-action > span,
+  .snapshot-grid > span,
+  .event-source-detail > span,
+  .trigger-decision-metrics > span,
+  .portfolio-content > div
+) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.explainability-dialog .event-mapping-flow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px;
+}
+
+.explainability-dialog .event-mapping-flow > div {
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.explainability-dialog .event-mapping-flow > div > span {
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 11px;
+  background: var(--panel-subtle);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.explainability-dialog .event-mapping-flow > div > i {
+  align-self: center;
+  flex: 0 0 auto;
+}
+
+.explainability-dialog .event-mapping-flow small,
+.explainability-dialog .generated-scenario-action i {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--secondary);
+  font-size: clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem);
+  font-style: normal;
+  line-height: 1.4;
+}
+
+.explainability-dialog .mapping-origin {
+  display: block;
+  margin: -5px 0 12px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.explainability-dialog .generated-scenario-action {
+  margin-top: 12px;
+}
+
+.explainability-dialog :is(.event-source-detail, .trigger-decision-card) > span {
+  display: block;
+  margin-top: 12px;
+}
+
+.explainability-dialog :is(.event-source-detail, .trigger-decision-card) > span small {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--secondary);
+}
+
+.explainability-dialog .snapshot-grid {
+  gap: 14px;
+}
+
+.explainability-dialog .snapshot-grid > span {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.explainability-dialog .snapshot-grid small {
+  color: var(--secondary);
+}
+
+.explainability-dialog :is(.driver-list, .affected-list) > span {
+  min-width: 0;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.explainability-dialog .portfolio-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.explainability-dialog .portfolio-areas {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.explainability-dialog .portfolio-areas > span:first-child {
+  flex-basis: 100%;
+}
+
+.explainability-dialog .source-excerpt p {
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+
+.explainability-dialog :is(.confidence-row, .score-line, .evidence-source) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.explainability-dialog .confidence-row {
+  margin-top: 12px;
+}
+
+.explainability-dialog .trigger-decision-card > p {
+  margin-top: 14px;
+}
+
+.explainability-dialog .factor-row {
+  grid-template-columns: minmax(0, 1fr) minmax(70px, 1.3fr) auto;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+@media (max-width: 900px) {
+  .event-explainability-dialog .event-mapping-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .event-table-wrap {
+    overflow-x: visible;
+  }
+
+  .event-table-wrap > .event-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .event-table-wrap > .event-table > thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .event-table-wrap > .event-table > tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .event-table-wrap > .event-table > tbody > tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+    padding: 8px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .event-table-wrap > .event-table > tbody > tr:nth-child(even),
+  .event-table-wrap > .event-table > tbody > tr:hover,
+  .event-table-wrap > .event-table > tbody > tr.selected-row {
+    background: var(--panel);
+  }
+
+  .event-table-wrap > .event-table > tbody > tr.selected-row {
+    border-color: var(--accent);
+    box-shadow: inset 3px 0 var(--accent);
+  }
+
+  .event-table-wrap > .event-table > tbody > tr > td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    min-height: 0;
+    padding: 7px 5px;
+    border: 0;
+    color: var(--text);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    text-align: left !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .event-table-wrap > .event-table > tbody > tr > td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    color: var(--secondary);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .event-table-wrap > .event-table > tbody > tr > td:first-child {
+    grid-column: 1 / -1;
+    padding-top: 5px;
+  }
+
+  .event-table-wrap > .event-table > tbody > tr > td:first-child > a,
+  .event-table-wrap > .event-table > tbody > tr > td:first-child > strong {
+    max-width: 100%;
+    color: var(--text) !important;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .event-table-wrap > .event-table > tbody > tr > td:nth-child(4),
+  .event-table-wrap > .event-table > tbody > tr > td:nth-child(5) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .event-table-wrap > .event-table > tbody > tr > td:last-child:nth-child(8) {
+    grid-column: 1 / -1;
+  }
+
+  .event-table-wrap .entity-cell-text {
+    overflow-wrap: anywhere;
+  }
 }
 
 @media (max-width: 640px) {
@@ -749,5 +1298,49 @@
   .explainability-dialog .dialog-section,
   .explainability-dialog .dialog-section p {
     overflow-wrap: anywhere;
+  }
+
+  .explainability-dialog :is(.snapshot-grid, .event-integration-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .explainability-dialog .event-mapping-flow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .explainability-dialog .event-mapping-flow > div {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .explainability-dialog .event-mapping-flow > div > i {
+    transform: rotate(90deg);
+  }
+
+  .explainability-dialog :is(.portfolio-content, .dialog-two-column) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .event-explainability-dialog .trigger-decision-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .explainability-dialog .portfolio-areas {
+    grid-column: auto;
+  }
+
+  .explainability-dialog .factor-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .explainability-dialog .factor-row > i {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .explainability-dialog .event-source-detail > span,
+  .explainability-dialog .trigger-decision-card > span {
+    margin-top: 14px;
   }
 }

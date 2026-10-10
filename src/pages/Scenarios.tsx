@@ -734,6 +734,7 @@ export function Scenarios({
             </div>
             <Button
               disabled={loading}
+              className="manual-stress-run-action"
               onClick={() => runScenarioStressTest(controls, scenario, true, 'manual')}
             >
               {loading ? "Calculating..." : "Run Manual Stress Test"}
@@ -770,60 +771,63 @@ export function Scenarios({
             </Button>
           </div>
         ) : history.length ? (
-          <div className="table-wrap">
+          <div className="table-wrap stress-history-table-wrap">
             <table className="stress-history-table">
               <thead>
                 <tr>
-                  <th>Run Identity</th>
-                  <th className="col-portfolio">Portfolio</th>
-                  <th className="col-time">Executed At</th>
-                  <th>Source</th>
-                  <th className="text-right">Portfolio loss</th>
-                  <th className="text-right">Loss %</th>
-                  <th className="text-center col-status">Status</th>
-                  <th className="text-center">Action</th>
+                  <th data-label="Run">Run Identity</th>
+                  <th className="col-portfolio" data-label="Portfolio">Portfolio</th>
+                  <th className="col-time" data-label="Executed">Executed At</th>
+                  <th data-label="Source">Source</th>
+                  <th className="text-right" data-label="Portfolio loss">Portfolio loss</th>
+                  <th className="text-right" data-label="Loss">Loss %</th>
+                  <th className="text-center col-status" data-label="Status">Status</th>
+                  <th className="text-center" data-label="Action">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {history.map((entry) => {
                   const entryLoss = typeof entry.loss === "number" ? entry.loss : Number((entry as any).absoluteLoss || 0)
-                  const label = entry.displayTitle || entry.scenario || "Legacy Run · Origin Unknown"
+                  const label = entry.displayTitle || entry.scenario || "Legacy stress test"
                   const entryBaseline = entry.baselineValue || baseline || 1000
                   const lossPct = entryBaseline > 0 ? (entryLoss / entryBaseline) * 100 : 0
                   const pName = entry.portfolio_name || "Primary Portfolio"
-                  const sourceLabel = entry.parameterSource || entry.run_type || "unknown"
+                  const rawSource = String(entry.parameterSource || entry.run_type || "").trim()
+                  const sourceLabel = !rawSource || rawSource.toLowerCase() === "unknown"
+                    ? "Not recorded"
+                    : rawSource.replace(/[-_]+/g, " ").replace(/\b\w/g, (character) => character.toUpperCase())
 
                   return (
                     <tr key={String(entry.runId || entry.id)}>
-                      <td>
+                      <td data-label="Run">
                         <div className="history-run-title">{label}</div>
                         <span className="history-run-sub-mobile">{pName} · {entry.completedAt || "Recently"}</span>
                       </td>
-                      <td className="col-portfolio">{pName}</td>
-                      <td className="col-time">{entry.completedAt || "Recently"}</td>
-                      <td>
+                      <td className="col-portfolio" data-label="Portfolio">{pName}</td>
+                      <td className="col-time" data-label="Executed">{entry.completedAt || "Recently"}</td>
+                      <td data-label="Source">
                         <span className="history-source-badge">
                           {sourceLabel}
                         </span>
                       </td>
-                      <td className={`text-right ${entryLoss > 0 ? "negative" : ""}`}>
+                      <td data-label="Portfolio loss" className={`text-right ${entryLoss > 0 ? "negative" : ""}`}>
                         <strong>{entryLoss > 0 ? `-₹${entryLoss.toFixed(1)} Cr` : `₹0.0 Cr`}</strong>
                       </td>
-                      <td className={`text-right ${entryLoss > 0 ? "negative" : ""}`}>
+                      <td data-label="Loss" className={`text-right ${entryLoss > 0 ? "negative" : ""}`}>
                         {entryLoss > 0 ? `-${lossPct.toFixed(1)}%` : `0.0%`}
                       </td>
-                      <td className="text-center col-status">
+                      <td className="text-center col-status" data-label="Status">
                         <span className="history-status">
                           <i /> Completed
                         </span>
                       </td>
-                      <td className="text-center">
+                      <td className="text-center" data-label="Action">
                         <Button
                           variant="outline"
                           className="history-details-btn"
                           onClick={() => setSelectedRunDetails(entry)}
                         >
-                          Details
+                          View details
                         </Button>
                       </td>
                     </tr>
