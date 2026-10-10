@@ -171,13 +171,13 @@ export function WorkspaceSettingsPage({
           <span>Manage portfolio holdings, baseline exposure, news ingestion sources, and workspace appearance.</span>
         </div>
         {activeTab !== "portfolio" && (
-          <Button onClick={handleSaveChanges}>
+          <Button className="settings-save-button" onClick={handleSaveChanges}>
             Save changes
           </Button>
         )}
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginBottom: "24px", borderBottom: "1px solid var(--border)", paddingBottom: "14px" }}>
+      <div className="settings-tabs">
         <button
           onClick={() => setActiveTab("portfolio")}
           style={{

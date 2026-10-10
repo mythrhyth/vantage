@@ -256,18 +256,8 @@ export function PortfolioSetupPage({
 
       {statusMsg && (
         <div
-          className={`status-banner ${statusMsg.type}`}
-          style={{
-            padding: "12px 16px",
-            borderRadius: "6px",
-            marginBottom: "20px",
-            background: statusMsg.type === "success" ? "color-mix(in srgb, var(--positive) 15%, var(--panel))" : "color-mix(in srgb, var(--negative) 15%, var(--panel))",
-            border: `1px solid ${statusMsg.type === "success" ? "var(--positive)" : "var(--negative)"}`,
-            color: statusMsg.type === "success" ? "var(--positive)" : "var(--negative)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between"
-          }}
+          className={`status-banner portfolio-status-banner ${statusMsg.type}`}
+          role={statusMsg.type === "error" ? "alert" : "status"}
         >
           <span>{statusMsg.text}</span>
           <button
@@ -535,15 +525,20 @@ export function PortfolioSetupPage({
         </div>
 
         {/* Sidebar Save & Instructions */}
-        <aside className="control-panel">
+        <aside className="control-panel portfolio-save-panel">
           <PanelTitle title="Save Configuration" subtitle="Persist holdings to database" />
-          <div style={{ padding: "18px 0" }}>
-            <p style={{ fontSize: "13px", lineHeight: "1.55", color: "var(--secondary)", marginBottom: "18px" }}>
-              Updating portfolio holdings and exposures dynamically adjusts both <strong>Index Allocation</strong> calculations and <strong>Portfolio Stress Testing</strong> models across the platform.
+          <div className="portfolio-save-content">
+            <p className="portfolio-save-description">
+              Saved holdings and exposures are used by <strong>Index Allocation</strong> and <strong>Portfolio Stress Testing</strong>.
             </p>
 
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save Portfolio Setup"}
+            <Button
+              className="portfolio-save-button"
+              onClick={handleSave}
+              disabled={saving}
+              ariaLabel={saving ? "Saving portfolio setup" : "Save portfolio setup"}
+            >
+              {saving ? "Saving portfolio..." : "Save portfolio setup"}
             </Button>
           </div>
 

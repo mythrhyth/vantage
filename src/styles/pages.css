@@ -89,8 +89,22 @@
 .settings-page-heading { min-height: 80px; display: flex; justify-content: space-between; align-items: flex-start; }
 .settings-page-heading > div { display: flex; flex-direction: column; gap: 7px; }
 .settings-page-heading strong { font-size: clamp(20px, 2vw + 10px, 30px); font-weight: 600; letter-spacing: -.4px; word-break: break-word; }
-.settings-page-heading span { color: var(--secondary); font-size: clamp(12px, 0.75vw + 8px, 15px); word-break: break-word; }
+.settings-page-heading > div > span { color: var(--secondary); font-size: clamp(12px, 0.75vw + 8px, 15px); word-break: break-word; }
 .settings-page-heading .button-primary { width: auto; margin: 0; padding: 0 16px; }
+.settings-page-heading .settings-save-button { color: #fff; }
+.settings-page-heading .settings-save-button > span { color: inherit; }
+.settings-tabs { min-width: 0; display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.settings-tabs > button { min-width: 0; }
+.portfolio-save-panel { min-width: 0; min-height: 0; }
+.portfolio-save-content { padding: 18px 22px 0; }
+.portfolio-save-description { margin: 0 0 16px; color: var(--secondary); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.portfolio-save-description strong { color: var(--text); font-weight: 600; }
+.portfolio-save-button { width: 100%; min-height: 46px; color: #fff; }
+.portfolio-status-banner { box-sizing: border-box; max-width: 100%; margin-bottom: 20px; padding: 12px 16px; border: 1px solid; border-radius: 6px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.portfolio-status-banner.success { background: color-mix(in srgb, var(--positive) 15%, var(--panel)); border-color: var(--positive); color: var(--positive); }
+.portfolio-status-banner.error { background: color-mix(in srgb, var(--negative) 15%, var(--panel)); border-color: var(--negative); color: var(--negative); }
+.portfolio-status-banner > span { min-width: 0; }
+.portfolio-status-banner > button { flex: 0 0 36px; width: 36px; height: 36px; margin: -6px -8px -6px 0; }
 .settings-saved { margin: -3px 0 14px; padding: 10px 13px; color: var(--positive); background: color-mix(in srgb, var(--positive) 8%, var(--panel)); border: 1px solid color-mix(in srgb, var(--positive) 24%, var(--border)); font-size: clamp(11px, 0.75vw + 7px, 13px); }
 .settings-page-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .settings-page-section { background: var(--panel); border: 1px solid var(--border); min-height: 235px; }
@@ -678,6 +692,7 @@
   .landing-summary > span:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
   .tool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .profile-page-grid, .settings-page-grid { grid-template-columns: minmax(0, 1fr); }
+  .portfolio-save-panel { position: static; width: 100%; }
   .profile-side { display: grid; grid-template-columns: 1fr 1fr; }
   .intelligence-grid, .stress-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .intelligence-controls { position: static; width: 100%; max-height: none; overflow: visible; min-height: 0; }
@@ -736,6 +751,10 @@
   .profile-side { grid-template-columns: minmax(0, 1fr); }
   .settings-page-heading { min-height: 0; margin-bottom: 20px; flex-direction: column; gap: 18px; }
   .settings-page-heading .button-primary { width: 100%; }
+  .settings-tabs { gap: 8px; }
+  .settings-tabs > button { flex: 1 1 100%; justify-content: center; }
+  .portfolio-save-content { padding: 16px 16px 0; }
+  .portfolio-status-banner { padding: 11px 12px; }
   .model-settings { grid-template-columns: minmax(0, 1fr); }
   .comparison-values { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 26px 24px; }
   .comparison-values > svg { transform: rotate(90deg); }
