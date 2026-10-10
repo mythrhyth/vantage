@@ -247,16 +247,12 @@ export class PortfolioService {
   }
 
   async getPortfolioAssets(portfolioId: string) {
-    const portfolio = await prisma.portfolio.findUnique({ where: { id: portfolioId } });
+    const portfolio = await this.reconcilePortfolio(portfolioId);
     if (!portfolio) {
       throw new Error('Portfolio not found');
     }
 
-    const assets = await prisma.asset.findMany({
-      where: { portfolio_id: portfolioId }
-    });
-
-    return Promise.all(assets.map(async a => {
+    return Promise.all(portfolio.assets.map(async a => {
       const nlpSentiment = await this.getAssetNlpSentiment(a.ticker, a.company, a.sector);
       const rawWeight = Number(a.current_weight);
       const currentPct = rawWeight <= 1.0 ? rawWeight * 100 : rawWeight;
@@ -383,12 +379,16 @@ export class PortfolioService {
       return t === target;
     };
 
-    const loansAsset = assets.find((a: any) => isAssetType(a.asset_type, 'LOANS'));
-    const bondsAsset = assets.find((a: any) => isAssetType(a.asset_type, 'BONDS'));
-    const derivativesAsset = assets.find((a: any) => isAssetType(a.asset_type, 'DERIVATIVES'));
+    const loansAssets = assets.filter((a: any) => isAssetType(a.asset_type, 'LOANS'));
+    const bondsAssets = assets.filter((a: any) => isAssetType(a.asset_type, 'BONDS'));
+    const derivativesAssets = assets.filter((a: any) => isAssetType(a.asset_type, 'DERIVATIVES'));
     const equityAssets = assets.filter((a: any) => isAssetType(a.asset_type, 'EQUITY'));
 
     const baseline = Number(p.baseline_value);
+    const exposureOf = (asset: any) => asset.exposure_value === null
+      ? this.toWeightDecimal(Number(asset.current_weight)) * baseline
+      : Number(asset.exposure_value);
+    const sumExposure = (assetRows: any[]) => assetRows.reduce((total, asset) => total + exposureOf(asset), 0);
 
     const mappedAssets = assets.map((a: any) => {
       const rawWeight = Number(a.current_weight);
@@ -402,21 +402,17 @@ export class PortfolioService {
         sector: a.sector,
         currentWeight: parseFloat(currentPct.toFixed(2)),
         current_weight: parseFloat(currentPct.toFixed(2)),
-        exposureValue: a.exposure_value === null ? this.toWeightDecimal(Number(a.current_weight)) * baseline : Number(a.exposure_value),
-        exposure_value: a.exposure_value === null ? this.toWeightDecimal(Number(a.current_weight)) * baseline : Number(a.exposure_value),
+        exposureValue: exposureOf(a),
+        exposure_value: exposureOf(a),
         sentiment: Number(a.sentiment)
       };
     });
 
     const mappedHoldings = mappedAssets.filter((a: any) => isAssetType(a.asset_type, 'EQUITY'));
-    const loansExp = loansAsset ? Number(loansAsset.exposure_value ?? this.toWeightDecimal(Number(loansAsset.current_weight)) * baseline) : 0;
-    const bondsExp = bondsAsset ? Number(bondsAsset.exposure_value ?? this.toWeightDecimal(Number(bondsAsset.current_weight)) * baseline) : 0;
-    const derivExp = derivativesAsset ? Number(derivativesAsset.exposure_value ?? this.toWeightDecimal(Number(derivativesAsset.current_weight)) * baseline) : 0;
-
-    const equityExp = equityAssets.reduce((sum: number, a: any) => {
-      const weightDecimal = Number(a.current_weight) > 1.0 ? Number(a.current_weight) / 100 : Number(a.current_weight);
-      return sum + (a.exposure_value === null ? weightDecimal * baseline : Number(a.exposure_value));
-    }, 0);
+    const loansExp = sumExposure(loansAssets);
+    const bondsExp = sumExposure(bondsAssets);
+    const derivExp = sumExposure(derivativesAssets);
+    const equityExp = sumExposure(equityAssets);
     const totalEquityWeight = equityAssets.reduce((sum: number, a: any) => {
       const w = Number(a.current_weight);
       return sum + (w <= 1.0 ? w * 100 : w);

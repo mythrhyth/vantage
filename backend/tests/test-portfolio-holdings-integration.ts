@@ -160,7 +160,8 @@ async function runHoldingsIntegrationTests() {
       assets: {
         create: [
           { ticker: 'TESTA', company: 'Test A', asset_type: 'EQUITY', current_weight: 0.6, exposure_value: 600, sentiment: 0, base_sentiment: 0 },
-          { company: 'Test Loans', asset_type: 'LOANS', current_weight: 0.1, exposure_value: 100, sentiment: 0, base_sentiment: 0 }
+          { company: 'Test Loans A', asset_type: 'LOANS', current_weight: 0.1, exposure_value: 100, sentiment: 0, base_sentiment: 0 },
+          { company: 'Test Loans B', asset_type: 'LOAN', current_weight: 0.2, exposure_value: 200, sentiment: 0, base_sentiment: 0 }
         ]
       }
     }
@@ -169,8 +170,13 @@ async function runHoldingsIntegrationTests() {
     const reconciled = await portfolioService.getPortfolioById(legacyPortfolio.id);
     const persistedAssets = await prisma.asset.findMany({ where: { portfolio_id: legacyPortfolio.id } });
     const persistedTotal = persistedAssets.reduce((sum, asset) => sum + Number(asset.exposure_value), 0);
+    const summarizedTotal = reconciled
+      ? reconciled.exposures.loans + reconciled.exposures.bonds +
+        reconciled.exposures.derivatives + reconciled.exposures.equity
+      : 0;
     assert(Boolean(reconciled), 'Legacy portfolio remains readable after reconciliation');
     assert(Math.abs(persistedTotal - 1000) < 0.01, `Legacy asset exposures persist at configured baseline, got ${persistedTotal}`);
+    assert(Math.abs(summarizedTotal - 1000) < 0.01, `Summarized asset-class exposures match configured baseline, got ${summarizedTotal}`);
     testPass('Legacy constituent exposures are persisted at the configured baseline when portfolio data is read');
   } finally {
     await prisma.asset.deleteMany({ where: { portfolio_id: legacyPortfolio.id } });
