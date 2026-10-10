@@ -229,48 +229,31 @@ export function Scenarios({
     },
   ]
 
-  const rawFactors: [string, number][] = backendResult?.attribution_result?.factors
-    ? [
-        [
-          "Interest rate shock",
-          backendResult.attribution_result.factors.find(
-            (f: any) => f.factor === "interest_rate"
-          )?.loss || 0,
-        ],
-        [
-          "Credit spread shock",
-          backendResult.attribution_result.factors.find(
-            (f: any) => f.factor === "spread"
-          )?.loss || 0,
-        ],
-        [
-          "Liquidity haircut",
-          backendResult.attribution_result.factors.find(
-            (f: any) => f.factor === "liquidity"
-          )?.loss || 0,
-        ],
-        [
-          "Inflation shock",
-          backendResult.attribution_result.factors.find(
-            (f: any) => f.factor === "inflation"
-          )?.loss || 0,
-        ],
-      ]
-    : [
-        ["Interest rate shock", (applied.rate / 100) * baseline * 0.05],
-        ["Credit spread shock", (applied.spread / 100) * baseline * 0.04],
-        ["Liquidity haircut", (applied.liquidity / 100) * baseline * 0.03],
-        ["Inflation shock", (applied.inflation / 100) * baseline * 0.03],
-      ]
+  const rateFactorLoss = backendResult?.attribution_result?.factors?.find((f: any) => f.factor === "interest_rate")?.loss ?? (applied.rate ? (applied.rate / 10000) * baseline * 0.2 : 0)
+  const spreadFactorLoss = backendResult?.attribution_result?.factors?.find((f: any) => f.factor === "spread")?.loss ?? (applied.spread ? (applied.spread / 10000) * baseline * 0.15 : 0)
+  const pdFactorLoss = backendResult?.attribution_result?.factors?.find((f: any) => f.factor === "default_probability")?.loss ?? (applied.probability ? (applied.probability / 100) * loansExp * 0.4 : 0)
+  const liquidityFactorLoss = backendResult?.attribution_result?.factors?.find((f: any) => f.factor === "liquidity")?.loss ?? (applied.liquidity ? (applied.liquidity / 100) * baseline * 0.05 : 0)
+  const inflationFactorLoss = backendResult?.attribution_result?.factors?.find((f: any) => f.factor === "inflation")?.loss ?? (applied.inflation ? (applied.inflation / 10000) * baseline * 0.12 : 0)
+  const marketEquityLoss = backendResult?.attribution_result?.factors?.find((f: any) => f.factor === "market_equity")?.loss ?? 0
+  const commoditiesFxLoss = backendResult?.attribution_result?.factors?.find((f: any) => f.factor === "commodities_fx")?.loss ?? 0
+
+  const rawFactors: [string, number][] = [
+    ["Interest rate shock", rateFactorLoss],
+    ["Credit spread shock", spreadFactorLoss],
+    ["Default probability shift", pdFactorLoss],
+    ["Liquidity haircut", liquidityFactorLoss],
+    ["Inflation shock", inflationFactorLoss],
+  ]
+
+  if (marketEquityLoss > 0) rawFactors.push(["Market equity stress", marketEquityLoss])
+  if (commoditiesFxLoss > 0) rawFactors.push(["Commodity / FX stress", commoditiesFxLoss])
 
   const factorTotal = rawFactors.reduce((sum, [, value]) => sum + value, 0)
+  const residualVal = backendResult?.attribution_result?.interaction_residual ?? Math.max(0, parseFloat((loss - factorTotal).toFixed(2)))
+
   const factorRows: [string, number][] = [
-    ...rawFactors,
-    [
-      "Interaction / residual",
-      backendResult?.attribution_result?.interaction_residual ??
-        Math.max(0, loss - factorTotal),
-    ],
+    ...rawFactors.filter(([, val]) => val > 0),
+    ["Interaction / residual", residualVal],
   ].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
 
   const maxFactor = Math.max(
@@ -778,17 +761,28 @@ export function Scenarios({
               <tbody>
                 {history.map((entry) => {
                   const entryLoss = typeof entry.loss === "number" ? entry.loss : Number((entry as any).absoluteLoss || 0)
+                  const displayTitle = entry.event?.title
+                    ? entry.event.title
+                    : entry.scenario && entry.scenario !== "Custom Stress"
+                    ? entry.scenario
+                    : (entry as any).parameterSource === "manual" || entry.parameters?.parameter_source === "manual"
+                    ? "Manual Stress Test"
+                    : "Custom Stress Test"
+                  const entryBaseline = entry.baselineValue || baseline || 1000
+                  const lossPct = entryBaseline > 0 ? (entryLoss / entryBaseline) * 100 : 0
                   return (
                     <tr key={String(entry.runId)}>
                       <td>
-                        <strong>{entry.event?.title || "Custom Stress Event"}</strong>
+                        <strong>{displayTitle}</strong>
                       </td>
                       <td>{entry.event?.category ? titleCase(entry.event.category) : "General Macro"}</td>
                       <td>{entry.event?.impact !== undefined && entry.event?.impact !== null ? Number(entry.event.impact).toFixed(1) : "N/A"}</td>
                       <td>{entry.scenario || "Custom Stress"}</td>
-                      <td className="negative">-₹{entryLoss.toFixed(1)} Cr</td>
-                      <td className="negative">
-                        -{(baseline > 0 ? (entryLoss / baseline) * 100 : 0).toFixed(1)}%
+                      <td className={entryLoss > 0 ? "negative" : ""}>
+                        {entryLoss > 0 ? `-₹${entryLoss.toFixed(1)} Cr` : `₹0.0 Cr`}
+                      </td>
+                      <td className={entryLoss > 0 ? "negative" : ""}>
+                        {entryLoss > 0 ? `-${lossPct.toFixed(1)}%` : `0.0%`}
                       </td>
                       <td>
                         <span className="history-status">

@@ -139,11 +139,14 @@ export class RiskEngineService {
       horizonMultiplier = Math.sqrt(years);
     }
 
-    // Asset class sensitivities incorporating market & macro shocks
+    // Parse default probability shift (% points, e.g. 2% = 0.02)
+    const pdShift = (resolvedParameters.probability || 0) / 100;
+
+    // Asset class sensitivities incorporating market, macro & credit shocks
     const marketStress = Math.max(0, -spShift * 0.3) + Math.max(0, -techShift * 0.2) + Math.max(0, -emergingShift * 0.2);
     const commodityFxStress = Math.abs(oilShift * 0.15) + Math.abs(dollarShift * 0.1) + Math.abs(goldShift * 0.05);
 
-    const rawLoansLoss = portfolio.loansExposure * (spreadShift * 0.4 + Math.max(0, rateShift) * 0.1 + marketStress * 0.2) * horizonMultiplier;
+    const rawLoansLoss = portfolio.loansExposure * (spreadShift * 0.4 + Math.max(0, rateShift) * 0.1 + pdShift * 0.4 + marketStress * 0.2) * horizonMultiplier;
     // Fixed Income (Bonds): Rate increases (rateShift > 0) produce price loss; rate cuts (rateShift < 0) yield capital gains / loss reduction
     const rawBondsLoss = portfolio.bondsExposure * (rateShift * 0.5 + spreadShift * 0.2 + Math.max(0, inflationShift) * 0.2 + commodityFxStress * 0.1) * horizonMultiplier;
     const rawDerivativesLoss = portfolio.derivativesExposure * (liquidityHaircut * 0.6 + Math.abs(rateShift) * 0.2 + commodityFxStress * 0.2) * horizonMultiplier;
@@ -154,20 +157,33 @@ export class RiskEngineService {
     const stressedValue = Math.max(0, baselineValue - absoluteLoss);
     const riskScore = Math.min(100, Math.max(0, Math.round((absoluteLoss / (baselineValue || 1)) * 100)));
 
+    // Exact mathematical factor decomposition matching asset class sensitivity equations
+    const rateFactorLoss = (portfolio.loansExposure * 0.1 * Math.max(0, rateShift) + portfolio.bondsExposure * 0.5 * rateShift + portfolio.derivativesExposure * 0.2 * Math.abs(rateShift) + portfolio.equityExposure * 0.2 * Math.max(0, rateShift)) * horizonMultiplier;
+    const spreadFactorLoss = (portfolio.loansExposure * 0.4 * spreadShift + portfolio.bondsExposure * 0.2 * spreadShift) * horizonMultiplier;
+    const pdFactorLoss = (portfolio.loansExposure * 0.4 * pdShift) * horizonMultiplier;
+    const liquidityFactorLoss = (portfolio.derivativesExposure * 0.6 * liquidityHaircut + portfolio.equityExposure * 0.1 * liquidityHaircut) * horizonMultiplier;
+    const inflationFactorLoss = (portfolio.bondsExposure * 0.2 * Math.max(0, inflationShift) + portfolio.equityExposure * 0.2 * Math.max(0, inflationShift)) * horizonMultiplier;
+    const marketEquityFactorLoss = (portfolio.loansExposure * 0.2 * marketStress + portfolio.equityExposure * 0.5 * marketStress) * horizonMultiplier;
+    const commoditiesFxFactorLoss = (portfolio.bondsExposure * 0.1 * commodityFxStress + portfolio.derivativesExposure * 0.2 * commodityFxStress) * horizonMultiplier;
+
+    const totalFactorLoss = rateFactorLoss + spreadFactorLoss + pdFactorLoss + liquidityFactorLoss + inflationFactorLoss + marketEquityFactorLoss + commoditiesFxFactorLoss;
+    const interactionResidual = Math.max(0, absoluteLoss - Math.max(0, totalFactorLoss));
+
     const attributionResult = {
       loansLoss: parseFloat(rawLoansLoss.toFixed(2)),
       bondsLoss: parseFloat(rawBondsLoss.toFixed(2)),
       derivativesLoss: parseFloat(rawDerivativesLoss.toFixed(2)),
       equityLoss: parseFloat(rawEquityLoss.toFixed(2)),
       factors: [
-        { factor: 'interest_rate', loss: parseFloat((rateShift * baselineValue * 0.05 * horizonMultiplier).toFixed(2)) },
-        { factor: 'spread', loss: parseFloat((spreadShift * baselineValue * 0.04 * horizonMultiplier).toFixed(2)) },
-        { factor: 'liquidity', loss: parseFloat((liquidityHaircut * baselineValue * 0.03 * horizonMultiplier).toFixed(2)) },
-        { factor: 'inflation', loss: parseFloat((inflationShift * baselineValue * 0.03 * horizonMultiplier).toFixed(2)) },
-        { factor: 'market_equity', loss: parseFloat((marketStress * baselineValue * 0.04 * horizonMultiplier).toFixed(2)) },
-        { factor: 'commodities_fx', loss: parseFloat((commodityFxStress * baselineValue * 0.02 * horizonMultiplier).toFixed(2)) }
+        { factor: 'interest_rate', loss: parseFloat(rateFactorLoss.toFixed(2)) },
+        { factor: 'spread', loss: parseFloat(spreadFactorLoss.toFixed(2)) },
+        { factor: 'default_probability', loss: parseFloat(pdFactorLoss.toFixed(2)) },
+        { factor: 'liquidity', loss: parseFloat(liquidityFactorLoss.toFixed(2)) },
+        { factor: 'inflation', loss: parseFloat(inflationFactorLoss.toFixed(2)) },
+        { factor: 'market_equity', loss: parseFloat(marketEquityFactorLoss.toFixed(2)) },
+        { factor: 'commodities_fx', loss: parseFloat(commoditiesFxFactorLoss.toFixed(2)) }
       ],
-      interaction_residual: parseFloat((Math.max(0, absoluteLoss * 0.02)).toFixed(2))
+      interaction_residual: parseFloat(interactionResidual.toFixed(2))
     };
 
     const run = await prisma.stressTestRun.create({
@@ -208,22 +224,26 @@ export class RiskEngineService {
       include: { scenario: true, event: true }
     });
 
-    return runs.map(r => ({
-      id: r.id,
-      runId: r.id,
-      run_id: r.id,
-      scenario: r.scenario?.name || 'Custom Stress',
-      event: r.event ? { id: r.event.id, title: r.event.title, category: r.event.category, impact: Number((r.event as any).impact ?? 5.0) } : null,
-      parameters: r.parameters_used,
-      baselineValue: Number(r.baseline_value),
-      stressedValue: Number(r.stressed_value),
-      absoluteLoss: Number(r.absolute_loss),
-      loss: Number(r.absolute_loss),
-      riskScore: Number(r.risk_score),
-      executedAt: r.executed_at,
-      completedAt: r.executed_at ? new Date(r.executed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently'
-    }));
-
+    return runs.map(r => {
+      const params = r.parameters_used as any;
+      const paramSource = params?.parameter_source || (r.event_id ? 'event_derived' : r.scenario_id ? 'preset' : 'manual');
+      return {
+        id: r.id,
+        runId: r.id,
+        run_id: r.id,
+        scenario: r.scenario?.name || params?.scenario_name || (paramSource === 'manual' ? 'Manual Stress Test' : 'Custom Stress'),
+        event: r.event ? { id: r.event.id, title: r.event.title, category: r.event.category, impact: Number((r.event as any).impact ?? 5.0) } : null,
+        parameters: r.parameters_used,
+        parameterSource: paramSource,
+        baselineValue: Number(r.baseline_value),
+        stressedValue: Number(r.stressed_value),
+        absoluteLoss: Number(r.absolute_loss),
+        loss: Number(r.absolute_loss),
+        riskScore: Number(r.risk_score),
+        executedAt: r.executed_at,
+        completedAt: r.executed_at ? new Date(r.executed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently'
+      };
+    });
   }
 
   async getRunById(id: string) {

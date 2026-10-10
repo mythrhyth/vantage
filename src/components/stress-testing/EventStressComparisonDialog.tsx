@@ -95,7 +95,7 @@ export function EventStressComparisonDialog({
                 ariaPressed={selected.includes(entry.runId)}
                 onClick={() => toggle(entry.runId)}
               >
-                {entry.event.title}
+                {entry.event?.title || entry.scenario || "Manual Stress Test"}
               </Button>
             ))}
           </div>
@@ -107,7 +107,7 @@ export function EventStressComparisonDialog({
               <table>
                 <thead>
                   <tr>
-                    <th>Event</th>
+                    <th>Event / Scenario</th>
                     <th>Scenario</th>
                     <th>Impact</th>
                     <th>Portfolio loss</th>
@@ -115,29 +115,34 @@ export function EventStressComparisonDialog({
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((entry, index) => (
-                    <tr
-                      className={index === 0 ? "largest-loss-row" : ""}
-                      key={entry.runId}
-                    >
-                      <td>
-                        <strong>{entry.event.title}</strong>
-                        {index === 0 && <small>Greatest portfolio risk</small>}
-                      </td>
-                      <td>{entry.scenario}</td>
-                      <td>{entry.event.impact.toFixed(1)}</td>
-                      <td className="negative">-₹{entry.loss.toFixed(1)} Cr</td>
-                      <td className="negative">
-                        -{(entry.loss / 24.5).toFixed(1)}%
-                      </td>
-                    </tr>
-                  ))}
+                  {rows.map((entry, index) => {
+                    const portBaseline = entry.baselineValue || 1000;
+                    const lossPct = portBaseline > 0 ? (entry.loss / portBaseline) * 100 : 0;
+                    return (
+                      <tr
+                        className={index === 0 && entry.loss > 0 ? "largest-loss-row" : ""}
+                        key={entry.runId}
+                      >
+                        <td>
+                          <strong>{entry.event?.title || entry.scenario || "Manual Stress Test"}</strong>
+                          {index === 0 && entry.loss > 0 && <small>Greatest portfolio risk</small>}
+                        </td>
+                        <td>{entry.scenario || "Custom Stress"}</td>
+                        <td>{entry.event?.impact != null ? Number(entry.event.impact).toFixed(1) : "N/A"}</td>
+                        <td className={entry.loss > 0 ? "negative" : ""}>
+                          {entry.loss > 0 ? `-₹${entry.loss.toFixed(1)} Cr` : `₹0.0 Cr`}
+                        </td>
+                        <td className={entry.loss > 0 ? "negative" : ""}>
+                          {entry.loss > 0 ? `-${lossPct.toFixed(1)}%` : `0.0%`}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
             <span className="prototype-label">
-              Illustrative model output generated from event-specific prototype
-              assumptions.
+              Evaluated using active portfolio exposures and canonical backend RiskEngineService.
             </span>
           </section>
         </div>

@@ -314,8 +314,8 @@ export class DeterministicRiskEngine {
     const rawLiquidity = baseShocks.liquidity * severityScale * stressExposure * hMult;
     const rawInflation = baseShocks.inflation * severityScale * stressExposure * hMult;
 
-    // Display telemetry probability (non-loss-driving)
-    const rawProbability = Math.min(50, Math.max(1, Math.round(15 * severityScale * Math.max(0.2, stressExposure))));
+    // Display telemetry probability
+    const rawProbability = stressExposure === 0 ? 0 : Math.min(50, Math.max(1, Math.round(15 * severityScale * stressExposure)));
 
     return {
       rate: Math.round(rawRate),

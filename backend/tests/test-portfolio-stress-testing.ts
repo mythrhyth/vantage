@@ -247,8 +247,8 @@ async function runPortfolioStressTestingTests() {
       )
     }
 
-    // 7b. Factor attribution & interaction residual reconciliation
-    console.log(`   - Testing Factor Attribution Reconciliation`)
+    // 7b. Factor attribution & exact linear decomposition reconciliation
+    console.log(`   - Testing Factor Attribution Exact Reconciliation`)
     const attr = runResult.attribution_result as any
     const factorLossSum = attr.factors.reduce((sum: number, f: any) => sum + (Number(f.loss) || 0), 0)
     assert(
@@ -258,6 +258,25 @@ async function runPortfolioStressTestingTests() {
     assert(
       Number.isFinite(factorLossSum),
       `Factor contribution sum is finite (₹${factorLossSum.toFixed(2)} Cr)`
+    )
+    assert(
+      Math.abs((factorLossSum + attr.interaction_residual) - runResult.absolute_loss) < 0.1,
+      `Factor losses + interaction residual (₹${(factorLossSum + attr.interaction_residual).toFixed(2)} Cr) strictly reconcile to total loss (₹${runResult.absolute_loss.toFixed(2)} Cr)`
+    )
+
+    // 7c. Default Probability Parameter Causal Credit Loss Test
+    console.log(`   - Testing Default Probability Credit Loss Parameterization`)
+    const runZeroPD = await riskEngineService.runStressTest(portfolio.id, { rate: 100, spread: 50, probability: 0 })
+    const runHighPD = await riskEngineService.runStressTest(portfolio.id, { rate: 100, spread: 50, probability: 10 })
+    const pdFactorVal = (runHighPD.attribution_result as any)?.factors?.find((f: any) => f.factor === 'default_probability')?.loss ?? 0
+
+    assert(
+      runHighPD.attribution_result.loansLoss > runZeroPD.attribution_result.loansLoss,
+      `Default probability slider (10% PD) increased loan losses (Zero PD: ₹${runZeroPD.attribution_result.loansLoss} Cr vs 10% PD: ₹${runHighPD.attribution_result.loansLoss} Cr)`
+    )
+    assert(
+      pdFactorVal > 0,
+      `Default probability factor contribution is parameterized and positive (₹${pdFactorVal.toFixed(2)} Cr)`
     )
 
     // 7c. Allocation Application & Persistence to Database

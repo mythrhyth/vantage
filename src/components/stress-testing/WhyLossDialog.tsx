@@ -4,7 +4,7 @@ import { Button } from "../common/Button"
 
 export function WhyLossDialog({
   loss,
-  baseline = 2450,
+  baseline = 1000,
   scenario,
   attribution,
   onClose,
@@ -17,6 +17,8 @@ export function WhyLossDialog({
     bondsLoss?: number
     derivativesLoss?: number
     equityLoss?: number
+    factors?: Array<{ factor: string; loss: number }>
+    interaction_residual?: number
   }
   onClose: () => void
 }) {
