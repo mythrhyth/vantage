@@ -1,0 +1,296 @@
+%PDF-1.4
+%VANTAGE HACKATHON DECK
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R] /Count 7 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 740 >>
+stream
+0.035 0.075 0.14 rg 0 0 960 540 re f
+0.18 0.82 0.72 rg 0 0 14 540 re f
+0.18 0.82 0.72 rg BT /F1 13 Tf 66 454 Td (S&P GLOBAL & CRISIL  /  CAMPUS HACKATHON 2026) Tj ET
+0.94 0.96 0.98 rg BT /F1 50 Tf 66 362 Td (VANTAGE) Tj ET
+0.66 0.73 0.81 rg BT /F1 23 Tf 66 318 Td (Portfolio-aware financial risk intelligence) Tj ET
+0.17 0.24 0.33 RG 2 w 66 282 m 800 282 l S
+0.94 0.96 0.98 rg BT /F1 17 Tf 66 235 Td (From financial news to explainable portfolio stress signals) Tj ET
+0.66 0.73 0.81 rg BT /F1 14 Tf 66 145 Td (Candidate: Rhythm Bhetwal ) Tj ET
+0.66 0.73 0.81 rg BT /F1 14 Tf 66 117 Td (College / Campus: NIT Meghalaya           ) Tj ET
+0.97 0.69 0.32 rg BT /F1 11 Tf 66 67 Td (Prototype for educational use - synthetic examples only) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 2732 >>
+stream
+0.035 0.075 0.14 rg 0 0 960 540 re f
+0.18 0.82 0.72 rg 52 466 5 32 re f
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 482 Td (VANTAGE  /  CAMPUS HACKATHON 2026) Tj ET
+0.94 0.96 0.98 rg BT /F1 29 Tf 52 428 Td (News is not portfolio risk) Tj ET
+0.66 0.73 0.81 rg BT /F1 13 Tf 52 399 Td (The same headline can have very different implications for different holdings.) Tj ET
+0.17 0.24 0.33 RG 1 w 52 39 m 908 39 l S
+0.66 0.73 0.81 rg BT /F1 10 Tf 52 17 Td (S&P GLOBAL & CRISIL  |  SYNTHETIC DATA  |  NOT INVESTMENT ADVICE) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 886 17 Td (02) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 790 482 Td (PROBLEM) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 52 99 266 258 re B
+0.97 0.69 0.32 rg 52 99 4 258 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 72 326 Td (THE GAP) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 297 Td (Generic sentiment ignores) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 276 Td (portfolio composition.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 255 Td () Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 234 Td (Free-form AI can produce) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 213 Td (unverifiable loss numbers.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 192 Td () Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 171 Td (Static alerts are hard to) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 150 Td (audit or prioritize.) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 347 99 266 258 re B
+0.18 0.82 0.72 rg 347 99 4 258 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 367 326 Td (OUR APPROACH) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 367 297 Td (Classify event and sentiment) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 367 276 Td (using local ONNX models.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 367 255 Td () Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 367 234 Td (Match event to portfolio) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 367 213 Td (holdings and sectors.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 367 192 Td () Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 367 171 Td (Calculate stress and loss) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 367 150 Td (with deterministic formulas.) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 642 99 266 258 re B
+0.18 0.82 0.72 rg 642 99 4 258 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 662 326 Td (WHAT CHANGES) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 662 297 Td (A traceable chain from) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 662 276 Td (headline to exposure.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 662 255 Td () Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 662 234 Td (Relevant events are ranked) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 662 213 Td (for the portfolio.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 662 192 Td () Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 662 171 Td (Loss attribution is visible) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 662 150 Td (by asset class.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 2749 >>
+stream
+0.035 0.075 0.14 rg 0 0 960 540 re f
+0.18 0.82 0.72 rg 52 466 5 32 re f
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 482 Td (VANTAGE  /  CAMPUS HACKATHON 2026) Tj ET
+0.94 0.96 0.98 rg BT /F1 29 Tf 52 428 Td (One explainable data flow) Tj ET
+0.66 0.73 0.81 rg BT /F1 13 Tf 52 399 Td (AI classifies text; deterministic services calculate numerical risk.) Tj ET
+0.17 0.24 0.33 RG 1 w 52 39 m 908 39 l S
+0.66 0.73 0.81 rg BT /F1 10 Tf 52 17 Td (S&P GLOBAL & CRISIL  |  SYNTHETIC DATA  |  NOT INVESTMENT ADVICE) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 886 17 Td (03) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 790 482 Td (SYSTEM DESIGN) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 52 203 148 112 re B
+0.18 0.82 0.72 rg 52 311 148 4 re f
+0.18 0.82 0.72 rg BT /F1 11 Tf 67 287 Td (INPUT) Tj ET
+0.94 0.96 0.98 rg BT /F1 13 Tf 67 256 Td (RSS feeds /) Tj ET
+0.94 0.96 0.98 rg BT /F1 13 Tf 67 233 Td (submitted text) Tj ET
+0.18 0.82 0.72 RG 2 w 201 259 m 226 259 l S
+0.18 0.82 0.72 rg BT /F1 15 Tf 206 267 Td (>) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 229 203 148 112 re B
+0.18 0.82 0.72 rg 229 311 148 4 re f
+0.18 0.82 0.72 rg BT /F1 11 Tf 244 287 Td (NLP) Tj ET
+0.94 0.96 0.98 rg BT /F1 13 Tf 244 256 Td (Local ONNX) Tj ET
+0.94 0.96 0.98 rg BT /F1 13 Tf 244 233 Td (sentiment + event) Tj ET
+0.18 0.82 0.72 RG 2 w 378 259 m 403 259 l S
+0.18 0.82 0.72 rg BT /F1 15 Tf 383 267 Td (>) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 406 203 148 112 re B
+0.18 0.82 0.72 rg 406 311 148 4 re f
+0.18 0.82 0.72 rg BT /F1 11 Tf 421 287 Td (MATCH) Tj ET
+0.94 0.96 0.98 rg BT /F1 13 Tf 421 256 Td (Ticker / sector) Tj ET
+0.94 0.96 0.98 rg BT /F1 13 Tf 421 233 Td (portfolio relevance) Tj ET
+0.18 0.82 0.72 RG 2 w 555 259 m 580 259 l S
+0.18 0.82 0.72 rg BT /F1 15 Tf 560 267 Td (>) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 583 203 148 112 re B
+0.18 0.82 0.72 rg 583 311 148 4 re f
+0.18 0.82 0.72 rg BT /F1 11 Tf 598 287 Td (RISK) Tj ET
+0.94 0.96 0.98 rg BT /F1 13 Tf 598 256 Td (Deterministic) Tj ET
+0.94 0.96 0.98 rg BT /F1 13 Tf 598 233 Td (stress calculation) Tj ET
+0.18 0.82 0.72 RG 2 w 732 259 m 757 259 l S
+0.18 0.82 0.72 rg BT /F1 15 Tf 737 267 Td (>) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 760 203 148 112 re B
+0.18 0.82 0.72 rg 760 311 148 4 re f
+0.18 0.82 0.72 rg BT /F1 11 Tf 775 287 Td (OUTPUT) Tj ET
+0.94 0.96 0.98 rg BT /F1 13 Tf 775 256 Td (API + dashboard) Tj ET
+0.94 0.96 0.98 rg BT /F1 13 Tf 775 233 Td (loss attribution) Tj ET
+0.94 0.96 0.98 rg BT /F1 14 Tf 52 148 Td (PostgreSQL persists portfolios, events, and stress-test runs.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 52 119 Td (Optional semantic enrichment is separate from risk calculations.) Tj ET
+0.18 0.82 0.72 rg BT /F1 12 Tf 52 89 Td (Architecture: docs/assets/architecture_flow.svg) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 1989 >>
+stream
+0.035 0.075 0.14 rg 0 0 960 540 re f
+0.18 0.82 0.72 rg 52 466 5 32 re f
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 482 Td (VANTAGE  /  CAMPUS HACKATHON 2026) Tj ET
+0.94 0.96 0.98 rg BT /F1 29 Tf 52 428 Td (Designed for local, auditable analysis) Tj ET
+0.66 0.73 0.81 rg BT /F1 13 Tf 52 399 Td (Core numerical outputs do not depend on a generative AI response.) Tj ET
+0.17 0.24 0.33 RG 1 w 52 39 m 908 39 l S
+0.66 0.73 0.81 rg BT /F1 10 Tf 52 17 Td (S&P GLOBAL & CRISIL  |  SYNTHETIC DATA  |  NOT INVESTMENT ADVICE) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 886 17 Td (04) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 790 482 Td (IMPLEMENTATION) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 52 234 408 126 re B
+0.18 0.82 0.72 rg 52 234 4 126 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 72 329 Td (Local NLP) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 300 Td (FinBERT sentiment + 8-class event classifier) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 279 Td (ONNX inference via transformers.js) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 500 234 408 126 re B
+0.18 0.82 0.72 rg 500 234 4 126 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 520 329 Td (Quantitative engine) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 520 300 Td (Pure TypeScript deterministic risk engine) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 520 279 Td (Inspectable stress and loss calculations) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 52 85 408 126 re B
+0.18 0.82 0.72 rg 52 85 4 126 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 72 180 Td (Application stack) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 151 Td (React + TypeScript + Vite frontend) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 130 Td (Node.js + Express + Prisma backend) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 500 85 408 126 re B
+0.18 0.82 0.72 rg 500 85 4 126 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 520 180 Td (Persistence and enrichment) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 520 151 Td (PostgreSQL for prototype state) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 520 130 Td (Gemini semantic enrichment is optional) Tj ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 1764 >>
+stream
+0.035 0.075 0.14 rg 0 0 960 540 re f
+0.18 0.82 0.72 rg 52 466 5 32 re f
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 482 Td (VANTAGE  /  CAMPUS HACKATHON 2026) Tj ET
+0.94 0.96 0.98 rg BT /F1 29 Tf 52 428 Td (Measured model checks; no claimed business uplift) Tj ET
+0.66 0.73 0.81 rg BT /F1 13 Tf 52 399 Td (Reported internal validation figures documented with the model artifacts.) Tj ET
+0.17 0.24 0.33 RG 1 w 52 39 m 908 39 l S
+0.66 0.73 0.81 rg BT /F1 10 Tf 52 17 Td (S&P GLOBAL & CRISIL  |  SYNTHETIC DATA  |  NOT INVESTMENT ADVICE) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 886 17 Td (05) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 790 482 Td (KEY RESULTS) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 52 206 198 132 re B
+0.18 0.82 0.72 rg BT /F1 25 Tf 69 289 Td (2,375 / 2,375) Tj ET
+0.94 0.96 0.98 rg BT /F1 11 Tf 69 254 Td (matching ONNX predictions) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 269 206 198 132 re B
+0.18 0.82 0.72 rg BT /F1 25 Tf 286 289 Td (0) Tj ET
+0.94 0.96 0.98 rg BT /F1 11 Tf 286 254 Td (label mismatches) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 486 206 198 132 re B
+0.18 0.82 0.72 rg BT /F1 25 Tf 503 289 Td (< 0.000050) Tj ET
+0.94 0.96 0.98 rg BT /F1 11 Tf 503 254 Td (maximum probability difference) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 703 206 198 132 re B
+0.97 0.69 0.32 rg BT /F1 25 Tf 720 289 Td (0.9281) Tj ET
+0.94 0.96 0.98 rg BT /F1 11 Tf 720 254 Td (event-classifier macro F1) Tj ET
+0.94 0.96 0.98 rg BT /F1 14 Tf 52 157 Td (Prototype output: event category, sentiment, portfolio relevance,) Tj ET
+0.94 0.96 0.98 rg BT /F1 14 Tf 52 132 Td (stress parameters, and asset-class loss attribution.) Tj ET
+0.66 0.73 0.81 rg BT /F1 11 Tf 52 91 Td (Validation is not proof of live-market accuracy or investment performance.) Tj ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R >> >> /Contents 12 0 R >>
+endobj
+14 0 obj
+<< /Length 1904 >>
+stream
+0.035 0.075 0.14 rg 0 0 960 540 re f
+0.18 0.82 0.72 rg 52 466 5 32 re f
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 482 Td (VANTAGE  /  CAMPUS HACKATHON 2026) Tj ET
+0.94 0.96 0.98 rg BT /F1 29 Tf 52 428 Td (Turn alerts into an explainable risk workflow) Tj ET
+0.66 0.73 0.81 rg BT /F1 13 Tf 52 399 Td (Designed to support analyst review, not replace it.) Tj ET
+0.17 0.24 0.33 RG 1 w 52 39 m 908 39 l S
+0.66 0.73 0.81 rg BT /F1 10 Tf 52 17 Td (S&P GLOBAL & CRISIL  |  SYNTHETIC DATA  |  NOT INVESTMENT ADVICE) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 886 17 Td (06) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 790 482 Td (DOMAIN IMPACT) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 52 118 266 230 re B
+0.18 0.82 0.72 rg 52 118 4 230 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 72 317 Td (PRIORITIZE) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 288 Td (Focus attention on events) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 267 Td (that match holdings, sectors,) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 246 Td (or portfolio-wide exposures.) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 347 118 266 230 re B
+0.18 0.82 0.72 rg 347 118 4 230 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 367 317 Td (TRACE) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 367 288 Td (Show how event category,) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 367 267 Td (portfolio exposure, and stress) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 367 246 Td (parameters connect.) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 642 118 266 230 re B
+0.18 0.82 0.72 rg 642 118 4 230 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 662 317 Td (COMPARE) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 662 288 Td (Inspect estimated losses by) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 662 267 Td (asset class to support scenario) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 662 246 Td (discussion and review.) Tj ET
+0.97 0.69 0.32 rg BT /F1 12 Tf 52 81 Td (Business impact is qualitative; no time or financial savings are asserted.) Tj ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R >> >> /Contents 14 0 R >>
+endobj
+16 0 obj
+<< /Length 1881 >>
+stream
+0.035 0.075 0.14 rg 0 0 960 540 re f
+0.18 0.82 0.72 rg 52 466 5 32 re f
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 482 Td (VANTAGE  /  CAMPUS HACKATHON 2026) Tj ET
+0.94 0.96 0.98 rg BT /F1 29 Tf 52 428 Td (Assumptions, risks, and next steps) Tj ET
+0.66 0.73 0.81 rg BT /F1 13 Tf 52 399 Td (Use only synthetic/public example data; review all outputs independently.) Tj ET
+0.17 0.24 0.33 RG 1 w 52 39 m 908 39 l S
+0.66 0.73 0.81 rg BT /F1 10 Tf 52 17 Td (S&P GLOBAL & CRISIL  |  SYNTHETIC DATA  |  NOT INVESTMENT ADVICE) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 886 17 Td (07) Tj ET
+0.18 0.82 0.72 rg BT /F1 10 Tf 790 482 Td (LIMITATIONS) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 52 98 408 265 re B
+0.97 0.69 0.32 rg 52 98 4 265 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 72 332 Td (LIMITATIONS) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 303 Td (Stress formulas are simplified estimates.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 282 Td (Entity matching can miss context or) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 261 Td (corporate relationships.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 240 Td (Live ingestion depends on public feeds) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 219 Td (and network availability.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 72 198 Td (This is not investment advice.) Tj ET
+0.075 0.13 0.21 rg 0.16 0.24 0.34 RG 1 w 500 98 408 265 re B
+0.18 0.82 0.72 rg 500 98 4 265 re f
+0.94 0.96 0.98 rg BT /F1 16 Tf 520 332 Td (NEXT STEPS) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 520 303 Td (Add historical scenario backtesting.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 520 282 Td (Expand entity resolution and coverage.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 520 261 Td (Evaluate with broader, sourced public data.) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 520 240 Td (Record a local end-to-end demo and) Tj ET
+0.66 0.73 0.81 rg BT /F1 12 Tf 520 219 Td (complete candidate submission details.) Tj ET
+endstream
+endobj
+17 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R >> >> /Contents 16 0 R >>
+endobj
+xref
+0 18
+0000000000 65535 f 
+0000000033 00000 n 
+0000000082 00000 n 
+0000000179 00000 n 
+0000000249 00000 n 
+0000001039 00000 n 
+0000001165 00000 n 
+0000003948 00000 n 
+0000004074 00000 n 
+0000006874 00000 n 
+0000007000 00000 n 
+0000009041 00000 n 
+0000009169 00000 n 
+0000010985 00000 n 
+0000011113 00000 n 
+0000013069 00000 n 
+0000013197 00000 n 
+0000015130 00000 n 
+trailer
+<< /Size 18 /Root 1 0 R >>
+startxref
+15258
+%%EOF

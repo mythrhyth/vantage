@@ -242,7 +242,9 @@ export function EventExplainabilityDialog({
               <div className="sentiment-scale">
                 <i
                   className="sentiment-marker"
-                  style={{ left: `${((numSentiment + 1) / 2) * 100}%` }}
+                  style={{
+                    left: `${Math.min(100, Math.max(0, ((numSentiment + 1) / 2) * 100))}%`,
+                  }}
                 />
               </div>
               <div className="sentiment-scale-labels">
@@ -254,7 +256,7 @@ export function EventExplainabilityDialog({
                 {(Array.isArray(event.sentimentDrivers) ? event.sentimentDrivers : []).map((driver: any) => {
                   const driverText = typeof driver === 'string' ? driver : (driver.text || driver.driver || JSON.stringify(driver));
                   return (
-                    <span key={driverText}>
+                    <span className="sentiment-driver" key={driverText}>
                       <b>{driverText}</b>
                       <small className={numSentiment >= 0 ? "positive" : "negative"}>
                         {sentimentLabel}
@@ -317,7 +319,7 @@ export function EventExplainabilityDialog({
                   const area = Array.isArray(item) ? item[0] : (item.area || item.name || String(item));
                   const level = Array.isArray(item) ? item[1] : (item.level || "Moderate");
                   return (
-                    <span key={area}>
+                    <span className="affected-area" key={area}>
                       <b>{area}</b>
                       <small className={level === "High" ? "risk" : ""}>
                         {level}
@@ -384,35 +386,37 @@ export function EventExplainabilityDialog({
             <div className="dialog-section-title">Portfolio relevance</div>
             {event.relevanceType ? (
               <div className="portfolio-content">
-                <div>
-                  <span>Relevance Type</span>
-                  <strong>{event.relevanceType}</strong>
+              <div className="portfolio-field">
+                <span className="portfolio-field-label">Relevance type</span>
+                <strong className="portfolio-field-value">{titleCase(event.relevanceType)}</strong>
                 </div>
                 {event.relevanceScore !== null && event.relevanceScore !== undefined && (
-                  <div>
-                    <span>Relevance Score</span>
-                    <strong>{Number(event.relevanceScore).toFixed(2)}</strong>
+                <div className="portfolio-field">
+                  <span className="portfolio-field-label">Relevance score</span>
+                  <strong className="portfolio-field-value">{Number(event.relevanceScore).toFixed(2)}</strong>
                   </div>
                 )}
-                <div>
-                  <span>Relevance Reason</span>
-                  <p>{event.relevanceReason}</p>
+              <div className="portfolio-field portfolio-reason">
+                <span className="portfolio-field-label">Relevance reason</span>
+                <p>{event.relevanceReason || "No relevance explanation is available for this event."}</p>
                 </div>
                 {uniqueAssets.length > 0 && (
-                  <div className="portfolio-areas">
-                    <span>Affected Holdings:</span>
+                <div className="portfolio-field portfolio-areas">
+                  <span className="portfolio-field-label">Affected holdings</span>
+                  <div className="portfolio-holdings">
                     {uniqueAssets.map((asset: string) => (
                       <span key={asset}>
                         <b>{asset}</b>
                       </span>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
             ) : (
-              <div className="portfolio-unavailable">
-                <strong>Relevance metadata unavailable</strong>
-                <span>
+            <div className="portfolio-unavailable" role="status">
+              <strong>Relevance metadata unavailable</strong>
+              <span>
                   No mapped holdings data is available for this event.
                 </span>
               </div>

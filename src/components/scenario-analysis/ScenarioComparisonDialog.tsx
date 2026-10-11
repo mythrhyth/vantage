@@ -102,13 +102,22 @@ export function ScenarioComparisonDialog({
     import("../../services/api").then(({ riskApi }) => riskApi.getScenarios())
       .then(scenarios => {
         if (cancelled) return
-        if (scenarios.length === 0) {
+        const scenariosByName = new Map<string, ScenarioConfig>()
+        scenarios.forEach((scenario) => {
+          const name = scenario.name.trim()
+          const key = name.toLocaleLowerCase()
+          if (name && !scenariosByName.has(key)) {
+            scenariosByName.set(key, { ...scenario, name })
+          }
+        })
+        const uniqueScenarios = Array.from(scenariosByName.values())
+        if (uniqueScenarios.length === 0) {
           setLoadError("No saved scenario configurations are available.")
           setLoading(false)
           return
         }
-        setAvailableScenarios(scenarios)
-        setSelectedScenarios(scenarios.slice(0, Math.min(4, scenarios.length)).map(scenario => scenario.name))
+        setAvailableScenarios(uniqueScenarios)
+        setSelectedScenarios(uniqueScenarios.slice(0, Math.min(4, uniqueScenarios.length)).map(scenario => scenario.name))
       })
       .catch((error: Error) => {
         if (!cancelled) {
@@ -170,7 +179,7 @@ export function ScenarioComparisonDialog({
               <Button
                 key={name}
                 variant="outline"
-                className={selectedScenarios.includes(name) ? "selected" : ""}
+                className={`scenario-choice ${selectedScenarios.includes(name) ? "selected" : ""}`}
                 ariaPressed={selectedScenarios.includes(name)}
                 onClick={() => toggleScenario(name)}
               >

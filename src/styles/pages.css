@@ -1123,6 +1123,14 @@
   margin-top: 12px;
 }
 
+.explainability-dialog .generated-scenario-action > span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
 .explainability-dialog :is(.event-source-detail, .trigger-decision-card) > span {
   display: block;
   margin-top: 12px;
@@ -1160,15 +1168,79 @@
   gap: 14px;
 }
 
+.event-explainability-dialog .portfolio-content > .portfolio-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-subtle);
+}
+
+.event-explainability-dialog .portfolio-field-label {
+  display: block;
+  color: var(--secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.event-explainability-dialog .portfolio-field-value {
+  display: block;
+  color: var(--text);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.event-explainability-dialog .portfolio-reason p {
+  color: var(--text);
+  line-height: 1.6;
+}
+
 .explainability-dialog .portfolio-areas {
   grid-column: 1 / -1;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
 }
 
-.explainability-dialog .portfolio-areas > span:first-child {
-  flex-basis: 100%;
+.event-explainability-dialog .portfolio-holdings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.event-explainability-dialog .portfolio-holdings > span {
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.event-explainability-dialog .portfolio-unavailable {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-subtle);
+}
+
+.event-explainability-dialog .portfolio-unavailable span {
+  color: var(--secondary);
+  line-height: 1.5;
 }
 
 .explainability-dialog .source-excerpt p {
@@ -1231,10 +1303,11 @@
   }
 
   .event-table-wrap > .event-table > tbody > tr {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-direction: column;
+    gap: 0;
     min-width: 0;
-    padding: 8px 12px;
+    padding: 12px;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -1252,35 +1325,43 @@
   }
 
   .event-table-wrap > .event-table > tbody > tr > td {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(6.5rem, 0.65fr) minmax(0, 1.35fr);
+    align-items: start;
+    column-gap: 10px;
+    width: 100%;
+    min-width: calc(100% - 24px);
     min-height: 0;
-    padding: 7px 5px;
+    box-sizing: border-box;
+    padding: 9px 4px;
     border: 0;
     color: var(--text);
-    font-size: 0.8125rem;
-    line-height: 1.45;
+    font-size: 0.875rem;
+    line-height: 1.5;
     text-align: left !important;
     white-space: normal;
     overflow-wrap: anywhere;
   }
 
+  .event-table-wrap > .event-table > tbody > tr > td:first-child {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .event-table-wrap > .event-table > tbody > tr > td::before {
     content: attr(data-label);
     display: block;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     color: var(--secondary);
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.4;
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
 
   .event-table-wrap > .event-table > tbody > tr > td:first-child {
-    grid-column: 1 / -1;
     padding-top: 5px;
   }
 
@@ -1288,9 +1369,9 @@
   .event-table-wrap > .event-table > tbody > tr > td:first-child > strong {
     max-width: 100%;
     color: var(--text) !important;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     font-weight: 600;
-    line-height: 1.45;
+    line-height: 1.5;
     overflow-wrap: anywhere;
   }
 
@@ -1300,11 +1381,16 @@
   }
 
   .event-table-wrap > .event-table > tbody > tr > td:last-child:nth-child(8) {
-    grid-column: 1 / -1;
+    display: grid;
   }
 
   .event-table-wrap .entity-cell-text {
     overflow-wrap: anywhere;
+  }
+
+  .event-table-wrap .sentiment-badge,
+  .event-table-wrap .impact-badge {
+    font-size: 0.875rem;
   }
 }
 
@@ -1349,6 +1435,23 @@
     grid-column: auto;
   }
 
+  .event-explainability-dialog .portfolio-content > .portfolio-field {
+    padding: 12px;
+  }
+
+  .event-explainability-dialog .portfolio-field-label {
+    font-size: 0.75rem;
+  }
+
+  .event-explainability-dialog .portfolio-field-value,
+  .event-explainability-dialog .portfolio-reason p {
+    font-size: 0.875rem;
+  }
+
+  .event-explainability-dialog .portfolio-areas {
+    grid-column: 1 / -1;
+  }
+
   .explainability-dialog .factor-row {
     grid-template-columns: minmax(0, 1fr) auto;
   }
@@ -1361,5 +1464,176 @@
   .explainability-dialog .event-source-detail > span,
   .explainability-dialog .trigger-decision-card > span {
     margin-top: 14px;
+  }
+}
+
+/* Event explainability: keep sentiment evidence and affected entities distinct. */
+.event-explainability-dialog .sentiment-scale {
+  height: 8px;
+  margin: 12px 0 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--negative), var(--warning), var(--positive));
+}
+
+.event-explainability-dialog .sentiment-marker {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 16px;
+  border: 2px solid var(--panel);
+  border-radius: 3px;
+  background: var(--text);
+  transform: translate(-50%, -50%);
+}
+
+.event-explainability-dialog .sentiment-scale-labels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+}
+
+.event-explainability-dialog .sentiment-scale-labels > :nth-child(2) {
+  text-align: center;
+}
+
+.event-explainability-dialog .sentiment-scale-labels > :last-child {
+  text-align: right;
+}
+
+.event-explainability-dialog .driver-list,
+.event-explainability-dialog .affected-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.event-explainability-dialog .driver-list > .sentiment-driver,
+.event-explainability-dialog .affected-list > .affected-area {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-subtle);
+}
+
+.event-explainability-dialog .sentiment-driver > b,
+.event-explainability-dialog .affected-area > b {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
+
+.event-explainability-dialog .sentiment-driver > small,
+.event-explainability-dialog .affected-area > small {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.event-explainability-dialog .entity-label {
+  display: block;
+  margin: 14px 0 5px;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.event-explainability-dialog .primary-entity {
+  display: block;
+  max-width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-subtle);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.event-explainability-dialog .affected-section .secondary-label {
+  margin-top: 16px;
+}
+
+.event-explainability-dialog .affected-area > small {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--secondary);
+}
+
+.event-explainability-dialog .evidence-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.event-explainability-dialog .evidence-chips > span {
+  min-width: 0;
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-subtle);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.event-explainability-dialog .factor-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-explainability-dialog .factor-row {
+  display: grid;
+  align-items: center;
+}
+
+.event-explainability-dialog .event-mapping-flow > div > span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.event-explainability-dialog .event-mapping-flow small {
+  margin-bottom: 0;
+}
+
+.scenario-compare-dialog .scenario-choice-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.scenario-compare-dialog .scenario-choice-grid .scenario-choice {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 12px;
+  color: var(--text);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.scenario-compare-dialog .scenario-choice-grid .scenario-choice.selected {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+@media (max-width: 480px) {
+  .scenario-compare-dialog .scenario-choice-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .event-explainability-dialog .driver-list > .sentiment-driver,
+  .event-explainability-dialog .affected-list > .affected-area {
+    gap: 8px;
+    padding: 9px;
   }
 }

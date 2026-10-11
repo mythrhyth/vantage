@@ -85,7 +85,7 @@ Set your configuration values:
 
 ```env
 # Database Connection (Neon Cloud PostgreSQL or Local)
-DATABASE_URL="postgresql://neondb_owner:YOUR_PASSWORD@YOUR_NEON_HOST/neondb?sslmode=require"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require"
 
 # Server Port
 PORT=3000
@@ -94,7 +94,7 @@ PORT=3000
 GEMINI_API_KEY="your_optional_gemini_key"
 
 # NLP Provider Selection ('gemini' or 'development')
-NLP_PROVIDER=gemini
+NLP_PROVIDER=development
 ```
 
 ### 2. Database Sync & Client Generation

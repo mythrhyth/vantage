@@ -6,7 +6,7 @@ import { prisma } from '../src/db';
 async function evaluateEntityResolver() {
   console.log('--- STARTING PHASE 3 EVALUATION ON 50-EXAMPLE BENCHMARK ---');
 
-  const benchmarkPath = path.resolve(__dirname, 'data', 'entity-relevance-benchmark-50.json');
+  const benchmarkPath = path.resolve(__dirname, '..', '..', 'data', 'entity-relevance-benchmark-50.json');
   if (!fs.existsSync(benchmarkPath)) {
     throw new Error(`Benchmark file not found: ${benchmarkPath}`);
   }

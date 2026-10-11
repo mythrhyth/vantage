@@ -4,7 +4,7 @@
 
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-v18%2B-green.svg?logo=nodedotjs)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-v20.19%2B-green.svg?logo=nodedotjs)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?logo=react)](https://react.dev/)
 [![ONNX Runtime](https://img.shields.io/badge/ONNX_Runtime-v2.17.2-orange.svg?logo=onnx)](https://onnxruntime.ai/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon_Cloud-336791.svg?logo=postgresql)](https://neon.tech/)
@@ -14,6 +14,7 @@
 ---
 
 ## 📌 Table of Contents
+- [S&P Global & Crisil Campus Hackathon Submission](#sp-global--crisil-campus-hackathon-submission)
 - [Executive Summary & Core Value Proposition](#-executive-summary--core-value-proposition)
 - [The Problem: Why Traditional Risk Dashboards Fail](#-the-problem-why-traditional-risk-dashboards-fail)
 - [What Makes VANTAGE Different? (Unique Selling Proposition)](#-what-makes-vantage-different-unique-selling-proposition)
@@ -28,6 +29,76 @@
 - [Limitations & Responsible Analytical Use](#-limitations--responsible-analytical-use)
 - [Future Engineering Roadmap](#-future-engineering-roadmap)
 - [Credits & Licensing](#-credits--licensing)
+
+---
+
+## S&P Global & Crisil Campus Hackathon Submission
+
+- **Candidate Name:** Rhythm Bhetwal
+- **College Email ID:** b24cs038@nitm.ac.in
+- **College / Campus:** NIT Meghalaya National Institute of Technology (NIT) Meghalaya
+- **Demo Video Link:** To be recorded; add a publicly accessible unlisted YouTube link.
+- **Slide Deck:** [`docs/presentation.pdf`](docs/presentation.pdf) (7-slide draft).
+- **Slide Deck Link (if hosted externally):** Not applicable; the deck is included in this repository.
+
+### 1. Project Overview / Problem Statement & Approach
+
+VANTAGE turns financial news into portfolio-aware risk signals. Generic sentiment feeds do not show whether an event affects a particular portfolio, while unconstrained language models are unsuitable for producing auditable numerical loss estimates. VANTAGE combines local financial NLP and portfolio relevance matching with deterministic, inspectable risk and stress-loss calculations.
+
+### 2. Architecture & Tech Stack
+
+News feeds and submitted text flow through deduplication, local ONNX sentiment and event classification, portfolio relevance matching, deterministic risk calculations, PostgreSQL persistence, and a React dashboard. The calculation-backed loss engine attributes stress losses by asset class. See the [architecture diagram](docs/assets/architecture_flow.svg) and the detailed [architecture specification](docs/ARCHITECTURE.md).
+
+The prototype uses React, TypeScript, Vite, Node.js, Express, Prisma, PostgreSQL, transformers.js/ONNX Runtime, and an optional Google Gemini provider for semantic enrichment. Gemini is not required for the deterministic risk calculations.
+
+### 3. Dataset Used
+
+The [`data/`](data/) directory contains all three JSON datasets used by the prototype's evaluation scripts. They are hand-authored synthetic examples for sentiment, event classification, and entity/portfolio relevance tests. They are not records copied from live news or proprietary client data; public company names/tickers may appear solely as illustrative entity-matching examples. See [`data/README.md`](data/README.md) for dataset descriptions and assumptions.
+
+### 4. Quickstart & Installation
+
+**Runtime:** Node.js 20.19+ recommended, npm, Git LFS, and PostgreSQL 14+ (local or hosted); commands below are for a local prototype run.
+
+```bash
+git clone https://github.com/mythrhyth/vantage.git
+cd vantage
+git lfs pull
+npm ci
+cd backend
+npm ci
+cd ..
+```
+
+Create `backend/.env` from `backend/.env.example`, set `DATABASE_URL` to a PostgreSQL database you control, and set `NLP_PROVIDER=development` to run without a Gemini API key. Then initialize the schema and sample portfolio:
+
+```bash
+cd backend
+npx prisma db push
+npx prisma db seed
+```
+
+Start the API and frontend in separate terminals from the repository root:
+
+```bash
+cd backend
+npm run dev
+```
+
+```bash
+npm run dev
+```
+
+The API listens on `http://localhost:3000` and the frontend on `http://localhost:5173`. Do not commit `.env` or real client/portfolio data. Additional setup notes are in [Installation & Quick Start Guide](#-installation--quick-start-guide).
+
+### 5. Key Results & Domain Impact
+
+The prototype classifies financial events, filters them by portfolio relevance, generates deterministic stress parameters, and reports calculation-backed losses by asset class. Its main domain value is a traceable connection between a news event, portfolio exposure, and estimated stress impact rather than a generic sentiment score. Automated evaluation and test commands are documented in [Automated Test Suite & Empirical Verification](#-automated-test-suite--empirical-verification).
+
+### 6. Limitations & Next Steps
+
+Risk outputs are model-based estimates, not forecasts or investment advice. The current entity matching and stress formulas are simplified, and live ingestion depends on public feeds and network availability. See [Limitations & Responsible Analytical Use](#-limitations--responsible-analytical-use) and [Future Engineering Roadmap](#-future-engineering-roadmap).
+
+> **Before submission:** replace the candidate fields above, add the recorded demo URL, and include the final 5–7 slide PDF at `docs/presentation.pdf`. The repository contains no deployment guide because this submission is intended to run locally.
 
 ---
 
@@ -230,8 +301,12 @@ $$\text{riskScore} = \min\left(100, \text{round}\left(\frac{\text{totalLoss}}{\t
 financial-risk-intelligence-platform/
 ├── README.md                            # Primary Judge-Facing Landing Page & Architecture
 ├── docs/                                # Technical Specifications & API Documentation
+│   ├── presentation.pdf                 # Hackathon presentation (7-slide draft)
 │   ├── ARCHITECTURE.md                  # Comprehensive Component & Mathematical Pipeline Specification
 │   └── API.md                           # Complete REST API Endpoint Reference & Payload Schemas
+├── data/                                # Synthetic JSON demo and evaluation datasets
+│   └── README.md                        # Dataset descriptions, provenance, and assumptions
+├── LICENSE                              # ISC License
 ├── backend/                             # Backend Service Root
 │   ├── README.md                        # Backend Setup, Ingestion, and Developer Guide
 │   ├── models/nlp/                      # Production Local ONNX Model Artifacts
@@ -271,7 +346,7 @@ financial-risk-intelligence-platform/
 │   │   └── server.ts                    # Express Web Server Initialization
 │   └── tests/                           # Verification Test Suites
 │       ├── run-all.ts                   # Master Test Suite Orchestration Script
-│       ├── data/                        # Static Evaluation Datasets
+│       ├── test-finetune-pipeline.ts    # Benchmark integrity tests (fixtures in /data)
 │       ├── test-deterministic-risk-engine.ts # 19 Property Invariants Test Suite
 │       ├── test-deterministic-e2e.ts    # End-to-End PostgreSQL Integration Test
 │       ├── test-phase1d-integration.ts  # FinBERT ONNX Integration Tests
@@ -305,11 +380,12 @@ financial-risk-intelligence-platform/
 
 ## ⚙️ Installation & Quick Start Guide
 
-For Render and Vercel deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+Deployment is out of scope for this local hackathon prototype. Follow the local setup instructions below to run VANTAGE.
 
 ### Prerequisites
-- **Node.js**: `v18.0.0` or higher (v20+ recommended)
+- **Node.js**: `v20.19.0` or higher for the Vite 8 frontend
 - **npm**: `v9.0.0` or higher
+- **Git LFS**: required to download the tracked ONNX model weights
 - **PostgreSQL**: Neon Cloud PostgreSQL connection string or local PostgreSQL instance (`v14+`)
 
 ---
@@ -320,13 +396,14 @@ For Render and Vercel deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.
 # Clone the repository
 git clone https://github.com/mythrhyth/vantage.git
 cd vantage
+git lfs pull
 
 # Install Root (Frontend) Dependencies
-npm install
+npm ci
 
 # Install Backend Dependencies
 cd backend
-npm install
+npm ci
 cd ..
 ```
 
@@ -344,7 +421,7 @@ Edit `backend/.env` with your actual configuration:
 
 ```env
 # PostgreSQL Database Connection String
-DATABASE_URL="postgresql://neondb_owner:YOUR_PASSWORD@YOUR_NEON_HOST/neondb?sslmode=require"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require"
 
 # Server Port
 PORT=3000
@@ -353,7 +430,7 @@ PORT=3000
 GEMINI_API_KEY="your_actual_gemini_api_key_here"
 
 # Primary NLP Provider ('gemini' or 'development')
-NLP_PROVIDER=gemini
+NLP_PROVIDER=development
 ```
 
 *Note: Even without a `GEMINI_API_KEY`, VANTAGE runs 100% of numerical risk calculations locally via fine-tuned FinBERT ONNX and Event Classifier ONNX models.*
