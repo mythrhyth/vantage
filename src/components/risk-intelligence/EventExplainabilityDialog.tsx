@@ -191,12 +191,14 @@ export function EventExplainabilityDialog({
                     : `${mappedScenario} · analyst initiated`,
                 ],
               ].map(([label, value], index) => (
-                <div key={label}>
-                  <span>
+                <div className="event-mapping-step" key={label}>
+                  <span className="mapping-step-number" aria-hidden="true">
+                    {index + 1}
+                  </span>
+                  <span className="mapping-step-content">
                     <small>{label}</small>
                     <b>{value}</b>
                   </span>
-                  {index < 4 && <i>→</i>}
                 </div>
               ))}
             </div>

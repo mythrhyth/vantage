@@ -37,7 +37,7 @@
 - **Candidate Name:** Rhythm Bhetwal
 - **College Email ID:** b24cs038@nitm.ac.in
 - **College / Campus:** NIT Meghalaya National Institute of Technology (NIT) Meghalaya
-- **Demo Video Link:** To be recorded; add a publicly accessible unlisted YouTube link.
+- **Demo Video Link:** https://youtu.be/meZh5X4EetA
 - **Slide Deck:** [`docs/presentation.pdf`](docs/presentation.pdf) (7-slide draft).
 - **Slide Deck Link (if hosted externally):** Not applicable; the deck is included in this repository.
 

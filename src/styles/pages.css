@@ -1088,7 +1088,7 @@
   gap: 8px;
 }
 
-.explainability-dialog .event-mapping-flow > div > span {
+.explainability-dialog .event-mapping-flow > div > .mapping-step-content {
   min-width: 0;
   flex: 1 1 auto;
   padding: 11px;
@@ -1241,6 +1241,72 @@
 .event-explainability-dialog .portfolio-unavailable span {
   color: var(--secondary);
   line-height: 1.5;
+}
+
+.explainability-dialog.event-explainability-dialog {
+  width: min(100%, 1180px);
+}
+
+.event-explainability-dialog .dialog-section {
+  padding: 20px;
+}
+
+.event-explainability-dialog .dialog-section-title {
+  font-size: 0.8125rem;
+}
+
+.event-explainability-dialog .trigger-decision-card > p {
+  margin-top: 14px;
+}
+
+.event-explainability-dialog .trigger-decision-card > p > strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text);
+}
+
+.event-explainability-dialog .event-mapping-flow {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.event-explainability-dialog .event-mapping-step {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.event-explainability-dialog .mapping-step-number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.event-explainability-dialog .event-mapping-step > .mapping-step-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  min-height: 100%;
+  padding: 13px 14px;
+}
+
+.event-explainability-dialog .mapping-step-content small {
+  margin: 0;
+}
+
+.event-explainability-dialog .mapping-step-content b {
+  overflow-wrap: anywhere;
 }
 
 .explainability-dialog .source-excerpt p {
@@ -1414,13 +1480,12 @@
     gap: 8px;
   }
 
-  .explainability-dialog .event-mapping-flow > div {
-    flex-direction: column;
-    gap: 4px;
+  .event-explainability-dialog .dialog-section {
+    padding: 12px;
   }
 
-  .explainability-dialog .event-mapping-flow > div > i {
-    transform: rotate(90deg);
+  .event-explainability-dialog .event-mapping-step > .mapping-step-content {
+    padding: 10px 12px;
   }
 
   .explainability-dialog :is(.portfolio-content, .dialog-two-column) {
@@ -1593,7 +1658,7 @@
   align-items: center;
 }
 
-.event-explainability-dialog .event-mapping-flow > div > span {
+.event-explainability-dialog .event-mapping-flow > div > .mapping-step-content {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
