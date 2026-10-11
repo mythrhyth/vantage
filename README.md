@@ -13,43 +13,95 @@
 
 ---
 
-### Project Snapshot
-
-- Converts financial news into portfolio-aware risk signals using local ONNX NLP + deterministic quant risk modeling.
-- Quantifies event severity, transmission impact, and asset-class loss attribution without relying on opaque LLM-generated numbers.
-- Designed for macro risk teams, portfolio managers, and executive dashboards that need auditable risk explanations.
-- Built as a full-stack TypeScript prototype with a React frontend, Express backend, PostgreSQL persistence, and local model execution.
-
 ## 📌 Table of Contents
-- [S&P Global & Crisil Campus Hackathon Submission](#hackathon-submission)
-- [Executive Summary & Core Value Proposition](#executive-summary)
-- [The Problem](#problem)
-- [What Makes VANTAGE Different? (Unique Selling Proposition)](#usp)
-- [End-to-End System Architecture](#architecture)
-- [Dataset Used](#dataset-used)
-- [Technology Stack](#technology-stack)
-- [Installation & Quick Start Guide](#installation)
-- [Automated Test Suite & Empirical Verification](#tests)
-- [Limitations & Responsible Analytical Use](#limitations)
-- [Future Engineering Roadmap](#roadmap)
-- [Credits & Licensing](#credits)
+- [S&P Global & Crisil Campus Hackathon Submission](#sp-global--crisil-campus-hackathon-submission)
+- [Executive Summary & Core Value Proposition](#-executive-summary--core-value-proposition)
+- [The Problem: Why Traditional Risk Dashboards Fail](#-the-problem-why-traditional-risk-dashboards-fail)
+- [What Makes VANTAGE Different? (Unique Selling Proposition)](#-what-makes-vantage-different-unique-selling-proposition)
+- [End-to-End System Architecture](#-end-to-end-system-architecture)
+- [Mathematical & Technical Risk Model](#-mathematical--technical-risk-model)
+- [Key Platform Features](#-key-platform-features)
+- [Technology Stack](#-technology-stack)
+- [Repository Organization](#-repository-organization)
+- [Installation & Quick Start Guide](#-installation--quick-start-guide)
+- [API Quick Reference](#-api-quick-reference)
+- [Automated Test Suite & Empirical Verification](#-automated-test-suite--empirical-verification)
+- [Limitations & Responsible Analytical Use](#-limitations--responsible-analytical-use)
+- [Future Engineering Roadmap](#-future-engineering-roadmap)
+- [Credits & Licensing](#-credits--licensing)
 
 ---
 
-<a id="hackathon-submission"></a>
 ## S&P Global & Crisil Campus Hackathon Submission
 
 - **Candidate Name:** Rhythm Bhetwal
 - **College Email ID:** b24cs038@nitm.ac.in
 - **College / Campus:** NIT Meghalaya National Institute of Technology (NIT) Meghalaya
-- **Demo Video Link:** To be recorded; add a publicly accessible unlisted YouTube link once finalized.
-- **Slide Deck:** [`docs/presentation.pdf`](docs/presentation.pdf) (7-slide draft)
-- **Status:** Submitted for evaluation and continuously refined through local validation and risk-model verification.
+- **Demo Video Link:** https://youtu.be/meZh5X4EetA
+- **Slide Deck:** [`docs/presentation.pdf`](docs/presentation.pdf) (7-slide draft).
+- **Slide Deck Link (if hosted externally):** Not applicable; the deck is included in this repository.
 
+### 1. Project Overview / Problem Statement & Approach
+
+VANTAGE turns financial news into portfolio-aware risk signals. Generic sentiment feeds do not show whether an event affects a particular portfolio, while unconstrained language models are unsuitable for producing auditable numerical loss estimates. VANTAGE combines local financial NLP and portfolio relevance matching with deterministic, inspectable risk and stress-loss calculations.
+
+### 2. Architecture & Tech Stack
+
+News feeds and submitted text flow through deduplication, local ONNX sentiment and event classification, portfolio relevance matching, deterministic risk calculations, PostgreSQL persistence, and a React dashboard. The calculation-backed loss engine attributes stress losses by asset class. See the [architecture diagram](docs/assets/architecture_flow.svg) and the detailed [architecture specification](docs/ARCHITECTURE.md).
+
+The prototype uses React, TypeScript, Vite, Node.js, Express, Prisma, PostgreSQL, transformers.js/ONNX Runtime, and an optional Google Gemini provider for semantic enrichment. Gemini is not required for the deterministic risk calculations.
+
+### 3. Dataset Used
+
+The [`data/`](data/) directory contains all three JSON datasets used by the prototype's evaluation scripts. They are hand-authored synthetic examples for sentiment, event classification, and entity/portfolio relevance tests. They are not records copied from live news or proprietary client data; public company names/tickers may appear solely as illustrative entity-matching examples. See [`data/README.md`](data/README.md) for dataset descriptions and assumptions.
+
+### 4. Quickstart & Installation
+
+**Runtime:** Node.js 20.19+ recommended, npm, Git LFS, and PostgreSQL 14+ (local or hosted); commands below are for a local prototype run.
+
+```bash
+git clone https://github.com/mythrhyth/vantage.git
+cd vantage
+git lfs pull
+npm ci
+cd backend
+npm ci
+cd ..
+```
+
+Create `backend/.env` from `backend/.env.example`, set `DATABASE_URL` to a PostgreSQL database you control, and set `NLP_PROVIDER=development` to run without a Gemini API key. Then initialize the schema and sample portfolio:
+
+```bash
+cd backend
+npx prisma db push
+npx prisma db seed
+```
+
+Start the API and frontend in separate terminals from the repository root:
+
+```bash
+cd backend
+npm run dev
+```
+
+```bash
+npm run dev
+```
+
+The API listens on `http://localhost:3000` and the frontend on `http://localhost:5173`. Do not commit `.env` or real client/portfolio data. Additional setup notes are in [Installation & Quick Start Guide](#-installation--quick-start-guide).
+
+### 5. Key Results & Domain Impact
+
+The prototype classifies financial events, filters them by portfolio relevance, generates deterministic stress parameters, and reports calculation-backed losses by asset class. Its main domain value is a traceable connection between a news event, portfolio exposure, and estimated stress impact rather than a generic sentiment score. Automated evaluation and test commands are documented in [Automated Test Suite & Empirical Verification](#-automated-test-suite--empirical-verification).
+
+### 6. Limitations & Next Steps
+
+Risk outputs are model-based estimates, not forecasts or investment advice. The current entity matching and stress formulas are simplified, and live ingestion depends on public feeds and network availability. See [Limitations & Responsible Analytical Use](#-limitations--responsible-analytical-use) and [Future Engineering Roadmap](#-future-engineering-roadmap).
+
+> **Before submission:** replace the candidate fields above, add the recorded demo URL, and include the final 5–7 slide PDF at `docs/presentation.pdf`. The repository contains no deployment guide because this submission is intended to run locally.
 
 ---
 
-<a id="executive-summary"></a>
 ## 💡 Executive Summary & Core Value Proposition
 
 Financial risk management teams and portfolio managers face an overwhelming volume of daily macroeconomic headlines, central bank announcements, and sector shocks. Traditional financial dashboards either rely on **generic sentiment scores** (which treat all negative news equally regardless of portfolio composition) or rely on **black-box LLMs** to hallucinate numerical financial loss figures.
@@ -58,8 +110,7 @@ Financial risk management teams and portfolio managers face an overwhelming volu
 
 ---
 
-<a id="problem"></a>
-## 📉 The Problem
+## 📉 The Problem: Why Traditional Risk Dashboards Fail
 
 Existing financial risk intelligence workflows suffer from four fundamental architectural limitations:
 
@@ -70,7 +121,6 @@ Existing financial risk intelligence workflows suffer from four fundamental arch
 
 ---
 
-<a id="usp"></a>
 ## 🚀 What Makes VANTAGE Different? (Unique Selling Proposition)
 
 ### 1. 100% Local ONNX Inference for Authoritative NLP
@@ -93,13 +143,12 @@ Existing financial risk intelligence workflows suffer from four fundamental arch
 
 ---
 
-<a id="architecture"></a>
 ## 🏗 End-to-End System Architecture
 
 ![VANTAGE End-to-End System Architecture Pipeline](docs/assets/architecture_flow.svg)
 
 <details>
-<summary><b> View Editable Mermaid Source Code</b></summary>
+<summary><b>📐 View Editable Mermaid Source Code</b></summary>
 
 ```mermaid
 flowchart TD
@@ -166,29 +215,69 @@ flowchart TD
 
 ---
 
-<a id="dataset-used"></a>
-## 🧠 Dataset Used
+## 📐 Mathematical & Technical Risk Model
 
-VANTAGE uses financial NLP datasets for model development and evaluation, along with locally maintained synthetic JSON fixtures for application-level testing and validation.
+### 1. Event Severity ($S_{\text{event}}$)
+Combines base category severity $S_{\text{cat}}$ with continuous FinBERT sentiment $s \in [-1.0, +1.0]$ via sentiment multiplier $M_{\text{sent}}(s) = 1.0 - 0.35s$:
+$$S_{\text{event}} = \text{clamp}\left(1.0, 10.0, S_{\text{cat}} \times M_{\text{sent}}(s)\right)$$
 
-### 3.1 Financial NLP Datasets
-
-| Dataset | Purpose | Link |
-|---|---|---|
-| **Financial PhraseBank** | Financial sentiment classification into positive, neutral, and negative categories. Used for fine-tuning and evaluating the sentiment classifier. | [Hugging Face – Financial PhraseBank](https://huggingface.co/datasets/takala/financial_phrasebank) |
-| **Twitter Financial News Topic** (`zeroshot/twitter-financial-news-topic`) | Financial event classification. Used to develop the event classifier, with labels mapped to eight financial event categories. | [Hugging Face – Twitter Financial News Topic](https://huggingface.co/datasets/zeroshot/twitter-financial-news-topic) |
-
-> Synthetic test fixtures are maintained locally for stress-testing the application pipeline, portfolio scenarios, and API behavior without depending on external data during CI or local QA runs.
-
-### Short model-evaluation snapshot
-
-VANTAGE runs a two-stage local NLP pipeline: FinBERT for sentiment and a fine-tuned event classifier for eight financial categories. In the recorded evaluation notes, the sentiment classifier reached 91.05% accuracy and the event classifier reached 95.12% accuracy, with 97.60% top-2 accuracy. The detailed deterministic risk equations and model-evaluation methodology are documented in [architecture.md](architecture.md).
-
-> Note: the recorded benchmarking numbers should be validated against the saved evaluation outputs before being treated as reproduced benchmarks.
+| Category | Base Severity ($S_{\text{cat}}$) | Base Rate Shock (bps) | Base Spread Shock (bps) | Base Liquidity (%) | Base Inflation (bps) |
+|---|:---:|:---:|:---:|:---:|:---:|
+| **Monetary policy** | 8.5 | +250 | +120 | +10% | +150 |
+| **Credit** | 8.0 | -50 | +350 | +20% | +50 |
+| **Macroeconomic** | 7.5 | +150 | +250 | +15% | +200 |
+| **Commodities** | 7.0 | +100 | +150 | +15% | +300 |
+| **Geopolitical** | 7.0 | +100 | +200 | +25% | +150 |
+| **Sector outlook** | 6.0 | -50 | +180 | +15% | +50 |
+| **Earnings** | 5.5 | -30 | +150 | +10% | -50 |
+| **Regulatory** | 5.0 | +20 | +120 | +15% | +50 |
 
 ---
 
-<a id="technology-stack"></a>
+### 2. Portfolio Transmission Sensitivity ($T_{\text{port}}$)
+Computes weighted transmission across asset class exposure weights $w_A$ and Category Sensitivity matrix $W_{\text{cat, asset}}$:
+$$T_{\text{port}} = \sum_{A \in \{\text{LOANS, BONDS, DERIVATIVES, EQUITY}\}} \left( w_A \times W_{\text{cat}, A} \right)$$
+
+---
+
+### 3. Effective Exposure ($E_{\text{effective}}$)
+$$E_{\text{effective}} = \begin{cases} 
+E_{\text{direct}}, & \text{for DIRECT relevance} \\
+E_{\text{indirect}}, & \text{for INDIRECT relevance} \\
+1.0, & \text{for PORTFOLIO-WIDE relevance} \\
+0.0, & \text{for IRRELEVANT events}
+\end{cases}$$
+
+---
+
+### 4. Vulnerability Multiplier ($V_{\text{port}}$) & Portfolio Impact ($I_{\text{portfolio}}$)
+$$V_{\text{port}} = E_{\text{effective}} \times T_{\text{port}} \times C_{\text{conc}} \times H_{\text{mult}} \times R_{\text{mult}}$$
+$$I_{\text{raw}} = 1.0 + (S_{\text{event}} - 1.0) \times V_{\text{port}}$$
+$$I_{\text{portfolio}} = \text{clamp}\left(1.0, 10.0, \text{round}(I_{\text{raw}}, 2)\right)$$
+
+> **Note**: $T_{\text{port}}$ appears **exactly once** in $V_{\text{port}}$, guaranteeing zero $T_{\text{port}}^2$ double counting.
+
+---
+
+### 5. Stress Parameter Shocks
+$$\text{severityScale} = \frac{S_{\text{event}}}{10.0}$$
+$$E_{\text{stress}} = E_{\text{effective}} \times T_{\text{port}} \times R_{\text{stress}}$$
+$$\text{ParamShock} = \text{Math.round}\left(\text{BaseShock} \times \text{severityScale} \times E_{\text{stress}} \times H_{\text{mult}}\right)$$
+
+---
+
+### 6. Production Financial Loss Engine (`RiskEngineService`)
+Given generated integer parameters (`rate`, `spread`, `liquidity`, `inflation`), loss shifts are converted to decimals ($\text{rateShift} = \text{rate}/100$) and applied directly to baseline portfolio exposures:
+
+$$\text{loansLoss} = \text{loansExposure} \times \left(0.4 \times \text{spreadShift} + 0.1 \times \text{rateShift}\right)$$
+$$\text{bondsLoss} = \text{bondsExposure} \times \left(0.5 \times \text{rateShift} + 0.2 \times \text{spreadShift}\right)$$
+$$\text{derivativesLoss} = \text{derivativesExposure} \times \left(0.6 \times \text{liquidityHaircut} + 0.2 \times \text{rateShift}\right)$$
+$$\text{equityLoss} = \text{equityExposure} \times \left(0.2 \times \text{rateShift} + 0.3 \times \text{inflationShift} + 0.1 \times \text{liquidityHaircut}\right)$$
+$$\text{totalLoss} = \max\left(0, \text{loansLoss} + \text{bondsLoss} + \text{derivativesLoss} + \text{equityLoss}\right)$$
+$$\text{riskScore} = \min\left(100, \text{round}\left(\frac{\text{totalLoss}}{\text{baselineValue}} \times 100 \times 5\right)\right)$$
+
+---
+
 ## 🛠 Technology Stack
 
 | Layer | Component / Technology | Specific Purpose in VANTAGE |
@@ -206,7 +295,89 @@ VANTAGE runs a two-stage local NLP pipeline: FinBERT for sentiment and a fine-tu
 
 ---
 
-<a id="installation"></a>
+## 📂 Repository Organization
+
+```text
+financial-risk-intelligence-platform/
+├── README.md                            # Primary Judge-Facing Landing Page & Architecture
+├── docs/                                # Technical Specifications & API Documentation
+│   ├── presentation.pdf                 # Hackathon presentation (7-slide draft)
+│   ├── ARCHITECTURE.md                  # Comprehensive Component & Mathematical Pipeline Specification
+│   └── API.md                           # Complete REST API Endpoint Reference & Payload Schemas
+├── data/                                # Synthetic JSON demo and evaluation datasets
+│   └── README.md                        # Dataset descriptions, provenance, and assumptions
+├── LICENSE                              # ISC License
+├── backend/                             # Backend Service Root
+│   ├── README.md                        # Backend Setup, Ingestion, and Developer Guide
+│   ├── models/nlp/                      # Production Local ONNX Model Artifacts
+│   │   ├── README.md                    # Model Provenance, Quantization Specs & Tokenizer Docs
+│   │   ├── phase1d-finbert/             # FinBERT ONNX weights & tokenizer
+│   │   └── phase2-event-classifier/     # Event Classifier ONNX weights & tokenizer
+│   ├── prisma/                          # Database Configuration
+│   │   ├── migrations/                  # Versioned PostgreSQL migration scripts
+│   │   ├── schema.prisma                # Relational data schema (RiskEvent, Portfolio, Asset, Run)
+│   │   └── seed.ts                      # Initial portfolio & baseline holdings seed script
+│   ├── src/                             # Express Application Source Code
+│   │   ├── config/                      # Configuration Tables
+│   │   │   └── risk-engine.config.ts    # Centralized Calibration Matrices & Shock Definitions
+│   │   ├── controllers/                 # HTTP Request Controllers
+│   │   │   └── api.controller.ts        # Endpoint payload validation & response formatting
+│   │   ├── ingestion/                   # Data Ingestion Engine
+│   │   │   ├── adapters/                # RSS Feed & HTML Source Adapters
+│   │   │   ├── deduplication/           # SHA-256 Hashing & Title Deduplication
+│   │   │   └── ingestion.service.ts     # Multi-source Ingestion Manager
+│   │   ├── providers/nlp/               # NLP Inference Providers
+│   │   │   ├── finbert-sentiment.analyzer.ts # Local FinBERT ONNX Analyzer
+│   │   │   ├── financial-context.ts     # Contextual Adjustment Rules
+│   │   │   ├── phase2-event-classifier.ts    # Local ONNX Event Classifier Engine
+│   │   │   ├── gemini-nlp.provider.ts   # Optional Gemini AI Provider
+│   │   │   ├── development-nlp.provider.ts# Offline Fallback Rule Engine
+│   │   │   └── nlp.service.ts           # Hybrid Orchestrator & Deterministic Engine Wiring
+│   │   ├── routes/                      # API Routing Specifications
+│   │   │   └── api.routes.ts            # REST endpoint routes table
+│   │   ├── services/                    # Domain Services
+│   │   │   ├── events/                  # Event querying and persistence
+│   │   │   ├── portfolios/              # Portfolio exposures and holdings management
+│   │   │   ├── scenarios/               # Macro scenario parameters generation
+│   │   │   ├── allocations/             # Index allocation optimization service
+│   │   │   └── risk-engine/             # Core Quantitative Risk Engines
+│   │   │       ├── deterministic-risk-engine.ts # Pure Deterministic Portfolio Impact Engine
+│   │   │       └── risk-engine.service.ts       # Production Financial Loss Engine & Attribution
+│   │   └── server.ts                    # Express Web Server Initialization
+│   └── tests/                           # Verification Test Suites
+│       ├── run-all.ts                   # Master Test Suite Orchestration Script
+│       ├── test-finetune-pipeline.ts    # Benchmark integrity tests (fixtures in /data)
+│       ├── test-deterministic-risk-engine.ts # 19 Property Invariants Test Suite
+│       ├── test-deterministic-e2e.ts    # End-to-End PostgreSQL Integration Test
+│       ├── test-phase1d-integration.ts  # FinBERT ONNX Integration Tests
+│       ├── test-phase2-integration.ts  # Event Classifier ONNX Integration Tests
+│       ├── test-real-ingestion-flow.ts  # Real Ingestion & DB Persistence Test
+│       ├── test-api.ts                  # API Endpoint Integration Tests
+│       └── test-nlp-pipeline.ts         # Validation Bounds & Error Tests
+├── src/                                 # Frontend Web Application (React 19 + TypeScript)
+│   ├── App.tsx                          # App Routing & Global Shell
+│   ├── main.tsx                         # React Virtual DOM Mounting Point
+│   ├── index.css                        # Glassmorphism & High-Contrast Design Tokens
+│   ├── api.ts                           # Axios API Client & Error Interceptors
+│   ├── types.ts                         # Shared Frontend Interface Definitions
+│   ├── utils.ts                         # Formatting, Math, and Calculation Utilities
+│   ├── components/                      # UI Components
+│   │   ├── common/                      # Reusable Buttons, Icons, Sliders, Titles
+│   │   ├── risk-intelligence/           # Event Cards, Distribution Bars, Explainability Dialogs
+│   │   └── stress-testing/              # WhyLossDialog, AssetLossDialog, Scenario Controls
+│   └── pages/                           # Application Pages
+│       ├── RiskIntelligence.tsx         # Real-Time Event Feed & Portfolio Filtering
+│       ├── PortfolioStressTesting.tsx   # Interactive Event-Driven Stress Simulation
+│       ├── Scenarios.tsx                # Macro Scenario Library & Custom Stress Controls
+│       ├── IndexAllocation.tsx          # Sentiment-Adjusted Index Rebalancing
+│       ├── Overview.tsx                 # Executive Risk Overview & Top Exposures
+│       └── PortfolioSetupPage.tsx       # Portfolio Exposure Calibration UI
+├── vite.config.ts                       # Vite 8 Build Configuration
+└── package.json                         # Root Dependencies & Build Scripts
+```
+
+---
+
 ## ⚙️ Installation & Quick Start Guide
 
 Deployment is out of scope for this local hackathon prototype. Follow the local setup instructions below to run VANTAGE.
@@ -300,7 +471,25 @@ npm run dev
 
 ---
 
-<a id="tests"></a>
+## 📡 API Quick Reference
+
+Complete request and response JSON schemas are documented in [`docs/API.md`](docs/API.md).
+
+| Method | Endpoint Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/events` | Query ingested risk events (filters: `portfolioId`, `category`, `source`, `sentiment`, `impact`) |
+| `GET` | `/api/events/:id` | Fetch event details, ONNX confidence scores, signals, and canonical source link |
+| `POST` | `/api/events/analyze` | Submit custom text for FinBERT + Event Classifier ONNX classification & risk analysis |
+| `POST` | `/api/ingest` | Trigger manual news ingestion cycle across AP News, Reuters, Bloomberg, Fed, ECB, CNBC, and major Indian financial outlets |
+| `GET` | `/api/portfolios` | List portfolios and baseline valuation (`baselineValue`) |
+| `PUT` | `/api/portfolios/:id` | Update portfolio baseline valuation and asset-class exposures |
+| `PUT` | `/api/portfolios/:id/holdings` | Update equity holdings and stock weights |
+| `POST` | `/api/stress-tests/generate-parameters` | Generate deterministic stress parameters for a selected risk event |
+| `POST` | `/api/stress-tests/run` | Execute portfolio stress test, compute loss attribution, and save run history |
+| `GET` | `/api/stress-tests/history` | Retrieve historical stress test run logs |
+
+---
+
 ## 🧪 Automated Test Suite & Empirical Verification
 
 VANTAGE includes a comprehensive automated test suite covering unit property invariants, ONNX local model inference, real database integration, and API route contracts.
@@ -314,7 +503,6 @@ npm test
 
 ---
 
-<a id="limitations"></a>
 ## ⚠️ Limitations & Responsible Analytical Use
 
 1. **Simplified Financial Formulas**: Financial loss calculations use standardized fixed-income duration and spread approximations. They represent analytical model stress outputs, not guaranteed market loss predictions or professional investment advice.
@@ -323,7 +511,6 @@ npm test
 
 ---
 
-<a id="roadmap"></a>
 ## 🔮 Future Engineering Roadmap
 
 - [ ] **Multi-Asset Derivative Pricing Models**: Expand options and swap valuation formulas to include implied volatility surface shifts ($\Delta \sigma$).
@@ -332,7 +519,6 @@ npm test
 
 ---
 
-<a id="credits"></a>
 ## 📜 Credits & Licensing
 
 - **License**: Open-source under the [ISC License](LICENSE).
