@@ -3,18 +3,18 @@
 > **Transform unstructured global financial news into portfolio-aware risk signals, local ONNX-driven event classification, and deterministic, calculation-backed stress loss attribution.**
 
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7%2B-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-v20.19%2B-green.svg?logo=nodedotjs)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?logo=react)](https://react.dev/)
-[![ONNX Runtime](https://img.shields.io/badge/ONNX_Runtime-v2.17.2-orange.svg?logo=onnx)](https://onnxruntime.ai/)
+[![Transformers.js](https://img.shields.io/badge/Transformers.js-v2.17.2-orange.svg?logo=onnx)](https://github.com/xenova/transformers.js)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon_Cloud-336791.svg?logo=postgresql)](https://neon.tech/)
 [![Prisma](https://img.shields.io/badge/Prisma-5.22.0-2D3748.svg?logo=prisma)](https://www.prisma.io/)
-[![Build & Test](https://img.shields.io/badge/Test_Suite-100%25_Passing-brightgreen.svg)]()
 
 ---
 
 ## 📌 Table of Contents
 - [S&P Global & Crisil Campus Hackathon Submission](#sp-global--crisil-campus-hackathon-submission)
+- [NLP Models, Datasets & Evaluation](#nlp-models-datasets--evaluation)
 - [Executive Summary & Core Value Proposition](#-executive-summary--core-value-proposition)
 - [The Problem: Why Traditional Risk Dashboards Fail](#-the-problem-why-traditional-risk-dashboards-fail)
 - [What Makes VANTAGE Different? (Unique Selling Proposition)](#-what-makes-vantage-different-unique-selling-proposition)
@@ -36,10 +36,9 @@
 
 - **Candidate Name:** Rhythm Bhetwal
 - **College Email ID:** b24cs038@nitm.ac.in
-- **College / Campus:** NIT Meghalaya National Institute of Technology (NIT) Meghalaya
+- **College / Campus:** National Institute of Technology Meghalaya (NIT Meghalaya)
 - **Demo Video Link:** https://youtu.be/meZh5X4EetA
-- **Slide Deck:** [`docs/presentation.pdf`](docs/presentation.pdf) (7-slide draft).
-- **Slide Deck Link (if hosted externally):** Not applicable; the deck is included in this repository.
+- **Slide Deck:** [`docs/presentation.pptx`](docs/presentation.pptx) (included in this repository).
 
 ### 1. Project Overview / Problem Statement & Approach
 
@@ -51,9 +50,21 @@ News feeds and submitted text flow through deduplication, local ONNX sentiment a
 
 The prototype uses React, TypeScript, Vite, Node.js, Express, Prisma, PostgreSQL, transformers.js/ONNX Runtime, and an optional Google Gemini provider for semantic enrichment. Gemini is not required for the deterministic risk calculations.
 
-### 3. Dataset Used
+### 3. NLP Models, Datasets & Evaluation
 
-The [`data/`](data/) directory contains all three JSON datasets used by the prototype's evaluation scripts. They are hand-authored synthetic examples for sentiment, event classification, and entity/portfolio relevance tests. They are not records copied from live news or proprietary client data; public company names/tickers may appear solely as illustrative entity-matching examples. See [`data/README.md`](data/README.md) for dataset descriptions and assumptions.
+VANTAGE uses local ONNX models for financial sentiment and event classification, followed by a separate deterministic risk engine. The model-development datasets are:
+
+- **Sentiment:** [Financial PhraseBank](https://huggingface.co/datasets/takala/financial_phrasebank), for positive, neutral, and negative financial-text classification.
+- **Event classification:** [Twitter Financial News Topic](https://huggingface.co/datasets/zeroshot/twitter-financial-news-topic), mapped to VANTAGE's eight event categories. The reported dataset contains 21,107 examples; 2,375 is the support in the evaluation results below, not the full dataset size.
+
+**Recorded evaluation results** (internal results; not independently validated):
+
+| Model | Evaluation results |
+|---|---|
+| FinBERT sentiment classifier | 726 samples; 91.05% accuracy; 90.46% macro F1; positive/neutral/negative F1 of 87.77%/92.69%/90.91%; 10.02 ms/sample average latency |
+| Financial event classifier | 2,375 samples; 95.12% accuracy; 92.81% macro F1; 95.14% weighted F1; 97.60% top-2 accuracy; 0.0568 expected calibration error; 8.38 ms/item average latency |
+
+The project evaluation notes also report reference-model/ONNX parity across 2,375 predictions: zero label mismatches and a maximum probability difference below 0.00005. These are recorded benchmark figures, not guarantees of live-news performance; latency depends on hardware and benchmark conditions. The upstream datasets are referenced, not included in the repository. Small synthetic application-test fixtures are kept separately under `backend/tests/fixtures/`.
 
 ### 4. Quickstart & Installation
 
@@ -129,7 +140,7 @@ Existing financial risk intelligence workflows suffer from four fundamental arch
 
 ### 2. Strict Separation of AI & Quantitative Responsibilities
 - **AI/NLP Role**: Extracts classification taxonomy, continuous sentiment, and optional semantic explanations (entity resolution, signals, sentiment drivers, risk transmission steps).
-- **Quantitative Engine Role**: Calculates Event Severity ($S_{\text{event}}$), Portfolio Vulnerability ($V_{\text{port}}$), Portfolio Impact ($I_{\text{portfolio}}$), Stress Parameters, Stressed Valuation, and Dynamic Asset-Class Loss Attribution using inspectable, inspectable mathematical formulas.
+- **Quantitative Engine Role**: Calculates Event Severity ($S_{\text{event}}$), Portfolio Vulnerability ($V_{\text{port}}$), Portfolio Impact ($I_{\text{portfolio}}$), Stress Parameters, Stressed Valuation, and Dynamic Asset-Class Loss Attribution using inspectable mathematical formulas.
 
 ### 3. Portfolio-Aware Relevance & Transmission Matrix
 - Evaluates whether an event is `DIRECT` (matched holding ID/ticker), `INDIRECT` (matched sector), `PORTFOLIO_WIDE` (macroeconomic/monetary policy), or `IRRELEVANT` (zero matching exposure).
@@ -281,13 +292,13 @@ $$\text{riskScore} = \min\left(100, \text{round}\left(\frac{\text{totalLoss}}{\t
 
 | Layer | Component / Technology | Specific Purpose in VANTAGE |
 |---|---|---|
-| **Frontend UI** | React 19, TypeScript 5.6, Vite 8 | Dynamic risk intelligence dashboards, executive dialogs, interactive sliders |
+| **Frontend UI** | React 19, TypeScript 5.7+, Vite 8 | Dynamic risk intelligence dashboards, executive dialogs, interactive sliders |
 | **Styling** | Vanilla CSS, Tailwind CSS v4 | Glassmorphism UI, high-contrast dark theme, custom responsive data grids |
-| **Backend Service** | Node.js (v18+), Express 5 | REST API routing, RSS ingestion orchestrator, Prisma ORM service |
+| **Backend Service** | Node.js 20.19+, Express 5 | REST API routing, RSS ingestion orchestrator, Prisma ORM service |
 | **Database** | PostgreSQL (Neon Cloud Platform) | Persistent `RiskEvent`, `Portfolio`, `Asset`, `Scenario`, `StressTestRun` models |
 | **Local Sentiment NLP** | FinBERT ONNX (`@xenova/transformers`) | Continuous financial sentiment $s \in [-1, +1]$ and confidence scoring |
 | **Local Event Classifier** | Event Classifier ONNX (`@xenova/transformers`) | 8-class event taxonomy prediction & top-2 candidate confidence scores |
-| **Semantic AI Provider** | Google Gen AI SDK (`gemini-3.8-flash`) | Optional semantic enrichment (entities, signals, drivers, risk flow steps) |
+| **Semantic AI Provider** | Google Gen AI SDK (`gemini-3.8-flash` default; configurable) | Optional semantic enrichment (entities, signals, drivers, risk flow steps) |
 | **Risk Engine** | Pure TypeScript (`DeterministicRiskEngine`) | Deterministic severity, vulnerability, impact score, and parameter shocks |
 | **Loss Calculations** | `RiskEngineService` | Financial duration/spread loss execution & dynamic asset attribution |
 | **Test Runner** | `tsx` runner scripts (`backend/tests/run-all.ts`) | Automated test execution for property invariants, integration & E2E PostgreSQL flows |
@@ -297,82 +308,23 @@ $$\text{riskScore} = \min\left(100, \text{round}\left(\frac{\text{totalLoss}}{\t
 ## 📂 Repository Organization
 
 ```text
-financial-risk-intelligence-platform/
-├── README.md                            # Primary Judge-Facing Landing Page & Architecture
-├── docs/                                # Technical Specifications & API Documentation
-│   ├── presentation.pdf                 # Hackathon presentation (7-slide draft)
-│   ├── ARCHITECTURE.md                  # Comprehensive Component & Mathematical Pipeline Specification
-│   └── API.md                           # Complete REST API Endpoint Reference & Payload Schemas
-├── data/                                # Synthetic JSON demo and evaluation datasets
-│   └── README.md                        # Dataset descriptions, provenance, and assumptions
-├── LICENSE                              # ISC License
-├── backend/                             # Backend Service Root
-│   ├── README.md                        # Backend Setup, Ingestion, and Developer Guide
-│   ├── models/nlp/                      # Production Local ONNX Model Artifacts
-│   │   ├── README.md                    # Model Provenance, Quantization Specs & Tokenizer Docs
-│   │   ├── phase1d-finbert/             # FinBERT ONNX weights & tokenizer
-│   │   └── phase2-event-classifier/     # Event Classifier ONNX weights & tokenizer
-│   ├── prisma/                          # Database Configuration
-│   │   ├── migrations/                  # Versioned PostgreSQL migration scripts
-│   │   ├── schema.prisma                # Relational data schema (RiskEvent, Portfolio, Asset, Run)
-│   │   └── seed.ts                      # Initial portfolio & baseline holdings seed script
-│   ├── src/                             # Express Application Source Code
-│   │   ├── config/                      # Configuration Tables
-│   │   │   └── risk-engine.config.ts    # Centralized Calibration Matrices & Shock Definitions
-│   │   ├── controllers/                 # HTTP Request Controllers
-│   │   │   └── api.controller.ts        # Endpoint payload validation & response formatting
-│   │   ├── ingestion/                   # Data Ingestion Engine
-│   │   │   ├── adapters/                # RSS Feed & HTML Source Adapters
-│   │   │   ├── deduplication/           # SHA-256 Hashing & Title Deduplication
-│   │   │   └── ingestion.service.ts     # Multi-source Ingestion Manager
-│   │   ├── providers/nlp/               # NLP Inference Providers
-│   │   │   ├── finbert-sentiment.analyzer.ts # Local FinBERT ONNX Analyzer
-│   │   │   ├── financial-context.ts     # Contextual Adjustment Rules
-│   │   │   ├── phase2-event-classifier.ts    # Local ONNX Event Classifier Engine
-│   │   │   ├── gemini-nlp.provider.ts   # Optional Gemini AI Provider
-│   │   │   ├── development-nlp.provider.ts# Offline Fallback Rule Engine
-│   │   │   └── nlp.service.ts           # Hybrid Orchestrator & Deterministic Engine Wiring
-│   │   ├── routes/                      # API Routing Specifications
-│   │   │   └── api.routes.ts            # REST endpoint routes table
-│   │   ├── services/                    # Domain Services
-│   │   │   ├── events/                  # Event querying and persistence
-│   │   │   ├── portfolios/              # Portfolio exposures and holdings management
-│   │   │   ├── scenarios/               # Macro scenario parameters generation
-│   │   │   ├── allocations/             # Index allocation optimization service
-│   │   │   └── risk-engine/             # Core Quantitative Risk Engines
-│   │   │       ├── deterministic-risk-engine.ts # Pure Deterministic Portfolio Impact Engine
-│   │   │       └── risk-engine.service.ts       # Production Financial Loss Engine & Attribution
-│   │   └── server.ts                    # Express Web Server Initialization
-│   └── tests/                           # Verification Test Suites
-│       ├── run-all.ts                   # Master Test Suite Orchestration Script
-│       ├── test-finetune-pipeline.ts    # Benchmark integrity tests (fixtures in /data)
-│       ├── test-deterministic-risk-engine.ts # 19 Property Invariants Test Suite
-│       ├── test-deterministic-e2e.ts    # End-to-End PostgreSQL Integration Test
-│       ├── test-phase1d-integration.ts  # FinBERT ONNX Integration Tests
-│       ├── test-phase2-integration.ts  # Event Classifier ONNX Integration Tests
-│       ├── test-real-ingestion-flow.ts  # Real Ingestion & DB Persistence Test
-│       ├── test-api.ts                  # API Endpoint Integration Tests
-│       └── test-nlp-pipeline.ts         # Validation Bounds & Error Tests
-├── src/                                 # Frontend Web Application (React 19 + TypeScript)
-│   ├── App.tsx                          # App Routing & Global Shell
-│   ├── main.tsx                         # React Virtual DOM Mounting Point
-│   ├── index.css                        # Glassmorphism & High-Contrast Design Tokens
-│   ├── api.ts                           # Axios API Client & Error Interceptors
-│   ├── types.ts                         # Shared Frontend Interface Definitions
-│   ├── utils.ts                         # Formatting, Math, and Calculation Utilities
-│   ├── components/                      # UI Components
-│   │   ├── common/                      # Reusable Buttons, Icons, Sliders, Titles
-│   │   ├── risk-intelligence/           # Event Cards, Distribution Bars, Explainability Dialogs
-│   │   └── stress-testing/              # WhyLossDialog, AssetLossDialog, Scenario Controls
-│   └── pages/                           # Application Pages
-│       ├── RiskIntelligence.tsx         # Real-Time Event Feed & Portfolio Filtering
-│       ├── PortfolioStressTesting.tsx   # Interactive Event-Driven Stress Simulation
-│       ├── Scenarios.tsx                # Macro Scenario Library & Custom Stress Controls
-│       ├── IndexAllocation.tsx          # Sentiment-Adjusted Index Rebalancing
-│       ├── Overview.tsx                 # Executive Risk Overview & Top Exposures
-│       └── PortfolioSetupPage.tsx       # Portfolio Exposure Calibration UI
-├── vite.config.ts                       # Vite 8 Build Configuration
-└── package.json                         # Root Dependencies & Build Scripts
+.
+├── README.md
+├── LICENSE
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── presentation.pptx
+│   └── assets/architecture_flow.svg
+├── backend/
+│   ├── models/nlp/                 # Local FinBERT and event-classifier ONNX artifacts
+│   ├── prisma/                     # PostgreSQL schema and seed data
+│   ├── src/
+│   │   ├── providers/nlp/          # Local models and optional Gemini enrichment
+│   │   ├── routes/                 # REST API route definitions
+│   │   └── services/risk-engine/   # Deterministic impact and loss calculations
+│   └── tests/fixtures/             # Synthetic test/evaluation fixtures
+├── src/                            # React frontend
+└── package.json
 ```
 
 ---
@@ -472,7 +424,7 @@ npm run dev
 
 ## 📡 API Quick Reference
 
-Complete request and response JSON schemas are documented in [`docs/API.md`](docs/API.md).
+API routes are implemented in [`backend/src/routes/`](backend/src/routes/).
 
 | Method | Endpoint Path | Description |
 | :--- | :--- | :--- |

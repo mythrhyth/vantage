@@ -122,7 +122,7 @@ async function runFinBertEvaluation() {
   console.log('==================================================\n');
 
   // 1. Load Dataset & Quality Audit
-  const datasetPath = path.resolve(__dirname, '..', '..', 'data', 'financial-benchmark-100.json');
+  const datasetPath = path.resolve(__dirname, 'fixtures', 'financial-benchmark-100.json');
   if (!fs.existsSync(datasetPath)) {
     throw new Error(`Dataset file not found at ${datasetPath}`);
   }

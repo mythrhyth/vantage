@@ -6,7 +6,7 @@ import { finBertSentimentAnalyzer } from '../src/providers/nlp/finbert-sentiment
 describe('Phase 1D — Fine-Tuning & Evaluation Pipeline Integrity Tests', () => {
   const baseDir = path.resolve(__dirname, '..');
   const mlDataDir = path.join(baseDir, 'ml', 'data');
-  const frozenBenchmarkPath = path.resolve(baseDir, '..', 'data', 'financial-benchmark-100.json');
+  const frozenBenchmarkPath = path.resolve(baseDir, 'tests', 'fixtures', 'financial-benchmark-100.json');
 
   test('1. Frozen benchmark file exists and is intact (100 examples)', () => {
     expect(fs.existsSync(frozenBenchmarkPath)).toBe(true);
