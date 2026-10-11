@@ -78,39 +78,53 @@ export class NlpService {
       analysis = await this.fallbackProvider.analyze({ text, source: metadata.source, timestamp: metadata.publishedAt });
     }
 
-    // Overwrite sentiment and sentimentConfidence with Phase 1D Fine-Tuned FinBERT + Phase 1C FinancialContextLayer
-    try {
-      const rawFinBertResult = await finBertSentimentAnalyzer.analyzeSentiment(text);
-      const contextAdjusted = financialContextLayer.analyze(text, rawFinBertResult);
-      analysis.sentiment = contextAdjusted.adjustedSentiment;
-      analysis.sentimentConfidence = contextAdjusted.adjustedConfidence;
-      console.log(`[NlpService] Phase 1D FinBERT sentiment applied: sentiment=${analysis.sentiment}, confidence=${analysis.sentimentConfidence} (raw FinBERT: ${rawFinBertResult.sentiment}, label: ${rawFinBertResult.label})`);
-    } catch (finBertErr: any) {
-      console.error('[NlpService] Phase 1D FinBERT inference error:', finBertErr);
-      throw new Error(`Phase 1D FinBERT Integration Error: ${finBertErr.message}`);
-    }
-
-    // Overwrite event classification and confidence with Phase 2 Fine-Tuned Event Classifier
-    try {
-      const phase2Result = await phase2EventClassifier.classifyEvent(text);
-      const geminiCategorySuggestion = analysis.classification;
-      analysis.classification = phase2Result.predictedCategory;
-      analysis.classificationConfidence = phase2Result.confidence;
-      analysis.top2Classification = phase2Result.top2Category;
-      analysis.top2Confidence = phase2Result.top2Confidence;
-      analysis.categoryProbabilities = phase2Result.categoryProbabilities;
-
-      console.log(`[NlpService] Phase 2 Event Classifier applied: category="${analysis.classification}", confidence=${analysis.classificationConfidence} (top2: "${phase2Result.top2Category}", Gemini suggested: "${geminiCategorySuggestion}")`);
-
-      if (geminiCategorySuggestion && geminiCategorySuggestion !== phase2Result.predictedCategory) {
-        const note = `[Phase 2 Classifier: ${phase2Result.predictedCategory} (${(phase2Result.confidence * 100).toFixed(1)}% conf); Gemini suggested: ${geminiCategorySuggestion}]`;
-        analysis.classificationReason = analysis.classificationReason
-          ? `${analysis.classificationReason} ${note}`
-          : note;
+    if (process.env.NLP_MODE === 'development') {
+      const note = 'Development NLP mode: rule-based estimates; local FinBERT and event-classifier models are disabled.';
+      analysis.sentimentConfidence = Math.min(analysis.sentimentConfidence, 0.5);
+      analysis.classificationConfidence = Math.min(analysis.classificationConfidence ?? 0.5, 0.5);
+      analysis.impactConfidence = Math.min(analysis.impactConfidence, 0.5);
+      analysis.signals.push(note);
+      analysis.classificationReason = analysis.classificationReason
+        ? `${analysis.classificationReason} ${note}`
+        : note;
+      analysis.impactReason = analysis.impactReason
+        ? `${analysis.impactReason} ${note}`
+        : note;
+    } else {
+      // Overwrite sentiment with Phase 1D FinBERT + Phase 1C FinancialContextLayer.
+      try {
+        const rawFinBertResult = await finBertSentimentAnalyzer.analyzeSentiment(text);
+        const contextAdjusted = financialContextLayer.analyze(text, rawFinBertResult);
+        analysis.sentiment = contextAdjusted.adjustedSentiment;
+        analysis.sentimentConfidence = contextAdjusted.adjustedConfidence;
+        console.log(`[NlpService] Phase 1D FinBERT sentiment applied: sentiment=${analysis.sentiment}, confidence=${analysis.sentimentConfidence} (raw FinBERT: ${rawFinBertResult.sentiment}, label: ${rawFinBertResult.label})`);
+      } catch (finBertErr: any) {
+        console.error('[NlpService] Phase 1D FinBERT inference error:', finBertErr);
+        throw new Error(`Phase 1D FinBERT Integration Error: ${finBertErr.message}`);
       }
-    } catch (phase2Err: any) {
-      console.error('[NlpService] Phase 2 Event Classifier inference error:', phase2Err);
-      throw new Error(`Phase 2 Event Classifier Integration Error: ${phase2Err.message}`);
+
+      // Overwrite event classification with the Phase 2 fine-tuned classifier.
+      try {
+        const phase2Result = await phase2EventClassifier.classifyEvent(text);
+        const providerCategorySuggestion = analysis.classification;
+        analysis.classification = phase2Result.predictedCategory;
+        analysis.classificationConfidence = phase2Result.confidence;
+        analysis.top2Classification = phase2Result.top2Category;
+        analysis.top2Confidence = phase2Result.top2Confidence;
+        analysis.categoryProbabilities = phase2Result.categoryProbabilities;
+
+        console.log(`[NlpService] Phase 2 Event Classifier applied: category="${analysis.classification}", confidence=${analysis.classificationConfidence} (top2: "${phase2Result.top2Category}", provider suggested: "${providerCategorySuggestion}")`);
+
+        if (providerCategorySuggestion && providerCategorySuggestion !== phase2Result.predictedCategory) {
+          const note = `[Phase 2 Classifier: ${phase2Result.predictedCategory} (${(phase2Result.confidence * 100).toFixed(1)}% conf); provider suggested: ${providerCategorySuggestion}]`;
+          analysis.classificationReason = analysis.classificationReason
+            ? `${analysis.classificationReason} ${note}`
+            : note;
+        }
+      } catch (phase2Err: any) {
+        console.error('[NlpService] Phase 2 Event Classifier inference error:', phase2Err);
+        throw new Error(`Phase 2 Event Classifier Integration Error: ${phase2Err.message}`);
+      }
     }
 
     // Apply Deterministic Risk Engine to overwrite impact score with portfolio-aware score
@@ -170,6 +184,10 @@ export class NlpService {
       console.log(`[NlpService] Deterministic Risk Engine applied: Portfolio Impact=${analysis.impact} (Event Severity=${deterministicOutput.eventSeverity}, Stress Exposure=${deterministicOutput.stressExposure})`);
     } catch (detErr: any) {
       console.warn('[NlpService] Deterministic Risk Engine calculation warning:', detErr);
+    }
+
+    if (process.env.NLP_MODE === 'development') {
+      analysis.impactConfidence = Math.min(analysis.impactConfidence, 0.5);
     }
 
     // Validate NLP Output
