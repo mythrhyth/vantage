@@ -98,7 +98,6 @@ The prototype classifies financial events, filters them by portfolio relevance, 
 
 Risk outputs are model-based estimates, not forecasts or investment advice. The current entity matching and stress formulas are simplified, and live ingestion depends on public feeds and network availability. See [Limitations & Responsible Analytical Use](#-limitations--responsible-analytical-use) and [Future Engineering Roadmap](#-future-engineering-roadmap).
 
-> **Before submission:** replace the candidate fields above, add the recorded demo URL, and include the final 5–7 slide PDF at `docs/presentation.pdf`. The repository contains no deployment guide because this submission is intended to run locally.
 
 ---
 
